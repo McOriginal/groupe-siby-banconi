@@ -39,7 +39,7 @@ const SidebarData = [
   },
 
   {
-    label: 'Commande',
+    label: 'Liste de Commandes',
     icon: 'fas fa-server',
     isHasArrow: true,
     url: '/commandes',

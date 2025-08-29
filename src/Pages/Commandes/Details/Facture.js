@@ -27,6 +27,7 @@ import { useReactToPrint } from 'react-to-print';
 import { useRef } from 'react';
 import { companyName } from '../../CompanyInfo/CompanyInfo';
 import FactureHeader from './FactureHeader';
+import LogoFiligran from './LogoFiligran';
 
 export default function Facture() {
   const { id } = useParams();
@@ -139,7 +140,8 @@ export default function Facture() {
                     </CardText>
                   </div>
                   {/* Bordure Séparateur */}
-
+                  {/* Logo en Filigrant */}
+                  <LogoFiligran />
                   <div className='my-2 p-2'>
                     <table className='table align-middle table-nowrap table-hover table-bordered border-2 border-double border-info text-center'>
                       <thead>

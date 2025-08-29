@@ -20,6 +20,8 @@ import { useAllDevis, useDeleteDevis } from '../../Api/queriesDevis';
 import { useNavigate } from 'react-router-dom';
 import { deleteButton } from '../components/AlerteModal';
 import FactureHeader from '../Commandes/Details/FactureHeader';
+import LogoFiligran from '../Commandes/Details/LogoFiligran';
+import { companyName } from '../CompanyInfo/CompanyInfo';
 
 // Export En PDF
 // ------------------------------------------
@@ -152,6 +154,9 @@ export default function DevisListe() {
                       </CardText>
                     </div>
 
+                    {/* Logo Filigrant */}
+                    <LogoFiligran />
+
                     <div className='my-2 p-2'>
                       <table className='table align-middle table-nowrap table-hover table-bordered border-2 border-info text-center'>
                         <thead>
@@ -198,6 +203,10 @@ export default function DevisListe() {
                           </CardText>
                         </div>
                       </div>
+                      <p className='font-size-10 text-center'>
+                        Merci pour votre confiance et votre achat chez{' '}
+                        {companyName}. Nous espérons vous revoir bientôt!
+                      </p>
                     </CardFooter>
                   </CardBody>
                 </Card>

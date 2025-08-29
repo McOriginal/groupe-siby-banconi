@@ -14,7 +14,6 @@ import {
 import ProfileMenu from '../../components/Common/TopbarDropdown/ProfileMenu';
 import {
   companyLittleName,
-  companyName,
   companyLogo,
   companyOwnerName,
 } from '../../Pages/CompanyInfo/CompanyInfo';
@@ -96,7 +95,7 @@ const Header = (props) => {
                 color: ' #27548A',
               }}
             >
-              {companyName} |
+              {companyLittleName} |
               <span className=' ms-2 text-warning'> {companyOwnerName}</span>
             </p>
           </div>

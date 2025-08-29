@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Container, Row, Col } from 'reactstrap';
+import { companyName } from '../../Pages/CompanyInfo/CompanyInfo';
 
 const Footer = () => {
   return (
@@ -9,7 +10,7 @@ const Footer = () => {
         <Container fluid={true}>
           <Row>
             <Col sm={6}>
-              {new Date().getFullYear()} © Centre de Santé MARHABA.
+              {new Date().getFullYear()} © {companyName}.
             </Col>
             <Col sm={6}>
               <div className='text-sm-end d-none d-sm-block'>

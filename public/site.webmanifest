@@ -1,8 +1,8 @@
 {
-  "short_name": "Quincaillerie DUBAI",
-  "description": "Quincaillerie DUBAI Chez MOHAMED WOROFANA - Votre quincaillerie de confiance à BAMAKO, MALI. Spécialisée dans la vente de matériel de quincaillerie, outillage, plomberie, électricité et bien plus.",
   "lang": "fr",
-  "name": "Quincaillerie DUBAI Chez MOHAMED WOROFANA",
+  "name": "Commerce Général Groupe Siby",
+  "short_name": "Groupe Siby",
+  "description": "Groupe Siby - Votre quincaillerie de confiance à BAMAKO, MALI. Spécialisée dans la vente de matériel de quincaillerie, Immoblier, Location de Voiture , plomberie, électricité et bien plus.",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -15,7 +15,7 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
+  "theme_color": " #ffffff",
+  "background_color": " #F7F4EA",
   "display": "standalone"
 }

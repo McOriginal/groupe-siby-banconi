@@ -23,6 +23,7 @@ import { useAllCommandes } from '../../Api/queriesCommande';
 import html2pdf from 'html2pdf.js';
 import { useReactToPrint } from 'react-to-print';
 import FactureHeader from './Details/FactureHeader';
+import LogoFiligran from './Details/LogoFiligran';
 
 // Export En PDF
 // ------------------------------------------
@@ -141,6 +142,9 @@ export default function FactureListe() {
                       </CardText>
                     </div>
                     {/* Bordure Séparateur */}
+
+                    {/* Logo Filigran */}
+                    <LogoFiligran />
 
                     <div className='my-2 p-2'>
                       <table className='table align-middle table-nowrap table-hover table-bordered border-2 border-info text-center'>

@@ -1,16 +1,15 @@
 import { CardHeader, CardImg } from 'reactstrap';
 import {
   companyAdresse,
+  companyLogo,
   companyName,
-  companyOwnerName,
   companyServices1,
+  companyServices2,
   companyTel,
-  outil_1,
   outil_10,
   outil_11,
   outil_12,
-  outil_2,
-  outil_3,
+  outil_13,
   outil_4,
   outil_5,
   outil_6,
@@ -29,28 +28,15 @@ export default function FactureHeader() {
       <div
         style={{
           position: 'absolute',
-          top: '30px',
-          left: '30px',
+          top: '40px',
+          left: '-5px',
         }}
         className='d-flex flex-column gap-3 justify-content-center align-item-center'
       >
         <CardImg
-          src={outil_2}
+          src={companyLogo}
           style={{
-            width: '50px',
-          }}
-        />
-        <CardImg
-          src={outil_1}
-          style={{
-            width: '50px',
-          }}
-        />
-
-        <CardImg
-          src={outil_3}
-          style={{
-            width: '50px',
+            width: '160px',
           }}
         />
       </div>
@@ -62,14 +48,14 @@ export default function FactureHeader() {
         style={{
           width: '50%',
         }}
-        className='text-center text-light bg-info  px-2 py-1 rounded-3 mx-auto mb-2'
+        className='text-center text-light bg-info font-size-11  px-2 py-1 rounded-3 mx-auto mb-2'
       >
         {' '}
-        {companyOwnerName}{' '}
+        Commerce Général & Immobilier
       </h6>
       <div className='text-info font-size-11 d-flex flex-column gap-0 justify-content-center align-item-center text-center mb-2'>
-        <span>Tout Pour la Construction</span>
         <span>{companyServices1}</span>
+        <span>{companyServices2}</span>
         <span>{companyAdresse}</span>
         <span>
           {' '}
@@ -83,6 +69,7 @@ export default function FactureHeader() {
         <CardImg src={outil_6} style={{ width: '50px' }} />
         <CardImg src={outil_11} style={{ width: '50px' }} />
         <CardImg src={outil_12} style={{ width: '50px' }} />
+        <CardImg src={outil_13} style={{ width: '50px' }} />
       </div>
       <div
         style={{

@@ -216,7 +216,7 @@ export default function ProduitListe() {
                             >
                               {' '}
                               <i className='ri-delete-bin-fill align-bottom me-2 text-danger'></i>{' '}
-                              Delete{' '}
+                              Supprimer{' '}
                             </DropdownItem>
                           </DropdownMenu>
                         </UncontrolledDropdown>

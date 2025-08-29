@@ -29,7 +29,7 @@ export default function TotalProduit() {
           />
           <CardBody>
             <CardTitle className='text-center'>
-              <span className='text-info fs-5'>{produitData.length}</span>
+              <span className='text-info fs-5'>{produitData?.length}</span>
               <p>Produits</p>
             </CardTitle>
           </CardBody>

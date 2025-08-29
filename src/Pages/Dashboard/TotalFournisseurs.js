@@ -28,7 +28,7 @@ export default function TotalFounisseurs() {
           />
           <CardBody>
             <CardTitle className='text-center'>
-              <span className='text-info fs-5'>{fournisseurData.length}</span>
+              <span className='text-info fs-5'>{fournisseurData?.length}</span>
               <p>Fournisseurs</p>
             </CardTitle>
           </CardBody>

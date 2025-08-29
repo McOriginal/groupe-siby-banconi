@@ -11,21 +11,21 @@ import outil_9 from '../../assets/images/outil (9).png';
 import outil_10 from '../../assets/images/outil (10).png';
 import outil_11 from '../../assets/images/outil (11).png';
 import outil_12 from '../../assets/images/outil (12).png';
+import outil_13 from '../../assets/images/outil (13).png';
 
 const companyName = 'Quincaillerie Général Groupe Siby';
 
 const companyLittleName = 'Groupe Siby';
 const companyServices1 =
   'Vente des: Matelats - Carreaux - Couches de Bébé etc...';
-const companyServices2 =
-  'Location des Appartements meublés et Location de Voitures';
+const companyServices2 = 'Location des Voitures et Appartements meublés';
 
 const companyOwnerName = 'Commerce Général';
 
 const companyAdresse =
-  "Kabala sur la route d'université en face de la station PETRO BAMA";
+  "Kabala sur la route d'université 50m avant de passer le pont";
 
-const companyTel = '+223 92-11-99-05 / 76-15-32-35 / 77-20-61-24';
+const companyTel = '+223 92-11-99-05 / 76-15-32-35 / 77-20-61-24 / 76-15-32-35';
 
 export {
   companyLogo,
@@ -48,4 +48,5 @@ export {
   outil_10,
   outil_11,
   outil_12,
+  outil_13,
 };
