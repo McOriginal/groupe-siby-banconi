@@ -27,4 +27,4 @@ root.render(
   </Provider>
 );
 reportWebVitals();
-// serviceWorker.unregister();
+ServiceWorker.register();
