@@ -191,7 +191,7 @@ export default function ProduitListe() {
                                 tog_form_modal();
                               }}
                             >
-                              <i className='ri-pencil-fill align-bottom me-2 text-muted'></i>
+                              <i className='ri-pencil-fill align-bottom me-2 text-secondary'></i>
                               Modifier
                             </DropdownItem>
                             <DropdownItem
@@ -200,12 +200,12 @@ export default function ProduitListe() {
                                 navigateToProduitApprovisonnement(prod?._id);
                               }}
                             >
-                              <i className='bx bx-analyse align-bottom me-2 text-muted'></i>
+                              <i className='bx bx-analyse align-bottom me-2 text-warning'></i>
                               Approvisonner
                             </DropdownItem>
 
                             <DropdownItem
-                              className='remove-item-btn'
+                              className='remove-item-btn text-danger'
                               onClick={() => {
                                 deleteButton(
                                   prod?._id,
@@ -215,7 +215,7 @@ export default function ProduitListe() {
                               }}
                             >
                               {' '}
-                              <i className='ri-delete-bin-fill align-bottom me-2 text-muted'></i>{' '}
+                              <i className='ri-delete-bin-fill align-bottom me-2 text-danger'></i>{' '}
                               Delete{' '}
                             </DropdownItem>
                           </DropdownMenu>

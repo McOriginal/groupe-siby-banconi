@@ -54,7 +54,10 @@ export default function FactureHeader() {
           }}
         />
       </div>
-      <h3 className='text-center text-info '> {companyName} </h3>
+      <h3 className='text-center text-bold font-size-22 text-info '>
+        {' '}
+        {companyName}{' '}
+      </h3>
       <h6
         style={{
           width: '50%',

@@ -62,23 +62,26 @@ const Header = (props) => {
       <header id='page-topbar'>
         <div className='navbar-header'>
           <div className='d-flex'>
-            <div className='navbar-brand-box text-center pt-5'>
+            <div
+              className='navbar-brand-box text-center pt-5 mb-4'
+              style={{ backgroundColor: ' #F7F4EA' }}
+            >
               <span>
                 <img
                   src={companyLogo}
                   style={{
-                    width: '60px',
-                    marginBottom: '10px',
+                    width: '80%',
+                    // marginBottom: '10px',
                   }}
                   alt='logo'
                 />
-                <h5 className='text-white'>{companyLittleName}</h5>
+                <h5 className='text-info'>{companyLittleName}</h5>
               </span>
             </div>
 
             <button
               type='button'
-              className='btn btn-sm px-3 font-size-24 header-item waves-effect  mt-4'
+              className='btn btn-sm px-3 font-size-24 header-item waves-effect  d-flex justify-content-center bg-info text-white align-self-center mx-3 pt-3'
               id='vertical-menu-btn'
               onClick={() => {
                 tToggle();

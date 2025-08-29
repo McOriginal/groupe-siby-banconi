@@ -1,4 +1,4 @@
-import companyLogo from '../../assets/images/quincaillerie.png';
+import companyLogo from '../../assets/images/logo.png';
 import outil_1 from '../../assets/images/outil (1).png';
 import outil_2 from '../../assets/images/outil (2).png';
 import outil_3 from '../../assets/images/outil (3).png';
