@@ -1,0 +1,98 @@
+import { CardHeader, CardImg } from 'reactstrap';
+import {
+  companyAdresse,
+  companyName,
+  companyOwnerName,
+  companyServices1,
+  companyTel,
+  outil_1,
+  outil_10,
+  outil_11,
+  outil_12,
+  outil_2,
+  outil_3,
+  outil_4,
+  outil_5,
+  outil_6,
+  outil_7,
+  outil_8,
+  outil_9,
+} from '../../CompanyInfo/CompanyInfo';
+export default function FactureHeader() {
+  return (
+    <CardHeader
+      style={{
+        border: '2px solid rgba(100, 169, 238, 0.5)',
+        borderRadius: '5px',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          top: '30px',
+          left: '30px',
+        }}
+        className='d-flex flex-column gap-3 justify-content-center align-item-center'
+      >
+        <CardImg
+          src={outil_2}
+          style={{
+            width: '50px',
+          }}
+        />
+        <CardImg
+          src={outil_1}
+          style={{
+            width: '50px',
+          }}
+        />
+
+        <CardImg
+          src={outil_3}
+          style={{
+            width: '50px',
+          }}
+        />
+      </div>
+      <h3 className='text-center text-info '> {companyName} </h3>
+      <h6
+        style={{
+          width: '50%',
+        }}
+        className='text-center text-light bg-info  px-2 py-1 rounded-3 mx-auto mb-2'
+      >
+        {' '}
+        {companyOwnerName}{' '}
+      </h6>
+      <div className='text-info font-size-11 d-flex flex-column gap-0 justify-content-center align-item-center text-center mb-2'>
+        <span>Tout Pour la Construction</span>
+        <span>{companyServices1}</span>
+        <span>{companyAdresse}</span>
+        <span>
+          {' '}
+          <strong className='font-size-12'>Info: </strong> {companyTel}
+        </span>
+      </div>
+      <div className='d-flex gap-3  justify-content-center align-item-center'>
+        <CardImg src={outil_5} style={{ width: '50px' }} />
+        <CardImg src={outil_8} style={{ width: '50px' }} />
+        <CardImg src={outil_10} style={{ width: '50px' }} />
+        <CardImg src={outil_6} style={{ width: '50px' }} />
+        <CardImg src={outil_11} style={{ width: '50px' }} />
+        <CardImg src={outil_12} style={{ width: '50px' }} />
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          top: '30px',
+          right: '30px',
+        }}
+        className='d-flex gap-1 flex-column justify-content-center align-item-center'
+      >
+        <CardImg src={outil_4} style={{ width: '50px' }} />
+        <CardImg src={outil_7} style={{ width: '50px' }} />
+        <CardImg src={outil_9} style={{ width: '50px' }} />
+      </div>
+    </CardHeader>
+  );
+}
