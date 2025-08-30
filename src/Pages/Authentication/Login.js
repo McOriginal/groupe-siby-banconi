@@ -108,9 +108,8 @@ const Login = () => {
           setIsLoading(false);
           const errorMessage =
             error?.response?.data?.message ||
-            error ||
             'Une erreur est survenue lors de la connexion.';
-          errorMessageAlert(errorMessage);
+          error || errorMessageAlert(errorMessage);
         },
       });
     },

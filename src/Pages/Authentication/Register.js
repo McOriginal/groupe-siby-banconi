@@ -107,7 +107,7 @@ const Register = () => {
                 <CardBody className='p-4'>
                   <div className='text-center mb-4'>
                     <p className='font-size-16 text-muted text-center mb-4'>
-                      Créer un compte
+                      Création d'un nouveau compte
                     </p>
                     <img
                       src={companyLogo}
@@ -115,10 +115,20 @@ const Register = () => {
                       height='54'
                       className='auth-logo logo-dark mx-auto'
                     />
-                    <h5 className=' text-info mt-2 text-center'>
+                    <h2
+                      className=' mt-2 text-center'
+                      style={{ color: ' #b89794' }}
+                    >
                       {companyName}
-                    </h5>
-                    <h6 className='text-info mt-2 text-center'>
+                    </h2>
+                    <h6
+                      style={{
+                        color: ' #ffff',
+                        background: ' #b89794',
+                        padding: '5px',
+                        borderRadius: '5px',
+                      }}
+                    >
                       {companyOwnerName}
                     </h6>
                   </div>
