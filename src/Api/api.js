@@ -5,7 +5,7 @@ const api = axios.create({
   baseURL:
     process.env.REACT_APP_API_URL ||
     // 'http://localhost:5000/api',
-    'https://backend-quincaillerie-groupe-siby.onrender.com',
+    'https://backend-quincaillerie-groupe-siby.onrender.com/api',
 
   headers: {
     'Content-Type': 'application/json',
