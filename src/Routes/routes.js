@@ -101,6 +101,7 @@ const authProtectedRoutes = [
   // Raports
   { path: '/rapports', component: <Rapports /> },
 
+  { path: '/register', component: <Register /> },
   // --------------------------------------------------------
 ];
 
@@ -121,7 +122,6 @@ const publicRoutes = [
   // { path: '/unauthorized', component: <Unauthorized /> },
 
   // Authentication Page
-  { path: '/register', component: <Register /> },
   { path: '/login', component: <Login /> },
   { path: '/forgotPassword', component: <ForgetPasswordPage /> },
   { path: '/verifyCode', component: <VerifyCode /> },

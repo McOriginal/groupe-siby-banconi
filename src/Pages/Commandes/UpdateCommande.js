@@ -29,6 +29,7 @@ import defaultImg from './../../assets/images/no_image.png';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAllProduit } from '../../Api/queriesProduits';
 import { useOneCommande, useUpdateCommande } from '../../Api/queriesCommande';
+import showToastAlert from '../components/ToasMessage';
 
 export default function UpdateCommande() {
   // State de navigation
@@ -89,18 +90,20 @@ export default function UpdateCommande() {
 
       //  Si le produit existe on incrémente la quantité
       if (existingItem) {
+        showToastAlert('Quantité + 1');
         return prevCart.map((item) =>
           item.produit._id === produit._id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
+      } else {
+        showToastAlert('Ajouté avec succès');
+        //  Sinon on ajoute le produit avec la quantité (1)
+        return [
+          ...prevCart,
+          { produit, quantity: 1, customerPrice: produit.price },
+        ];
       }
-
-      //  Sinon on ajoute le produit avec la quantité (1)
-      return [
-        ...prevCart,
-        { produit, quantity: 1, customerPrice: produit.price },
-      ];
     });
   };
 

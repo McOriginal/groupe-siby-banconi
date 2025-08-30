@@ -69,7 +69,7 @@ const Header = (props) => {
                 <img
                   src={companyLogo}
                   style={{
-                    width: '80%',
+                    width: '60px',
                     // marginBottom: '10px',
                   }}
                   alt='logo'
