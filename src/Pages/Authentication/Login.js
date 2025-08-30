@@ -62,7 +62,6 @@ const Login = () => {
     onSubmit: (values, { resetForm }) => {
       // Désactiver le bouton de soumission pour éviter les doubles clics
       setIsLoading(true);
-      console.log('Values: ', values);
       // Appel de la mutation pour se connecter
       loginUser(values, {
         onSuccess: () => {
@@ -105,7 +104,6 @@ const Login = () => {
           }, 2000);
         },
         onError: (error) => {
-          console.log('Error: ', error);
           setIsLoading(false);
           const errorMessage =
             error?.response?.data?.message ||
