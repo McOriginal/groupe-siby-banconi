@@ -74,33 +74,6 @@ exports.createFournisseur = async (req, res) => {
   }
 };
 
-// Obtenir tous les Fournisseurs
-exports.getAllFournisseurs = async (req, res) => {
-  try {
-    const fournisseurs = await Fournisseur.find()
-      // Trie par date de création, du plus récent au plus ancien
-      .sort({ createdAt: -1 });
-    return res.status(200).json(fournisseurs);
-  } catch (e) {
-    return res.status(404).json({ e });
-  }
-};
-
-// Récupérer un Fournisseur par ID
-exports.getFournisseur = async (req, res) => {
-  try {
-    const fournisseur = await Fournisseur.findById(req.params.id);
-    if (!fournisseur)
-      return res
-        .status(404)
-        .json({ status: 'error', message: 'Fournisseur non trouvé' });
-
-    res.status(200).json(fournisseur);
-  } catch (err) {
-    return res.status(400).json({ status: 'error', message: err.message });
-  }
-};
-
 // Mettre à jour un Fournisseur
 exports.updateFournisseur = async (req, res) => {
   try {
@@ -122,7 +95,7 @@ exports.updateFournisseur = async (req, res) => {
       !textValidation.stringValidator(lowerFirstName) ||
       !textValidation.stringValidator(lowerLastName) ||
       !textValidation.stringValidator(lowerAdresse) ||
-      !textValidation.emailValidation(emailAdresse)
+      (emailAdresse != '' && !textValidation.emailValidation(emailAdresse))
     ) {
       return res.status(400).json({
         status: 'error',
@@ -188,6 +161,33 @@ exports.updateFournisseur = async (req, res) => {
       });
     }
     return res.status(200).json(updated);
+  } catch (err) {
+    return res.status(400).json({ status: 'error', message: err.message });
+  }
+};
+
+// Obtenir tous les Fournisseurs
+exports.getAllFournisseurs = async (req, res) => {
+  try {
+    const fournisseurs = await Fournisseur.find()
+      // Trie par date de création, du plus récent au plus ancien
+      .sort({ createdAt: -1 });
+    return res.status(200).json(fournisseurs);
+  } catch (e) {
+    return res.status(404).json({ e });
+  }
+};
+
+// Récupérer un Fournisseur par ID
+exports.getFournisseur = async (req, res) => {
+  try {
+    const fournisseur = await Fournisseur.findById(req.params.id);
+    if (!fournisseur)
+      return res
+        .status(404)
+        .json({ status: 'error', message: 'Fournisseur non trouvé' });
+
+    res.status(200).json(fournisseur);
   } catch (err) {
     return res.status(400).json({ status: 'error', message: err.message });
   }
