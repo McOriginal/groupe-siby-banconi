@@ -7,12 +7,15 @@ import {
   CardText,
   Col,
   Container,
-  Row,
 } from 'reactstrap';
 import Breadcrumbs from '../../components/Common/Breadcrumb';
 
 import LoadingSpiner from '../components/LoadingSpiner';
-import { capitalizeWords, formatPrice } from '../components/capitalizeFunction';
+import {
+  capitalizeWords,
+  formatPhoneNumber,
+  formatPrice,
+} from '../components/capitalizeFunction';
 
 import html2pdf from 'html2pdf.js';
 import { useReactToPrint } from 'react-to-print';
@@ -29,7 +32,7 @@ import { companyName } from '../CompanyInfo/CompanyInfo';
 const exportPDFFacture = () => {
   const element = document.getElementById('facture');
   const opt = {
-    filename: 'facture.pdf',
+    filename: 'Facture_de_Devis.pdf',
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
@@ -84,9 +87,9 @@ export default function DevisListe() {
           )}
           {devisData?.length > 0 &&
             devisData?.map((dev, index) => (
-              <Row
-                key={dev._id}
-                className='d-flex flex-column justify-content-center'
+              <div
+                key={index}
+                className='d-flex flex-column justify-content-center my-4'
               >
                 {/* // Bouton */}
                 <Col className='col-sm-auto mb-3'>
@@ -129,88 +132,106 @@ export default function DevisListe() {
                   </div>
                 </Col>
                 {/* // ------------------------------------------- */}
-
-                <Card
-                  ref={contentRef}
-                  id='facture'
-                  className='d-flex justify-content-center border border-info'
-                  style={{
-                    boxShadow: '0px 0px 10px rgba(100, 169, 238, 0.5)',
-                    borderRadius: '15px',
-                    width: '583px',
-                    margin: '5px auto',
-                    position: 'relative',
-                  }}
-                >
-                  <CardBody>
-                    <FactureHeader />
-                    <div className='d-flex justify-content-between align-item-center mt-2'>
-                      <CardText className='font-size-18'>
-                        <strong>Motif: Devis des articles </strong>{' '}
-                      </CardText>
-                      <CardText>
-                        <strong> Date:</strong>{' '}
-                        {new Date(dev.createdAt).toLocaleDateString()}
-                      </CardText>
-                    </div>
-
-                    {/* Logo Filigrant */}
-                    <LogoFiligran />
-
-                    <div className='my-2 p-2'>
-                      <table className='table align-middle table-nowrap table-hover table-bordered border-2 border-info text-center'>
-                        <thead>
-                          <tr>
-                            <th>Qté</th>
-                            <th>Désignations</th>
-                            <th>P.U</th>
-                            <th>Montant</th>
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                          {dev?.items.map((article) => (
-                            <tr key={article._id}>
-                              <td>{article?.quantity} </td>
-                              <td className='text-wrap'>
-                                {capitalizeWords(article?.produit?.name)}{' '}
-                              </td>
-                              <td>{formatPrice(article?.customerPrice)} F </td>
-                              <td>
-                                {formatPrice(
-                                  article?.customerPrice * article?.quantity
-                                )}
-                                {' F'}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <CardFooter>
-                      <div className='p-1'>
-                        <div
-                          className='d-flex
-                  justify-content-between align-item-center'
-                        >
-                          <CardText className={'text-center'}>
-                            Total:{' '}
-                            <strong style={{ fontSize: '14px' }}>
-                              {' '}
-                              {formatPrice(dev?.totalAmount)} F{' '}
-                            </strong>{' '}
-                          </CardText>
-                        </div>
+                <div ref={contentRef} id='Facture_de_Devis'>
+                  <Card
+                    className='d-flex justify-content-center border border-info'
+                    style={{
+                      boxShadow: '0px 0px 10px rgba(100, 169, 238, 0.5)',
+                      borderRadius: '15px',
+                      width: '583px',
+                      margin: '5px auto',
+                      position: 'relative',
+                    }}
+                  >
+                    <CardBody>
+                      <FactureHeader />
+                      <div className='d-flex justify-content-between align-item-center mt-2'>
+                        <CardText className='font-size-14'>
+                          <strong>Motif: </strong> Devis pour:
+                        </CardText>
+                        <CardText>
+                          <strong> Date:</strong>{' '}
+                          {new Date(dev.createdAt).toLocaleDateString()}
+                        </CardText>
                       </div>
-                      <p className='font-size-10 text-center'>
-                        Merci pour votre confiance et votre achat chez{' '}
-                        {companyName}. Nous espérons vous revoir bientôt!
-                      </p>
-                    </CardFooter>
-                  </CardBody>
-                </Card>
-              </Row>
+                      {/* Infos Client */}
+                      <div className='d-flex justify-content-between align-item-center  '>
+                        <CardText>
+                          <strong>Client: </strong>
+                          {capitalizeWords(dev?.fullName) ||
+                            '-------------------'}{' '}
+                        </CardText>
+                        <CardText className='me-2'>
+                          <strong>Tél: </strong>
+                          {formatPhoneNumber(dev?.phoneNumber) ||
+                            '----------------'}
+                        </CardText>
+                      </div>
+                      <CardText className='text-start'>
+                        <strong>Adresse: </strong>
+                        {capitalizeWords(dev?.adresse) || '--------------'}
+                      </CardText>
+
+                      {/* Logo Filigrant */}
+                      <LogoFiligran />
+
+                      <div className='my-2 p-2'>
+                        <table className='table align-middle table-nowrap table-hover table-bordered border-2 border-info text-center'>
+                          <thead>
+                            <tr>
+                              <th>Qté</th>
+                              <th>Désignations</th>
+                              <th>P.U</th>
+                              <th>Montant</th>
+                            </tr>
+                          </thead>
+
+                          <tbody>
+                            {dev?.items.map((article) => (
+                              <tr key={article._id}>
+                                <td>{article?.quantity} </td>
+                                <td className='text-wrap'>
+                                  {capitalizeWords(article?.produit?.name)}{' '}
+                                </td>
+                                <td>
+                                  {formatPrice(article?.customerPrice)} F{' '}
+                                </td>
+                                <td>
+                                  {formatPrice(
+                                    article?.customerPrice * article?.quantity
+                                  )}
+                                  {' F'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <CardFooter>
+                        <div className='p-1'>
+                          <div
+                            className='d-flex
+                  justify-content-between align-item-center'
+                          >
+                            <CardText className={'text-center'}>
+                              Total:{' '}
+                              <strong style={{ fontSize: '14px' }}>
+                                {' '}
+                                {formatPrice(dev?.totalAmount)} F{' '}
+                              </strong>{' '}
+                            </CardText>
+                          </div>
+                        </div>
+                        <p className='font-size-10 text-center'>
+                          Merci pour votre confiance et votre achat chez{' '}
+                          {companyName}. Nous espérons vous revoir bientôt!
+                        </p>
+                      </CardFooter>
+                    </CardBody>
+                  </Card>
+                </div>
+              </div>
             ))}
         </Container>
       </div>

@@ -90,12 +90,13 @@ export default function UpdateCommande() {
 
       //  Si le produit existe on incrémente la quantité
       if (existingItem) {
-        showToastAlert('Quantité + 1');
-        return prevCart.map((item) =>
-          item.produit._id === produit._id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+        return prevCart.map((item) => {
+          if (item.produit._id === produit._id) {
+            showToastAlert(`Quantité: ${item.quantity + 1} `);
+            return { ...item, quantity: item.quantity + 1 };
+          }
+          return item;
+        });
       } else {
         showToastAlert('Ajouté avec succès');
         //  Sinon on ajoute le produit avec la quantité (1)

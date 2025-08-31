@@ -8,7 +8,11 @@ import {
   CardTitle,
   Col,
   Container,
+  Form,
+  FormFeedback,
+  FormGroup,
   Input,
+  Label,
   Row,
 } from 'reactstrap';
 
@@ -20,9 +24,12 @@ import {
   successMessageAlert,
 } from '../components/AlerteModal';
 import defaultImg from './../../assets/images/no_image.png';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useOneDevis, useUpdateDevis } from '../../Api/queriesDevis';
 import { useAllProduit } from '../../Api/queriesProduits';
+import showToastAlert from '../components/ToasMessage';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 
 export default function UpdateDevis() {
   // State de navigation
@@ -74,18 +81,23 @@ export default function UpdateDevis() {
 
       //  Si le produit existe on incrémente la quantité
       if (existingItem) {
-        return prevCart.map((item) =>
-          item.produit._id === produit._id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+        return prevCart.map((item) => {
+          if (item.produit._id === produit._id) {
+            showToastAlert(`Quantité: ${item.quantity + 1}`);
+            return { ...item, quantity: item.quantity + 1 };
+          }
+          return item;
+        });
       }
 
       //  Sinon on ajoute le produit avec la quantité (1)
-      return [
-        ...prevCart,
-        { produit, quantity: 1, customerPrice: produit.price },
-      ];
+      else {
+        showToastAlert('Ajouté avec succès');
+        return [
+          ...prevCart,
+          { produit, quantity: 1, customerPrice: produit.price },
+        ];
+      }
     });
   };
 
@@ -126,51 +138,76 @@ export default function UpdateDevis() {
   );
 
   // Form validation
-  const onSubmit = () => {
-    // Vérification de quantité dans le STOCK
-    if (cartItems.length === 0) return;
+  const validation = useFormik({
+    // enableReinitialize : use this flag when initial values needs to be changed
+    enableReinitialize: true,
 
-    setIsSubmitting(true);
-    const payload = {
-      // Les ARTICLES de panier
-      items: cartItems.map((item) => ({
-        produit: item.produit._id,
-        quantity: item.quantity,
-        customerPrice: item.customerPrice,
-      })),
-      totalAmount,
-    };
+    initialValues: {
+      fullName: 'non défini',
+      phoneNumber: undefined || 0,
+      adresse: 'non défini',
+      statut: 'livré',
+    },
+    validationSchema: Yup.object({
+      fullName: Yup.string()
+        .matches(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Veillez Entrez une valeur correct !')
+        .required('Ce champ est obligatoire'),
 
-    updateDevis(
-      { id: selectedDevis?._id, data: payload },
-      {
-        onSuccess: () => {
-          // Après on vide le panier
-          clearCart();
-          successMessageAlert(
-            capitalizeWords('Devis Enregistré avec succès !')
-          );
+      phoneNumber: Yup.number().required('Ce champ est obligatoire'),
+      adresse: Yup.string().required('Ce champ est obligatoire'),
+    }),
+
+    onSubmit: (values, { resetForm }) => {
+      // Vérification de quantité dans le STOCK
+      if (cartItems.length === 0) return;
+
+      setIsSubmitting(true);
+      const payload = {
+        fullName: values.fullName,
+        adresse: values.adresse,
+        phoneNumber: values.phoneNumber,
+        // Les ARTICLES de panier
+        items: cartItems.map((item) => ({
+          produit: item.produit._id,
+          quantity: item.quantity,
+          customerPrice: item.customerPrice,
+        })),
+        totalAmount,
+      };
+
+      updateDevis(
+        { id: selectedDevis?._id, data: payload },
+        {
+          onSuccess: () => {
+            // Après on vide le panier
+            clearCart();
+            successMessageAlert(
+              capitalizeWords('Devis mis à jour avec succès !')
+            );
+            setIsSubmitting(false);
+            resetForm();
+            navigate('/devisListe');
+          },
+          onError: (err) => {
+            const message =
+              err?.response?.data?.message ||
+              "Erreur lors de l'Enregistrement !" ||
+              err.message;
+            errorMessageAlert(message);
+            setIsSubmitting(false);
+          },
+        }
+      );
+
+      // Timeout au cas où la requête prend trop de temps
+      setTimeout(() => {
+        if (isLoading) {
+          errorMessageAlert('Une erreur est survenue. Veuillez réessayer !');
           setIsSubmitting(false);
-          navigate('/devisListe');
-        },
-        onError: (err) => {
-          const message =
-            err?.response?.data?.message ||
-            err.message ||
-            "Erreur lors de l'Enregistrement !";
-          errorMessageAlert(message);
-          setIsSubmitting(false);
-        },
-      }
-    );
-
-    setTimeout(() => {
-      if (isLoading) {
-        errorMessageAlert('Une erreur est survenue. Veuillez réessayer !');
-        setIsSubmitting(false);
-      }
-    }, 10000);
-  };
+        }
+      }, 10000);
+    },
+  });
 
   return (
     <React.Fragment>
@@ -182,7 +219,120 @@ export default function UpdateDevis() {
           {/* ---------------------------------------------------------------------- */}
           {/* Panier */}
           <Row>
-            <Col sm={12}>
+            {/* ------------------------------------------------------------- */}
+            {/* Les information sur Client */}
+            {/* ------------------------------------------------------------- */}
+            <Col md={6}>
+              <Card>
+                <CardTitle className='text-center m-2'>
+                  Informations Client
+                </CardTitle>
+                <CardBody>
+                  <Form
+                    className='needs-validation'
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      return false;
+                    }}
+                  >
+                    <Row>
+                      <Col sm={6}>
+                        <FormGroup>
+                          <Label for='fullName'>Nom et Prénom</Label>
+                          <Input
+                            name='fullName'
+                            id='fullName'
+                            type='text'
+                            className='form form-control'
+                            placeholder='Nom et Prénom de Client'
+                            onChange={validation.handleChange}
+                            onBlur={validation.handleBlur}
+                            value={validation.values.fullName || ''}
+                            invalid={
+                              validation.touched.fullName &&
+                              validation.errors.fullName
+                                ? true
+                                : false
+                            }
+                          />
+                          {validation.touched.fullName &&
+                          validation.errors.fullName ? (
+                            <FormFeedback type='invalid'>
+                              {validation.errors.fullName}
+                            </FormFeedback>
+                          ) : null}
+                        </FormGroup>
+                      </Col>
+                      <Col sm={6}>
+                        <FormGroup>
+                          <Label for='phoneNumber'>Téléphone</Label>
+                          <Input
+                            name='phoneNumber'
+                            id='phoneNumber'
+                            type='number'
+                            min={0}
+                            className='form form-control'
+                            placeholder='N°Téléphone de Client'
+                            onChange={validation.handleChange}
+                            onBlur={validation.handleBlur}
+                            value={validation.values.phoneNumber || ''}
+                            invalid={
+                              validation.touched.phoneNumber &&
+                              validation.errors.phoneNumber
+                                ? true
+                                : false
+                            }
+                          />
+                          {validation.touched.phoneNumber &&
+                          validation.errors.phoneNumber ? (
+                            <FormFeedback type='invalid'>
+                              {validation.errors.phoneNumber}
+                            </FormFeedback>
+                          ) : null}
+                        </FormGroup>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col sm={6}>
+                        <FormGroup>
+                          <Label for='fullName'>Adresse de Livraison</Label>
+                          <Input
+                            name='adresse'
+                            id='adresse'
+                            type='text'
+                            className='form form-control'
+                            placeholder="Entrez l'adresse de livraison"
+                            onChange={validation.handleChange}
+                            onBlur={validation.handleBlur}
+                            value={validation.values.adresse || ''}
+                            invalid={
+                              validation.touched.adresse &&
+                              validation.errors.adresse
+                                ? true
+                                : false
+                            }
+                          />
+                          {validation.touched.adresse &&
+                          validation.errors.adresse ? (
+                            <FormFeedback type='invalid'>
+                              {validation.errors.adresse}
+                            </FormFeedback>
+                          ) : null}
+                        </FormGroup>
+                      </Col>
+                    </Row>
+                  </Form>
+
+                  <Button color='warning' className='mx-auto d-block'>
+                    <i className=' fas fa-angle-double-left me-2'></i>
+                    <Link to='/devisListe' className='text-light'>
+                      Annuler Tous
+                    </Link>
+                  </Button>
+                </CardBody>
+              </Card>
+            </Col>
+            <Col md={6}>
               {/* Bouton */}
               {isSubmitting && <LoadingSpiner />}
 
@@ -200,9 +350,9 @@ export default function UpdateDevis() {
                     <Button
                       color='primary'
                       className='fw-bold'
-                      onClick={onSubmit}
+                      onClick={() => validation.handleSubmit()}
                     >
-                      Enregistrer le Devis
+                      Enregistrer la Commande
                     </Button>
                   </div>
                 </div>
@@ -226,14 +376,17 @@ export default function UpdateDevis() {
                       panier
                     </p>
                   )}
-                  {cartItems.map((item) => (
+                  {cartItems?.map((item, index) => (
                     <div
-                      key={item.produit._id}
+                      key={index}
                       className='d-flex justify-content-between align-items-center mb-2 border-bottom border-black p-2 shadow shadow-md'
                     >
                       <div>
                         <strong>{capitalizeWords(item.produit.name)}</strong>
                         <div>
+                          {/* {item.quantity} × {formatPrice(item.produit.price)} F
+                          = {formatPrice(item.produit.price * item.quantity)} F */}
+                          {/* Prix client */}
                           P.U: client
                           <Input
                             type='number'
