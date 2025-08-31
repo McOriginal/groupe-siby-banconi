@@ -36,7 +36,6 @@ const ProfileMenu = (props) => {
         </DropdownToggle>
         <DropdownMenu className='dropdown-menu-end'>
           <DropdownItem tag='a' href='/userprofile'>
-            {' '}
             <i className='ri-user-line align-middle me-2' />
             Profile
           </DropdownItem>
