@@ -2,6 +2,15 @@ const mongoose = require('mongoose');
 
 const deivsSchema = new mongoose.Schema(
   {
+    fullName: {
+      type: String,
+    },
+    phoneNumber: {
+      type: Number,
+    },
+    adresse: {
+      type: String,
+    },
     items: [
       {
         produit: {
