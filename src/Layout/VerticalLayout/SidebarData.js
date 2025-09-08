@@ -39,7 +39,7 @@ const SidebarData = [
   },
 
   {
-    label: 'Liste de Commandes',
+    label: 'Ventes / Commandes',
     icon: 'fas fa-server',
     isHasArrow: true,
     url: '/commandes',
@@ -52,7 +52,7 @@ const SidebarData = [
   },
 
   {
-    label: 'Factures',
+    label: 'Historique des Factures',
     icon: 'fas fa-receipt',
     isHasArrow: true,
     url: '/factures',
@@ -62,15 +62,15 @@ const SidebarData = [
 
   // Transactions / Comptabilité
   {
-    label: 'Entrées & Sorties',
+    label: 'Caisse & Comptabilité',
     isMainMenu: true,
   },
   {
     label: 'Comptabilité',
     icon: 'fas fa-euro-sign',
     subItem: [
-      { sublabel: 'Entrées (Paiement)', link: '/paiements' },
-      { sublabel: 'Sorties (Dépense)', link: '/depenses' },
+      { sublabel: 'Paiement / Entrées ', link: '/paiements' },
+      { sublabel: 'Dépense / Sorties', link: '/depenses' },
     ],
   },
 

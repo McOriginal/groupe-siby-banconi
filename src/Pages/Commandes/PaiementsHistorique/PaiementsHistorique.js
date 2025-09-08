@@ -127,7 +127,7 @@ export default function PaiementsHistorique({ id, reliqua }) {
                             </span>
                           </h6>
                           <h6>
-                            Reliqua:{' '}
+                            Reliquat:{' '}
                             <span
                               className={`text-${
                                 reliqua > 0 ? 'danger' : 'success'

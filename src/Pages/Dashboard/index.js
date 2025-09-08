@@ -7,7 +7,11 @@ import Breadcrumbs from '../../components/Common/Breadcrumb';
 
 import TotalFounisseurs from './TotalFournisseurs';
 import TotalProduit from './TotalProduit';
-import TotalCommande from './TotalCommande';
+import {
+  TotalCommande,
+  TotalCommandeNotDelivred,
+  TotalCommandeToDelivre,
+} from './TotalCommande';
 import TotalArticleSansStock from './TotalArticleSansStock';
 import { companyName } from '../CompanyInfo/CompanyInfo';
 
@@ -44,9 +48,19 @@ const Dashboard = () => {
               </Col>
 
               <Col sm={6} lg={4}>
-                {/* Total Traitements */}
+                {/* Total Commandes Enregistrées */}
 
                 <TotalCommande />
+              </Col>
+              <Col sm={6} lg={4}>
+                {/* Total Commande en Cours de livraison */}
+
+                <TotalCommandeToDelivre />
+              </Col>
+              <Col sm={6} lg={4}>
+                {/* Total CommandeEn Attente */}
+
+                <TotalCommandeNotDelivred />
               </Col>
             </Row>
           </motion.div>

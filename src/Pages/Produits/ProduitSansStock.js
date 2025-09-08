@@ -102,7 +102,7 @@ export default function ProduitSansStock() {
               </Card>
             </Col>
           </Row>
-          <Row>
+          <div className='d-flex justify-content-center align-items-center gap-4 flex-wrap'>
             {isLoading && <LoadingSpiner />}
             {error && (
               <div className='text-danger text-center'>
@@ -117,81 +117,81 @@ export default function ProduitSansStock() {
             {!error &&
               !isLoading &&
               filterSearchProduits?.length > 0 &&
-              filterSearchProduits?.map((prod) => (
-                <Col sm={6} lg={4} key={prod?._id}>
-                  <Card
+              filterSearchProduits?.map((prod, index) => (
+                <Card
+                  key={index}
+                  style={{
+                    boxShadow: '0px 0px 10px rgba(121,3,105,0.5)',
+                    borderRadius: '15px',
+                    padding: '10px 20px',
+                    display: 'flex',
+                    flexWrap: 'nowrap',
+                    alignItems: 'center',
+                    position: 'relative',
+                    width: '210px',
+                  }}
+                >
+                  <div
                     style={{
-                      boxShadow: '0px 0px 10px rgba(121,3,105,0.5)',
-                      borderRadius: '15px',
-                      padding: '10px 20px',
-                      display: 'flex',
-                      flexWrap: 'nowrap',
-                      alignItems: 'center',
-                      position: 'relative',
+                      position: 'absolute',
+                      top: '5%',
+                      right: '5%',
                     }}
                   >
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '5%',
-                        right: '5%',
-                      }}
-                    >
-                      <UncontrolledDropdown className='dropdown d-inline-block'>
-                        <DropdownToggle
-                          className='btn btn-soft-secondary btn-sm'
-                          tag='button'
+                    <UncontrolledDropdown className='dropdown d-inline-block'>
+                      <DropdownToggle
+                        className='btn btn-soft-secondary btn-sm'
+                        tag='button'
+                      >
+                        <i className='bx bx-caret-down-square fs-2 text-info'></i>
+                      </DropdownToggle>
+                      <DropdownMenu className='dropdown-menu-end'>
+                        <DropdownItem
+                          className='edit-item-btn'
+                          onClick={() => {
+                            navigateToProduitApprovisonnement(prod?._id);
+                          }}
                         >
-                          <i className='bx bx-caret-down-square fs-2 text-info'></i>
-                        </DropdownToggle>
-                        <DropdownMenu className='dropdown-menu-end'>
-                          <DropdownItem
-                            className='edit-item-btn'
-                            onClick={() => {
-                              navigateToProduitApprovisonnement(prod?._id);
-                            }}
-                          >
-                            <i className='bx bx-analyse align-bottom me-2 text-muted'></i>
-                            Approvisonner
-                          </DropdownItem>
-                        </DropdownMenu>
-                      </UncontrolledDropdown>
-                    </div>
-                    <img
-                      className='img-fluid'
-                      style={{
-                        borderRadius: '15px 15px 0 0',
-                        height: '100px',
-                        width: '60%',
-                        objectFit: 'contain',
-                      }}
-                      src={prod?.imageUrl ? prod?.imageUrl : defaultImg}
-                      alt={prod?.name}
-                    />
+                          <i className='bx bx-analyse align-bottom me-2 text-muted'></i>
+                          Approvisonner
+                        </DropdownItem>
+                      </DropdownMenu>
+                    </UncontrolledDropdown>
+                  </div>
+                  <img
+                    className='img-fluid'
+                    style={{
+                      borderRadius: '15px 15px 0 0',
+                      height: '100px',
+                      width: '60%',
+                      objectFit: 'contain',
+                    }}
+                    src={prod?.imageUrl ? prod?.imageUrl : defaultImg}
+                    alt={prod?.name}
+                  />
 
-                    <CardBody>
-                      <CardText className='fs-6 text-center'>
-                        {capitalizeWords(prod?.name)}
-                      </CardText>
-                      {/* <CardText className='font-size-12 text-center'>
-                        {capitalizeWords(prod?.category)}
-                      </CardText> */}
+                  <CardBody>
+                    <CardText
+                      className='fs-6 text-center'
+                      style={{ width: '200px' }}
+                    >
+                      {capitalizeWords(prod?.name)}
+                    </CardText>
 
-                      <CardTitle className='text-center'>
-                        {formatPrice(prod?.price)} F
-                      </CardTitle>
-                      <CardTitle className='text-center'>
-                        Stock:
-                        <span className='text-danger'>
-                          {' '}
-                          {formatPrice(prod?.stock)}
-                        </span>
-                      </CardTitle>
-                    </CardBody>
-                  </Card>
-                </Col>
+                    <CardTitle className='text-center'>
+                      {formatPrice(prod?.price)} F
+                    </CardTitle>
+                    <CardTitle className='text-center'>
+                      Stock:
+                      <span className='text-danger'>
+                        {' '}
+                        {formatPrice(prod?.stock)}
+                      </span>
+                    </CardTitle>
+                  </CardBody>
+                </Card>
               ))}
-          </Row>
+          </div>
         </Container>
       </div>
     </React.Fragment>

@@ -201,7 +201,7 @@ export default function FactureListe() {
                                 </strong>{' '}
                               </CardText>
                               <CardText className='text-center '>
-                                Réliqua:
+                                Reliquat:
                                 <strong style={{ fontSize: '14px' }}>
                                   {' '}
                                   {formatPrice(

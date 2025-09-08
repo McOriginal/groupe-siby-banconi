@@ -67,21 +67,25 @@ export default function NewCommande() {
 
       //  Si le produit existe on incrémente la quantité
       if (existingItem) {
-        return prevCart.map((item) => {
+        prevCart.map((item) => {
+          // const itemId = item.produit._id === produit._id;
           if (item.produit._id === produit._id) {
-            showToastAlert(`Quantité: ${item.quantity + 1} `);
+            showToastAlert('Quantité + 1');
             return { ...item, quantity: item.quantity + 1 };
           }
           return item;
         });
-      } else {
-        showToastAlert('Ajouté avec succès');
-        //  Sinon on ajoute le produit avec la quantité (1)
-        return [
-          ...prevCart,
-          { produit, quantity: 1, customerPrice: produit.price },
-        ];
       }
+
+      existingItem
+        ? showToastAlert('Quantité + 1')
+        : showToastAlert('Ajoute avec succès');
+
+      //  Sinon on ajoute le produit avec la quantité (1)
+      return [
+        ...prevCart,
+        { produit, quantity: 1, customerPrice: produit.price },
+      ];
     });
   };
 
@@ -362,7 +366,7 @@ export default function NewCommande() {
               {/* Bouton */}
               {isSubmitting && <LoadingSpiner />}
 
-              {cartItems.length > 0 && !isSubmitting && (
+              {cartItems?.length > 0 && !isSubmitting && (
                 <div className='d-flex gap-4 my-3'>
                   <Button
                     color='warning'
@@ -396,15 +400,15 @@ export default function NewCommande() {
                     </div>
                   </CardTitle>
 
-                  {cartItems.length === 0 && (
+                  {cartItems?.length === 0 && (
                     <p className='text-center'>
                       Veuillez cliquez sur un produit pour l'ajouter dans le
                       panier
                     </p>
                   )}
-                  {cartItems.map((item) => (
+                  {cartItems?.map((item, index) => (
                     <div
-                      key={item.produit._id}
+                      key={index}
                       className='d-flex justify-content-between align-items-center mb-2 border-bottom border-black p-2 shadow shadow-md'
                     >
                       <div>
@@ -523,58 +527,53 @@ export default function NewCommande() {
                   {/* --------------------------------------------------------------- */}
                   {/* --------------------------------------------------------------- */}
                   {/* Maping Produit Liste */}
-                  <div className='d-flex flex-wrap gap-3 justify-content-center'>
+                  <div className='d-flex justify-content-center align-items-center gap-4 flex-wrap'>
                     {!error &&
                       filterSearchProduits?.length > 0 &&
-                      filterSearchProduits?.map((produit) => (
-                        <div key={produit._id}>
-                          <Card
-                            className='shadow shadow-lg'
-                            onClick={() => addToCart(produit)}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <CardImg
-                              style={{
-                                height: '100px',
-                                objectFit: 'contain',
-                              }}
-                              src={
-                                produit.imageUrl ? produit.imageUrl : defaultImg
-                              }
-                              alt={produit.name}
-                            />
-                            <CardBody>
-                              <CardText className='text-center'>
-                                {capitalizeWords(produit.name)}
-                              </CardText>
-                              {/* <CardText className='font-size-15 text-center'>
-                                <strong>Catégorie: </strong>{' '}
-                                <span className='text-info '>
-                                  {' '}
-                                  {capitalizeWords(produit?.category)}{' '}
-                                </span>
-                              </CardText> */}
+                      filterSearchProduits?.map((produit, index) => (
+                        <Card
+                          key={index}
+                          className='shadow shadow-lg'
+                          onClick={() => addToCart(produit)}
+                          style={{
+                            cursor: 'pointer',
+                            width: '210px',
+                          }}
+                        >
+                          <CardImg
+                            style={{
+                              height: '100px',
+                              objectFit: 'contain',
+                            }}
+                            src={
+                              produit.imageUrl ? produit.imageUrl : defaultImg
+                            }
+                            alt={produit.name}
+                          />
+                          <CardBody>
+                            <CardText className='text-center'>
+                              {capitalizeWords(produit.name)}
+                            </CardText>
 
-                              <CardText className='text-center fw-bold'>
-                                {formatPrice(produit.price)} F
-                              </CardText>
-                              <CardTitle className='text-center'>
-                                Stock:
-                                {produit.stock >= 10 ? (
-                                  <span style={{ color: 'gray' }}>
-                                    {' '}
-                                    {formatPrice(produit?.stock)}
-                                  </span>
-                                ) : (
-                                  <span className='text-danger'>
-                                    {' '}
-                                    {formatPrice(produit?.stock)}
-                                  </span>
-                                )}
-                              </CardTitle>
-                            </CardBody>
-                          </Card>
-                        </div>
+                            <CardText className='text-center fw-bold'>
+                              {formatPrice(produit.price)} F
+                            </CardText>
+                            <CardTitle className='text-center'>
+                              Stock:
+                              {produit.stock >= 10 ? (
+                                <span style={{ color: 'gray' }}>
+                                  {' '}
+                                  {formatPrice(produit?.stock)}
+                                </span>
+                              ) : (
+                                <span className='text-danger'>
+                                  {' '}
+                                  {formatPrice(produit?.stock)}
+                                </span>
+                              )}
+                            </CardTitle>
+                          </CardBody>
+                        </Card>
                       ))}
                   </div>
                 </Row>

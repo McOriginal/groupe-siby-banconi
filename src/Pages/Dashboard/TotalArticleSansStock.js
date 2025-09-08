@@ -3,6 +3,8 @@ import LoadingSpiner from '../components/LoadingSpiner';
 
 import articleImg from './../../assets/images/package.png';
 import { useAllProduit } from '../../Api/queriesProduits';
+import { useNavigate } from 'react-router-dom';
+import { connectedUserRole } from '../Authentication/userInfos';
 
 export default function TotalArticleSansStock() {
   // Article Data
@@ -13,9 +15,17 @@ export default function TotalArticleSansStock() {
   } = useAllProduit();
 
   const finishStock = productData?.filter((item) => item.stock <= 10);
+  const navigate = useNavigate();
+
+  const handleNavigate = () => {
+    return navigate('/produit_no_stock');
+  };
 
   return (
-    <div>
+    <div
+      onClick={() => connectedUserRole === 'admin' && handleNavigate()}
+      style={{ cursor: 'pointer' }}
+    >
       {productLoading && <LoadingSpiner />}
       {!productError && !productLoading && (
         <Card

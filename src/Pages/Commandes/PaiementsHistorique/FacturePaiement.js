@@ -128,7 +128,7 @@ const FacturePaiement = ({
                       {formatPrice(selectedPaiementHistorique?.amount)} F
                     </CardText>
                     <CardText>
-                      <strong> Reliqua: </strong>
+                      <strong> Reliquat: </strong>
                       {formatPrice(reliqua)} F
                     </CardText>
                     <CardText>

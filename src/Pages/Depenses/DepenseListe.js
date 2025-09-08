@@ -14,23 +14,39 @@ export default function DepenseListe() {
   const { data: depenseData, isLoading, error } = useAllDepenses();
   const { mutate: deleteDepense, isDeleting } = useDeleteDepense();
   const [depenseToUpdate, setDepenseToUpdate] = useState(null);
-
+  const [todayExpense, setTodayExpense] = useState(false);
   // Search State
   const [searchTerm, setSearchTerm] = useState('');
 
   // Fonction pour la recherche
-  const filterSearchDepense = depenseData?.filter((depense) => {
-    const search = searchTerm.toLowerCase();
+  const filterSearchDepense = depenseData
+    ?.filter((depense) => {
+      const search = searchTerm.toLowerCase();
 
-    return (
-      depense.motifDepense.toLowerCase().includes(search) ||
-      depense.totalAmount.toString().includes(search) ||
-      new Date(depense.dateOfDepense)
-        .toLocaleDateString('fr-Fr')
-        .toString()
-        .includes(search)
-    );
-  });
+      return (
+        depense.motifDepense.toLowerCase().includes(search) ||
+        depense.totalAmount.toString().includes(search) ||
+        new Date(depense.dateOfDepense)
+          .toLocaleDateString('fr-Fr')
+          .toString()
+          .includes(search)
+      );
+    })
+    ?.filter((item) => {
+      if (todayExpense) {
+        return (
+          new Date(item?.dateOfDepense).toLocaleDateString() ===
+          new Date().toLocaleDateString()
+        );
+      }
+      return true;
+    });
+
+  // Total Expense
+  const sumTotalExpense = filterSearchDepense?.reduce(
+    (curr, item) => (curr += item?.totalAmount),
+    0
+  );
 
   // Ouverture de Modal Form
   function tog_form_modal() {
@@ -103,6 +119,28 @@ export default function DepenseListe() {
                         </div>
                       </Col>
                     </Row>
+                    <div className='d-flex justify-content-around mt-4 flex-wrap'>
+                      <h6 className=''>
+                        Total Depensés:{' '}
+                        <span className='text-danger'>
+                          {formatPrice(sumTotalExpense)} F{' '}
+                        </span>
+                      </h6>
+                      <div className='mx-4 d-flex gap-2 text-warning'>
+                        <input
+                          type='checkbox'
+                          className='form-check-input'
+                          id='filterToday'
+                          onChange={() => setTodayExpense(!todayExpense)}
+                        />
+                        <label
+                          className='form-check-label'
+                          htmlFor='filterToday'
+                        >
+                          Depense d'Aujourd'hui
+                        </label>
+                      </div>
+                    </div>
                     {error && (
                       <div className='text-danger text-center'>
                         Erreur de chargement des données

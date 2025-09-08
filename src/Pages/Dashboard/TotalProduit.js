@@ -3,6 +3,7 @@ import LoadingSpiner from '../components/LoadingSpiner';
 
 import produitImage from './../../assets/images/product.png';
 import { useAllProduit } from '../../Api/queriesProduits';
+import { useNavigate } from 'react-router-dom';
 
 export default function TotalProduit() {
   // Importing the useAllPatients hook to fetch patient data
@@ -12,8 +13,14 @@ export default function TotalProduit() {
     error: produitError,
   } = useAllProduit();
 
+  const navigate = useNavigate();
+
+  const handleNavigate = () => {
+    return navigate('/produits');
+  };
+
   return (
-    <div>
+    <div onClick={() => handleNavigate()} style={{ cursor: 'pointer' }}>
       {produitLoading && <LoadingSpiner />}
       {!produitError && !produitLoading && (
         <Card
@@ -29,7 +36,7 @@ export default function TotalProduit() {
           />
           <CardBody>
             <CardTitle className='text-center'>
-              <span className='text-info fs-5'>{produitData?.length}</span>
+              <span className='text-info fs-5'>{produitData.length}</span>
               <p>Produits</p>
             </CardTitle>
           </CardBody>

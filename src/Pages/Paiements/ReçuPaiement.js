@@ -126,7 +126,7 @@ const ReçuPaiement = ({ show_modal, tog_show_modal, selectedPaiementID }) => {
                       {formatPrice(selectedPaiement?.totalPaye)} F
                     </CardText>
                     <CardText>
-                      <strong> Reliqua: </strong>
+                      <strong> Reliquat: </strong>
                       {formatPrice(
                         selectedPaiement?.totalAmount -
                           selectedPaiement?.totalPaye

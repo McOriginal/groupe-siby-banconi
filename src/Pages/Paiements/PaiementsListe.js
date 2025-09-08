@@ -26,13 +26,13 @@ export default function PaiementsListe() {
   // State de Recherche
   const [searchTerm, setSearchTerm] = useState('');
   const [filterReliqua, setFilterReliqua] = useState(false);
-
+  const [todayPaiement, setTodayPaiement] = useState(false);
   // Fonction de Rechercher
   const filterSearchPaiement = paiementsData
     ?.filter((paiement) => {
       const search = searchTerm.toLowerCase();
       return (
-        `${paiement?.commande?.fulltName}`.toLowerCase().includes(search) ||
+        `${paiement?.commande?.fullName}`.toLowerCase().includes(search) ||
         paiement?.commande?.adresse.toLowerCase().includes(search) ||
         (paiement?.commande?.phoneNumber || '').toString().includes(search) ||
         paiement?.totalAmount.toString().includes(search) ||
@@ -48,7 +48,26 @@ export default function PaiementsListe() {
       if (!filterReliqua) return true; // pas de filtre
       const reliqua = (paiement?.totalAmount || 0) - (paiement?.totalPaye || 0);
       return reliqua > 0;
+    })
+    ?.filter((item) => {
+      if (todayPaiement) {
+        return (
+          new Date(item.paiementDate).toLocaleDateString() ===
+          new Date().toLocaleDateString()
+        );
+      }
+      return true;
     });
+
+  // Total de commandes
+  const sumTotalAmount = filterSearchPaiement?.reduce((curr, item) => {
+    return (curr += item?.totalAmount);
+  }, 0);
+
+  // Total Payés
+  const sumTotalPaye = filterSearchPaiement?.reduce((curr, item) => {
+    return (curr += item?.totalPaye);
+  }, 0);
 
   // Ouverture de Modal Form
   function tog_form_modal() {
@@ -110,20 +129,6 @@ export default function PaiementsListe() {
                           </Button>
                         </div>
                       </Col>
-                      <Col className='d-flex gap-2 justify-content-center align-self-center '>
-                        <input
-                          type='checkbox'
-                          className='form-check-input'
-                          id='filterReliqua'
-                          onChange={() => setFilterReliqua(!filterReliqua)}
-                        />
-                        <label
-                          className='form-check-label'
-                          htmlFor='filterReliqua'
-                        >
-                          Filtrer les Impayés
-                        </label>
-                      </Col>
 
                       <Col className='col-sm'>
                         <div className='d-flex justify-content-sm-end gap-2'>
@@ -144,6 +149,60 @@ export default function PaiementsListe() {
                               onChange={(e) => setSearchTerm(e.target.value)}
                             />
                           </div>
+                        </div>
+                      </Col>
+                      <Col
+                        md='12'
+                        className='d-flex justify-content-around mt-4 flex-wrap'
+                      >
+                        <h6 className=''>
+                          Total Commande:{' '}
+                          <span className='text-info'>
+                            {formatPrice(sumTotalAmount)} F{' '}
+                          </span>
+                        </h6>
+                        <h6 className=''>
+                          Total Payés:{' '}
+                          <span className='text-success'>
+                            {formatPrice(sumTotalPaye)} F{' '}
+                          </span>
+                        </h6>
+                        <h6 className=''>
+                          Total Non Payés:{' '}
+                          <span className='text-danger'>
+                            {formatPrice(sumTotalAmount - sumTotalPaye)} F{' '}
+                          </span>
+                        </h6>
+                      </Col>
+                      <Col className='d-flex gap-2 justify-content-start align-self-center my-3 '>
+                        <h6>Filtrer par: </h6>
+                        <div className='mx-4 d-flex gap-2 text-warning'>
+                          <input
+                            type='checkbox'
+                            className='form-check-input'
+                            id='filterReliqua'
+                            onChange={() => setFilterReliqua(!filterReliqua)}
+                          />
+                          <label
+                            className='form-check-label'
+                            htmlFor='filterReliqua'
+                          >
+                            les Impayés
+                          </label>
+                        </div>
+                        <div className='mx-4 d-flex gap-2 text-warning'>
+                          <input
+                            type='checkbox'
+                            className='form-check-input'
+                            id='filterToday'
+                            onChange={() => setTodayPaiement(!todayPaiement)}
+                          />
+                          <label
+                            className='form-check-label'
+                            htmlFor='filterToday'
+                          >
+                            Aujourd'hui
+                          </label>
                         </div>
                       </Col>
                     </Row>
@@ -189,7 +248,7 @@ export default function PaiementsListe() {
                                   Somme Payé
                                 </th>
                                 <th className='sort' data-sort='reliqua'>
-                                  Réliqua
+                                  Reliquat
                                 </th>
                                 <th data-sort='motif'>Réduction</th>
 

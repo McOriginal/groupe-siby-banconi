@@ -56,7 +56,8 @@ export default function UpdateCommande() {
     );
   });
 
-  const { data: selectedCommande } = useOneCommande(id);
+  const { data: selectedCommande, isLoading: loadingCartItems } =
+    useOneCommande(id);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Ajoute des produits dans le panier sans la base de données
@@ -90,21 +91,22 @@ export default function UpdateCommande() {
 
       //  Si le produit existe on incrémente la quantité
       if (existingItem) {
-        return prevCart.map((item) => {
-          if (item.produit._id === produit._id) {
-            showToastAlert(`Quantité: ${item.quantity + 1} `);
-            return { ...item, quantity: item.quantity + 1 };
-          }
-          return item;
-        });
-      } else {
-        showToastAlert('Ajouté avec succès');
-        //  Sinon on ajoute le produit avec la quantité (1)
-        return [
-          ...prevCart,
-          { produit, quantity: 1, customerPrice: produit.price },
-        ];
+        return prevCart.map((item) =>
+          item.produit._id === produit._id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
       }
+
+      existingItem
+        ? showToastAlert('Quantité + 1')
+        : showToastAlert('Ajoute avec succès');
+
+      //  Sinon on ajoute le produit avec la quantité (1)
+      return [
+        ...prevCart,
+        { produit, quantity: 1, customerPrice: produit.price },
+      ];
     });
   };
 
@@ -236,266 +238,272 @@ export default function UpdateCommande() {
             {/* ------------------------------------------------------------- */}
             {/* Les information sur Client */}
             {/* ------------------------------------------------------------- */}
-            <Col md={6}>
-              <Card>
-                <CardTitle className='text-center m-2'>
-                  Informations Client
-                </CardTitle>
-                <CardBody>
-                  <Form
-                    className='needs-validation'
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                  >
-                    <Row>
-                      <Col sm={6}>
-                        <FormGroup>
-                          <Label for='fullName'>Nom et Prénom</Label>
-                          <Input
-                            name='fullName'
-                            id='fullName'
-                            type='text'
-                            className='form form-control'
-                            placeholder='Nom et Prénom de Client'
-                            onChange={validation.handleChange}
-                            onBlur={validation.handleBlur}
-                            value={validation.values.fullName || ''}
-                            invalid={
-                              validation.touched.fullName &&
-                              validation.errors.fullName
-                                ? true
-                                : false
-                            }
-                          />
-                          {validation.touched.fullName &&
-                          validation.errors.fullName ? (
-                            <FormFeedback type='invalid'>
-                              {validation.errors.fullName}
-                            </FormFeedback>
-                          ) : null}
-                        </FormGroup>
-                      </Col>
-                      <Col sm={6}>
-                        <FormGroup>
-                          <Label for='phoneNumber'>Téléphone</Label>
-                          <Input
-                            name='phoneNumber'
-                            id='phoneNumber'
-                            type='number'
-                            min={0}
-                            className='form form-control'
-                            placeholder='N°Téléphone de Client'
-                            onChange={validation.handleChange}
-                            onBlur={validation.handleBlur}
-                            value={validation.values.phoneNumber || ''}
-                            invalid={
-                              validation.touched.phoneNumber &&
-                              validation.errors.phoneNumber
-                                ? true
-                                : false
-                            }
-                          />
-                          {validation.touched.phoneNumber &&
-                          validation.errors.phoneNumber ? (
-                            <FormFeedback type='invalid'>
-                              {validation.errors.phoneNumber}
-                            </FormFeedback>
-                          ) : null}
-                        </FormGroup>
-                      </Col>
-                    </Row>
-                    <Row>
-                      <Col sm={6}>
-                        <FormGroup>
-                          <Label for='fullName'>Adresse de Livraison</Label>
-                          <Input
-                            name='adresse'
-                            id='adresse'
-                            type='text'
-                            className='form form-control'
-                            placeholder="Entrez l'adresse de livraison"
-                            onChange={validation.handleChange}
-                            onBlur={validation.handleBlur}
-                            value={validation.values.adresse || ''}
-                            invalid={
-                              validation.touched.adresse &&
-                              validation.errors.adresse
-                                ? true
-                                : false
-                            }
-                          />
-                          {validation.touched.adresse &&
-                          validation.errors.adresse ? (
-                            <FormFeedback type='invalid'>
-                              {validation.errors.adresse}
-                            </FormFeedback>
-                          ) : null}
-                        </FormGroup>
-                      </Col>
-                      <Col sm={6}>
-                        <FormGroup>
-                          <Label for='statut'>Statut de Livraison</Label>
-                          <Input
-                            name='statut'
-                            id='statut'
-                            type='select'
-                            className='form form-control'
-                            onChange={validation.handleChange}
-                            onBlur={validation.handleBlur}
-                            value={validation.values.statut || ''}
-                            invalid={
-                              validation.touched.statut &&
-                              validation.errors.statut
-                                ? true
-                                : false
-                            }
-                          >
-                            <option value=''>Sélectionner le Statut</option>
-                            <option value='livré'>Livré</option>
-                            <option value='en cours'>
-                              Partiellement Livré
-                            </option>
-                            <option value='en attente'>En Attente</option>
-                          </Input>
-                          {validation.touched.statut &&
-                          validation.errors.statut ? (
-                            <FormFeedback type='invalid'>
-                              {validation.errors.statut}
-                            </FormFeedback>
-                          ) : null}
-                        </FormGroup>
-                      </Col>
-                    </Row>
-                  </Form>
-                </CardBody>
-              </Card>
-            </Col>
-            <Col md={6}>
-              {/* Bouton */}
-              {isSubmitting && <LoadingSpiner />}
-
-              {cartItems.length > 0 && !isSubmitting && (
-                <div className='d-flex gap-4 my-3'>
-                  <Button
-                    color='warning'
-                    className='fw-bold font-size-11'
-                    onClick={clearCart}
-                  >
-                    <i className='fas fa-window-close'></i>
-                  </Button>
-
-                  <div className='d-grid' style={{ width: '100%' }}>
-                    <Button
-                      color='primary'
-                      className='fw-bold'
-                      onClick={() => validation.handleSubmit()}
-                    >
-                      Enregistrer la Commande
-                    </Button>
-                  </div>
-                </div>
-              )}
-              {/* Bouton */}
-
-              <Card>
-                <CardBody style={{ height: '280px', overflowY: 'scroll' }}>
-                  <CardTitle className='mb-4'>
-                    <div className='d-flex justify-content-between align-items-center'>
-                      <h4>Panier</h4>
-                      <h5 className='text-warning'>
-                        Total : {formatPrice(totalAmount)} F
-                      </h5>
-                    </div>
+            {loadingCartItems && <LoadingSpiner />}
+            {!loadingCartItems && (
+              <Col md={6}>
+                <Card>
+                  <CardTitle className='text-center m-2'>
+                    Informations Client
                   </CardTitle>
-
-                  {cartItems.length === 0 && (
-                    <p className='text-center'>
-                      Veuillez cliquez sur un produit pour l'ajouter dans le
-                      panier
-                    </p>
-                  )}
-                  {cartItems.map((item) => (
-                    <div
-                      key={item.produit._id}
-                      className='d-flex justify-content-between align-items-center mb-2 border-bottom border-black p-2 shadow shadow-md'
+                  <CardBody>
+                    <Form
+                      className='needs-validation'
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        return false;
+                      }}
                     >
-                      <div>
-                        <strong>{capitalizeWords(item.produit.name)}</strong>
+                      <Row>
+                        <Col sm={6}>
+                          <FormGroup>
+                            <Label for='fullName'>Nom et Prénom</Label>
+                            <Input
+                              name='fullName'
+                              id='fullName'
+                              type='text'
+                              className='form form-control'
+                              placeholder='Nom et Prénom de Client'
+                              onChange={validation.handleChange}
+                              onBlur={validation.handleBlur}
+                              value={validation.values.fullName || ''}
+                              invalid={
+                                validation.touched.fullName &&
+                                validation.errors.fullName
+                                  ? true
+                                  : false
+                              }
+                            />
+                            {validation.touched.fullName &&
+                            validation.errors.fullName ? (
+                              <FormFeedback type='invalid'>
+                                {validation.errors.fullName}
+                              </FormFeedback>
+                            ) : null}
+                          </FormGroup>
+                        </Col>
+                        <Col sm={6}>
+                          <FormGroup>
+                            <Label for='phoneNumber'>Téléphone</Label>
+                            <Input
+                              name='phoneNumber'
+                              id='phoneNumber'
+                              type='number'
+                              min={0}
+                              className='form form-control'
+                              placeholder='N°Téléphone de Client'
+                              onChange={validation.handleChange}
+                              onBlur={validation.handleBlur}
+                              value={validation.values.phoneNumber || ''}
+                              invalid={
+                                validation.touched.phoneNumber &&
+                                validation.errors.phoneNumber
+                                  ? true
+                                  : false
+                              }
+                            />
+                            {validation.touched.phoneNumber &&
+                            validation.errors.phoneNumber ? (
+                              <FormFeedback type='invalid'>
+                                {validation.errors.phoneNumber}
+                              </FormFeedback>
+                            ) : null}
+                          </FormGroup>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col sm={6}>
+                          <FormGroup>
+                            <Label for='fullName'>Adresse de Livraison</Label>
+                            <Input
+                              name='adresse'
+                              id='adresse'
+                              type='text'
+                              className='form form-control'
+                              placeholder="Entrez l'adresse de livraison"
+                              onChange={validation.handleChange}
+                              onBlur={validation.handleBlur}
+                              value={validation.values.adresse || ''}
+                              invalid={
+                                validation.touched.adresse &&
+                                validation.errors.adresse
+                                  ? true
+                                  : false
+                              }
+                            />
+                            {validation.touched.adresse &&
+                            validation.errors.adresse ? (
+                              <FormFeedback type='invalid'>
+                                {validation.errors.adresse}
+                              </FormFeedback>
+                            ) : null}
+                          </FormGroup>
+                        </Col>
+                        <Col sm={6}>
+                          <FormGroup>
+                            <Label for='statut'>Statut de Livraison</Label>
+                            <Input
+                              name='statut'
+                              id='statut'
+                              type='select'
+                              className='form form-control'
+                              onChange={validation.handleChange}
+                              onBlur={validation.handleBlur}
+                              value={validation.values.statut || ''}
+                              invalid={
+                                validation.touched.statut &&
+                                validation.errors.statut
+                                  ? true
+                                  : false
+                              }
+                            >
+                              <option value=''>Sélectionner le Statut</option>
+                              <option value='livré'>Livré</option>
+                              <option value='en cours'>
+                                Partiellement Livré
+                              </option>
+                              <option value='en attente'>En Attente</option>
+                            </Input>
+                            {validation.touched.statut &&
+                            validation.errors.statut ? (
+                              <FormFeedback type='invalid'>
+                                {validation.errors.statut}
+                              </FormFeedback>
+                            ) : null}
+                          </FormGroup>
+                        </Col>
+                      </Row>
+                    </Form>
+                  </CardBody>
+                </Card>
+              </Col>
+            )}
+            {!loadingCartItems && (
+              <Col md={6}>
+                {/* Bouton */}
+                {isSubmitting && <LoadingSpiner />}
+
+                {cartItems.length > 0 && !isSubmitting && (
+                  <div className='d-flex gap-4 my-3'>
+                    <Button
+                      color='warning'
+                      className='fw-bold font-size-11'
+                      onClick={clearCart}
+                    >
+                      <i className='fas fa-window-close'></i>
+                    </Button>
+
+                    <div className='d-grid' style={{ width: '100%' }}>
+                      <Button
+                        color='primary'
+                        className='fw-bold'
+                        onClick={() => validation.handleSubmit()}
+                      >
+                        Enregistrer la Commande
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {/* Bouton */}
+
+                <Card>
+                  <CardBody style={{ height: '280px', overflowY: 'scroll' }}>
+                    <CardTitle className='mb-4'>
+                      <div className='d-flex justify-content-between align-items-center'>
+                        <h4>Panier</h4>
+                        <h5 className='text-warning'>
+                          Total : {formatPrice(totalAmount)} F
+                        </h5>
+                      </div>
+                    </CardTitle>
+
+                    {cartItems.length === 0 && (
+                      <p className='text-center'>
+                        Veuillez cliquez sur un produit pour l'ajouter dans le
+                        panier
+                      </p>
+                    )}
+                    {cartItems.map((item) => (
+                      <div
+                        key={item.produit._id}
+                        className='d-flex justify-content-between align-items-center mb-2 border-bottom border-black p-2 shadow shadow-md'
+                      >
                         <div>
-                          {/* {item.quantity} × {formatPrice(item.produit.price)} F
+                          <strong>{capitalizeWords(item.produit.name)}</strong>
+                          <div>
+                            {/* {item.quantity} × {formatPrice(item.produit.price)} F
                           = {formatPrice(item.produit.price * item.quantity)} F */}
-                          P.U: client
-                          <Input
+                            P.U: client
+                            <Input
+                              type='number'
+                              min={0}
+                              value={item.customerPrice}
+                              onChange={(e) => {
+                                const newPrice =
+                                  parseFloat(e.target.value) || 0;
+                                setCartsItems((prevCart) =>
+                                  prevCart.map((i) =>
+                                    i.produit._id === item.produit._id
+                                      ? { ...i, customerPrice: newPrice }
+                                      : i
+                                  )
+                                );
+                              }}
+                              style={{
+                                width: '100px',
+                                border: '1px solid #cdc606 ',
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className='d-flex align-items-center gap-2'>
+                          <Button
+                            color='danger'
+                            size='sm'
+                            onClick={() => decreaseQuantity(item.produit._id)}
+                          >
+                            -
+                          </Button>
+
+                          <input
                             type='number'
-                            min={0}
-                            value={item.customerPrice}
+                            min={1}
+                            value={item.quantity}
+                            onClick={(e) => e.stopPropagation()} // Évite le clic sur la carte
                             onChange={(e) => {
-                              const newPrice = parseFloat(e.target.value) || 0;
-                              setCartsItems((prevCart) =>
-                                prevCart.map((i) =>
-                                  i.produit._id === item.produit._id
-                                    ? { ...i, customerPrice: newPrice }
-                                    : i
-                                )
-                              );
+                              const value = parseInt(e.target.value, 10);
+                              if (!isNaN(value) && value > 0) {
+                                setCartsItems((prevCart) =>
+                                  prevCart.map((i) =>
+                                    i.produit._id === item.produit._id
+                                      ? { ...i, quantity: value }
+                                      : i
+                                  )
+                                );
+                              }
                             }}
                             style={{
-                              width: '100px',
-                              border: '1px solid #cdc606 ',
+                              width: '60px',
+                              textAlign: 'center',
+                              border: '1px solid orange',
+                              borderRadius: '5px',
                             }}
                           />
+
+                          <Button
+                            color='success'
+                            size='sm'
+                            onClick={() => increaseQuantity(item.produit._id)}
+                          >
+                            +
+                          </Button>
                         </div>
                       </div>
-
-                      <div className='d-flex align-items-center gap-2'>
-                        <Button
-                          color='danger'
-                          size='sm'
-                          onClick={() => decreaseQuantity(item.produit._id)}
-                        >
-                          -
-                        </Button>
-
-                        <input
-                          type='number'
-                          min={1}
-                          value={item.quantity}
-                          onClick={(e) => e.stopPropagation()} // Évite le clic sur la carte
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value, 10);
-                            if (!isNaN(value) && value > 0) {
-                              setCartsItems((prevCart) =>
-                                prevCart.map((i) =>
-                                  i.produit._id === item.produit._id
-                                    ? { ...i, quantity: value }
-                                    : i
-                                )
-                              );
-                            }
-                          }}
-                          style={{
-                            width: '60px',
-                            textAlign: 'center',
-                            border: '1px solid orange',
-                            borderRadius: '5px',
-                          }}
-                        />
-
-                        <Button
-                          color='success'
-                          size='sm'
-                          onClick={() => increaseQuantity(item.produit._id)}
-                        >
-                          +
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </CardBody>
-              </Card>
-            </Col>
+                    ))}
+                  </CardBody>
+                </Card>
+              </Col>
+            )}
           </Row>
           {/* ------------------------------------------------------------- */}
           {/* Liste des produits */}
@@ -536,58 +544,50 @@ export default function UpdateCommande() {
                   {/* --------------------------------------------------------------- */}
                   {/* --------------------------------------------------------------- */}
                   {/* Maping Produit Liste */}
-                  <div className='d-flex flex-wrap gap-3 justify-content-center'>
+                  <div className='d-flex justify-content-center align-items-center gap-4 flex-wrap'>
                     {!error &&
                       filterSearchProduits?.length > 0 &&
-                      filterSearchProduits?.map((produit) => (
-                        <div key={produit._id}>
-                          <Card
-                            className='shadow shadow-lg'
-                            onClick={() => addToCart(produit)}
-                            style={{ cursor: 'pointer' }}
-                          >
-                            <CardImg
-                              style={{
-                                height: '100px',
-                                objectFit: 'contain',
-                              }}
-                              src={
-                                produit.imageUrl ? produit.imageUrl : defaultImg
-                              }
-                              alt={produit.name}
-                            />
-                            <CardBody>
-                              <CardText className='text-center'>
-                                {capitalizeWords(produit.name)}
-                              </CardText>
-                              {/* <CardText className='font-size-15 text-center'>
-                                <strong>Catégorie: </strong>{' '}
-                                <span className='text-info '>
-                                  {' '}
-                                  {capitalizeWords(produit?.category)}{' '}
-                                </span>
-                              </CardText> */}
+                      filterSearchProduits?.map((produit, index) => (
+                        <Card
+                          key={index}
+                          className='shadow shadow-lg'
+                          onClick={() => addToCart(produit)}
+                          style={{ cursor: 'pointer', width: '200px' }}
+                        >
+                          <CardImg
+                            style={{
+                              height: '100px',
+                              objectFit: 'contain',
+                            }}
+                            src={
+                              produit.imageUrl ? produit.imageUrl : defaultImg
+                            }
+                            alt={produit.name}
+                          />
+                          <CardBody>
+                            <CardText className='text-center'>
+                              {capitalizeWords(produit.name)}
+                            </CardText>
 
-                              <CardText className='text-center fw-bold'>
-                                {formatPrice(produit.price)} F
-                              </CardText>
-                              <CardTitle className='text-center'>
-                                Stock:
-                                {produit.stock >= 10 ? (
-                                  <span style={{ color: 'gray' }}>
-                                    {' '}
-                                    {formatPrice(produit?.stock)}
-                                  </span>
-                                ) : (
-                                  <span className='text-danger'>
-                                    {' '}
-                                    {formatPrice(produit?.stock)}
-                                  </span>
-                                )}
-                              </CardTitle>
-                            </CardBody>
-                          </Card>
-                        </div>
+                            <CardText className='text-center fw-bold'>
+                              {formatPrice(produit.price)} F
+                            </CardText>
+                            <CardTitle className='text-center'>
+                              Stock:
+                              {produit.stock >= 10 ? (
+                                <span style={{ color: 'gray' }}>
+                                  {' '}
+                                  {formatPrice(produit?.stock)}
+                                </span>
+                              ) : (
+                                <span className='text-danger'>
+                                  {' '}
+                                  {formatPrice(produit?.stock)}
+                                </span>
+                              )}
+                            </CardTitle>
+                          </CardBody>
+                        </Card>
                       ))}
                   </div>
                 </Row>
