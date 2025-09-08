@@ -8,6 +8,7 @@ const approvisonementSchema = new mongoose.Schema(
       ref: 'Produit',
       required: true,
     },
+
     quantity: {
       type: Number,
       required: true,
@@ -23,6 +24,11 @@ const approvisonementSchema = new mongoose.Schema(
     fournisseur: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Fournisseur',
+      required: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
     },
   },

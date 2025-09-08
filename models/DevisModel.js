@@ -35,6 +35,11 @@ const deivsSchema = new mongoose.Schema(
       required: [true, "Le total de l'ordonnance est requis"],
       min: [0, 'Le total doit être positif'],
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
   },
 
   { timestamps: true }

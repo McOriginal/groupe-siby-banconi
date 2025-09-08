@@ -17,6 +17,11 @@ const depenseSchema = new mongoose.Schema(
       default: Date.now,
       required: true,
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
   },
   { timestamps: true }
 );

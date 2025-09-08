@@ -18,11 +18,12 @@ exports.createPaiement = async (req, res) => {
     }
 
     // sinon on créer un nouveau PAIEMENT
-    const paiement = await Paiement.create(req.body);
+    const paiement = await Paiement.create({ ...req.body, user: req.user.id });
 
     // Et On Ajout le paiement dans son l'historique
     await PaiementHistorique.create({
       amount: req.body.totalPaye,
+      user: req.user.id,
       ...req.body,
     });
     res.status(201).json(paiement);

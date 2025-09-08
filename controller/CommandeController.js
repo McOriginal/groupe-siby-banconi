@@ -49,6 +49,7 @@ exports.createCommande = async (req, res) => {
       fullName: lowerName,
       adresse: lowerAdresse,
       phoneNumber: formattedPhoneNumber,
+      user: req.user.id,
       ...restOfData,
     });
 

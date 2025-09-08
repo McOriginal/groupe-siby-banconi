@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const userController = require('../controller/UserController');
+
 const paiementHistoriqueController = require('../controller/PaiementHistoriqueController');
 
 // Créer
 router.post(
   '/createPaiementHistorique',
+  userController.authMiddleware,
   paiementHistoriqueController.createPaiementHistorique
 );
 

@@ -27,6 +27,7 @@ exports.createProduit = async (req, res) => {
       name: lowerName,
       stock: formatStock,
       price: formatPrice,
+      user: req.user.id,
       ...resOfData,
     });
 

@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const userController = require('../controller/UserController');
+
 const depenseController = require('./../controller/DepenseController');
 
 // Route to create a new expense
-router.post('/createDepense', depenseController.createDepense);
+router.post(
+  '/createDepense',
+  userController.authMiddleware,
+  depenseController.createDepense
+);
 
 // Route to update an existing expense
 router.put('/updateDepense/:id', depenseController.updateDepense);

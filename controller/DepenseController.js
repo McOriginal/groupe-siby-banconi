@@ -22,7 +22,9 @@ exports.createDepense = async (req, res) => {
       totalAmount: formattedTotalAmount,
       motifDepense: formattedMotifDepense,
       dateOfDepense: dateOfDepense,
+      user: req.user.id,
     });
+
     return res.status(201).json(depense);
   } catch (error) {
     return res.status(500).json({ message: error.message });

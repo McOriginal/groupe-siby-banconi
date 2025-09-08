@@ -62,6 +62,7 @@ exports.createFournisseur = async (req, res) => {
       lastName: lowerLastName,
       emailAdresse: lowerEmail,
       adresse: lowerAdresse,
+      user: req.user.id,
       ...resOfData,
     });
     return res.status(201).json(newFournisseur);

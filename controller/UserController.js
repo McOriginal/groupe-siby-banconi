@@ -24,6 +24,7 @@ exports.register = async (req, res) => {
       email,
       password: hashedPassword,
       role,
+      user: req.user.id,
     });
 
     res.status(201).json({ message: 'Utilisateur enregistré avec succès.' });
@@ -168,5 +169,24 @@ exports.resetPassword = async (req, res) => {
     res
       .status(500)
       .json({ message: 'Erreur de changement veuillez réessayez.' });
+  }
+};
+
+exports.authMiddleware = (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).json({ message: 'Accès refusé, token manquant.' });
+  }
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET ||
+        'ZER45TYUIOPQSDbcdefghijklmnsopqrstuvwxyzFG4567H'
+    );
+    req.user = decoded; // { id, name, email, role }
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Token invalide.' });
   }
 };

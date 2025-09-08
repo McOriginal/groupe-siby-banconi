@@ -36,6 +36,7 @@ exports.createApprovisonement = async (req, res) => {
           produit,
           quantity: formatQuantity,
           price: formatPrice,
+          user: req.user.id,
           ...restOfData,
         },
       ],
@@ -46,6 +47,7 @@ exports.createApprovisonement = async (req, res) => {
     await Depense.create(
       [
         {
+          user: req.user.id,
           totalAmount: formatPrice * formatQuantity,
           motifDepense: `Approvisionnement de ${formatQuantity} unité(s) du produit ${updatedProduct.name}`,
           dateOfDepense: approvisonement[0].deliveryDate,

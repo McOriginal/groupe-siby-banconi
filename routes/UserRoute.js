@@ -3,7 +3,11 @@ const router = express.Router();
 const userController = require('../controller/UserController');
 
 // Enregistrer un nouvel utilisateur
-router.post('/register', userController.register);
+router.post(
+  '/register',
+  userController.authMiddleware,
+  userController.register
+);
 
 // Login User
 router.post('/login', userController.login);

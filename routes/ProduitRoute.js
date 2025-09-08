@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const userController = require('../controller/UserController');
+
 const produitController = require('../controller/ProduitController');
 
 // Créer un Produit
-router.post('/addProduit', produitController.createProduit);
+router.post(
+  '/addProduit',
+  userController.authMiddleware,
+  produitController.createProduit
+);
 
 // Afficher une toutes les Produit
 router.get('/getAllProduits', produitController.getAllProduits);

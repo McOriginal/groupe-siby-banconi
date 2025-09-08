@@ -9,6 +9,7 @@ exports.createDevis = async (req, res) => {
     // Créer le Devis
     const newDevis = await Devis.create({
       items,
+      user: req.user.id,
       ...restOfData,
     });
 

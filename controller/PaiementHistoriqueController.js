@@ -3,7 +3,7 @@ const PaiementHistorique = require('../models/PaiementHistoriqueModel');
 const Paiement = require('../models/PaiementModel');
 // Enregistrer un paiement
 exports.createPaiementHistorique = async (req, res) => {
-  const { amount, ...restData } = req.body;
+  const { amount } = req.body;
   try {
     const selectedCommandeId = req.body.commande;
     // On cherche si ID de Paiement
@@ -38,7 +38,10 @@ exports.createPaiementHistorique = async (req, res) => {
       $inc: { totalPaye: +amount },
     });
 
-    const paiementHistorique = await PaiementHistorique.create(req.body);
+    const paiementHistorique = await PaiementHistorique.create({
+      ...req.body,
+      user: req.user.id,
+    });
 
     // après on met ajour le PAIEMENTS
     res.status(201).json(paiementHistorique);

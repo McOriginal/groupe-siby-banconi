@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const userController = require('../controller/UserController');
+
 const livraisonHistoriqueController = require('../controller/LivraisonHistoriqueController');
 
 // Ajouter une Livraison
 router.post(
   '/createLivraisonHistorique',
+  userController.authMiddleware,
   livraisonHistoriqueController.createLivraisonHistorique
 );
 

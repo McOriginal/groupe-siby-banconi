@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const userController = require('../controller/UserController');
+
 const commandeController = require('../controller/CommandeController');
 
 //  Créer une nouvelle Commande
-router.post('/createCommande', commandeController.createCommande);
+router.post(
+  '/createCommande',
+  userController.authMiddleware,
+  commandeController.createCommande
+);
 
 //  Obtenir toutes les Commandes
 router.get('/getAllCommandes', commandeController.getAllCommandes);

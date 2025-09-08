@@ -1,17 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const userController = require('../controller/UserController');
 const approvisonementController = require('../controller/ApprovisonementContoller');
-
 // Route pour créer un approvisionnement
 router.post(
-  '/createApprovisonement', // ID du approvisonnement
+  '/createApprovisonement',
+  userController.authMiddleware,
   approvisonementController.createApprovisonement
 );
-
-// router.put(
-//   '/updateApprovisonement/:id', // ID du approvisonnement
-//   approvisonementController.updateApprovisonement
-// );
 
 // Route pour récupérer tous les approvisionnements
 router.get(

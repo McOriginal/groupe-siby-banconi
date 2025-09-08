@@ -4,7 +4,7 @@ const Commande = require('../models/CommandeModel');
 // Ajouter de Livraison
 exports.createLivraisonHistorique = async (req, res) => {
   try {
-    await LivraisonHistorique.create(req.body);
+    await LivraisonHistorique.create({ ...req.body, user: req.user.id });
     return res.status(200).json({ message: 'Livraison ajouté avec succès' });
   } catch (e) {
     return res.status(404).json({ message: e.message });
