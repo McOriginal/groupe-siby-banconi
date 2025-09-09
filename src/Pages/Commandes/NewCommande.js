@@ -61,31 +61,27 @@ export default function NewCommande() {
   const addToCart = (produit) => {
     setCartsItems((prevCart) => {
       // On vérifie si le produit n'existe pas déjà
-      const existingItem = prevCart.find(
+      const existingItem = prevCart?.find(
         (item) => item.produit._id === produit._id
       );
-
       //  Si le produit existe on incrémente la quantité
       if (existingItem) {
-        prevCart.map((item) => {
-          // const itemId = item.produit._id === produit._id;
-          if (item.produit._id === produit._id) {
-            showToastAlert('Quantité + 1');
-            return { ...item, quantity: item.quantity + 1 };
-          }
-          return item;
-        });
+        const updateQuantity = prevCart.map((item) =>
+          item.produit._id === produit._id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+        showToastAlert(`Quantité ${existingItem?.quantity + 1} `);
+        return updateQuantity;
+      } else {
+        showToastAlert('Ajoute avec succès');
+
+        //  Sinon on ajoute le produit avec la quantité (1)
+        return [
+          ...prevCart,
+          { produit, quantity: 1, customerPrice: produit.price },
+        ];
       }
-
-      existingItem
-        ? showToastAlert('Quantité + 1')
-        : showToastAlert('Ajoute avec succès');
-
-      //  Sinon on ajoute le produit avec la quantité (1)
-      return [
-        ...prevCart,
-        { produit, quantity: 1, customerPrice: produit.price },
-      ];
     });
   };
 
