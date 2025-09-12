@@ -37,7 +37,6 @@ exports.register = async (req, res) => {
 // Connexion d'un utilisateur
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-
   try {
     // Vérifie si l'utilisateur existe
     const user = await User.findOne({ email });
@@ -77,6 +76,7 @@ exports.login = async (req, res) => {
       user: payload,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: 'Erreur lors de la connexion.' });
   }
 };
