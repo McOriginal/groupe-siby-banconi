@@ -132,7 +132,7 @@ export default function DevisListe() {
                   </div>
                 </Col>
                 {/* // ------------------------------------------- */}
-                <div ref={contentRef} id='Facture_de_Devis'>
+                <div ref={contentRef} id='facture'>
                   <Card
                     className='d-flex justify-content-center border border-info'
                     style={{
