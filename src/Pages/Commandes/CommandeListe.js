@@ -293,6 +293,9 @@ export default function CommandeListe() {
                           <thead className='table-light'>
                             <tr>
                               <th scope='col' style={{ width: '50px' }}>
+                                <i className='fas fa-dollar-sign text-warning'></i>
+                              </th>
+                              <th scope='col' style={{ width: '50px' }}>
                                 Date de Commande
                               </th>
                               <th className='sort' data-sort='fullName'>
@@ -320,6 +323,16 @@ export default function CommandeListe() {
                             {filterCommandes?.length > 0 &&
                               filterCommandes?.map((comm) => (
                                 <tr key={comm?._id}>
+                                  <th scope='row'>
+                                    {commandes?.factures?.some(
+                                      (fact) =>
+                                        fact?.commande?._id === comm?._id
+                                    ) ? (
+                                      <i className='fas fa-check-circle text-success'></i>
+                                    ) : (
+                                      <i className='fas fa-times-circle text-danger'></i>
+                                    )}{' '}
+                                  </th>
                                   <th scope='row'>
                                     {new Date(
                                       comm?.createdAt
