@@ -191,7 +191,7 @@ export default function NewCommande() {
           );
           setIsSubmitting(false);
           resetForm();
-          navigate('/paiements');
+          navigate('/commandes');
         },
         onError: (err) => {
           const message =

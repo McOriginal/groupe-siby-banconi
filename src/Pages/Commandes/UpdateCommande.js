@@ -193,7 +193,6 @@ export default function UpdateCommande() {
         totalAmount,
         commandeDate:
           values.comDate || new Date().toISOString().substring(0, 10),
-        user: connectedUserId,
       };
 
       // On passe au Modification de COMMANDE dans la table
@@ -208,7 +207,7 @@ export default function UpdateCommande() {
             );
             setIsSubmitting(false);
             resetForm();
-            navigate('/paiements');
+            navigate('/commandes');
           },
           onError: (err) => {
             console.log(err);
