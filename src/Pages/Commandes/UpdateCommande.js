@@ -30,7 +30,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAllProduit } from '../../Api/queriesProduits';
 import { useOneCommande, useUpdateCommande } from '../../Api/queriesCommande';
 import showToastAlert from '../components/ToasMessage';
-import { connectedUserId } from '../Authentication/userInfos';
 
 export default function UpdateCommande() {
   // State de navigation
@@ -135,6 +134,12 @@ export default function UpdateCommande() {
     );
   };
 
+  // Supprimer un produit du panier
+  const removeFromCart = (produitId) => {
+    setCartsItems((prevCart) =>
+      prevCart.filter((item) => item.produit._id !== produitId)
+    );
+  };
   // Fonction pour vider les produits dans le panier
   const clearCart = () => {
     setCartsItems([]);
@@ -240,11 +245,17 @@ export default function UpdateCommande() {
           {/* ---------------------------------------------------------------------- */}
           {/* Panier */}
           <Row>
+            {isSubmitting && (
+              <div className='d-flex justify-content-center align-items-center'>
+                <LoadingSpiner />
+              </div>
+            )}
+
             {/* ------------------------------------------------------------- */}
             {/* Les information sur Client */}
             {/* ------------------------------------------------------------- */}
             {loadingCartItems && <LoadingSpiner />}
-            {!loadingCartItems && (
+            {!loadingCartItems && !isSubmitting && (
               <Col md={6}>
                 <Card>
                   <CardTitle className='text-center m-2'>
@@ -266,7 +277,7 @@ export default function UpdateCommande() {
                               name='fullName'
                               id='fullName'
                               type='text'
-                              className='form form-control'
+                              className='form form-control border-1 border-dark'
                               placeholder='Nom et Prénom de Client'
                               onChange={validation.handleChange}
                               onBlur={validation.handleBlur}
@@ -294,7 +305,7 @@ export default function UpdateCommande() {
                               id='phoneNumber'
                               type='number'
                               min={0}
-                              className='form form-control'
+                              className='form form-control border-1 border-dark'
                               placeholder='N°Téléphone de Client'
                               onChange={validation.handleChange}
                               onBlur={validation.handleBlur}
@@ -323,7 +334,7 @@ export default function UpdateCommande() {
                               name='adresse'
                               id='adresse'
                               type='text'
-                              className='form form-control'
+                              className='form form-control border-1 border-dark'
                               placeholder="Entrez l'adresse de livraison"
                               onChange={validation.handleChange}
                               onBlur={validation.handleBlur}
@@ -350,7 +361,7 @@ export default function UpdateCommande() {
                               name='statut'
                               id='statut'
                               type='select'
-                              className='form form-control'
+                              className='form form-control border-1 border-dark'
                               onChange={validation.handleChange}
                               onBlur={validation.handleBlur}
                               value={validation.values.statut || ''}
@@ -410,10 +421,9 @@ export default function UpdateCommande() {
                 </Card>
               </Col>
             )}
-            {!loadingCartItems && (
+            {!loadingCartItems && !isSubmitting && (
               <Col md={6}>
                 {/* Bouton */}
-                {isSubmitting && <LoadingSpiner />}
 
                 {cartItems.length > 0 && !isSubmitting && (
                   <div className='d-flex gap-4 my-3'>
@@ -457,14 +467,12 @@ export default function UpdateCommande() {
                     )}
                     {cartItems.map((item) => (
                       <div
-                        key={item.produit._id}
+                        key={item?.produit?._id}
                         className='d-flex justify-content-between align-items-center mb-2 border-bottom border-black p-2 shadow shadow-md'
                       >
                         <div>
                           <strong>{capitalizeWords(item.produit.name)}</strong>
                           <div>
-                            {/* {item.quantity} × {formatPrice(item.produit.price)} F
-                          = {formatPrice(item.produit.price * item.quantity)} F */}
                             P.U: client
                             <Input
                               type='number'
@@ -489,46 +497,58 @@ export default function UpdateCommande() {
                           </div>
                         </div>
 
-                        <div className='d-flex align-items-center gap-2'>
+                        <div className='d-flex justify-content center align-items-center gap-2 flex-column'>
+                          <div className='d-flex align-items-center gap-2'>
+                            <Button
+                              color='danger'
+                              size='sm'
+                              onClick={() => decreaseQuantity(item.produit._id)}
+                            >
+                              -
+                            </Button>
+
+                            <input
+                              type='number'
+                              min={1}
+                              step={0.1}
+                              value={item.quantity}
+                              onClick={(e) => e.stopPropagation()} // Évite le clic sur la carte
+                              onChange={(e) => {
+                                const value = parseFloat(e.target.value, 10);
+                                if (!isNaN(value) && value > 0) {
+                                  setCartsItems((prevCart) =>
+                                    prevCart.map((i) =>
+                                      i.produit._id === item.produit._id
+                                        ? { ...i, quantity: value }
+                                        : i
+                                    )
+                                  );
+                                }
+                              }}
+                              style={{
+                                width: '60px',
+                                textAlign: 'center',
+                                border: '1px solid orange',
+                                borderRadius: '5px',
+                              }}
+                            />
+
+                            <Button
+                              color='success'
+                              size='sm'
+                              onClick={() => increaseQuantity(item.produit._id)}
+                            >
+                              +
+                            </Button>
+                          </div>
+
+                          {/* supprimer */}
                           <Button
                             color='danger'
                             size='sm'
-                            onClick={() => decreaseQuantity(item.produit._id)}
+                            onClick={() => removeFromCart(item.produit._id)}
                           >
-                            -
-                          </Button>
-
-                          <input
-                            type='number'
-                            min={1}
-                            value={item.quantity}
-                            onClick={(e) => e.stopPropagation()} // Évite le clic sur la carte
-                            onChange={(e) => {
-                              const value = parseInt(e.target.value, 10);
-                              if (!isNaN(value) && value > 0) {
-                                setCartsItems((prevCart) =>
-                                  prevCart.map((i) =>
-                                    i.produit._id === item.produit._id
-                                      ? { ...i, quantity: value }
-                                      : i
-                                  )
-                                );
-                              }
-                            }}
-                            style={{
-                              width: '60px',
-                              textAlign: 'center',
-                              border: '1px solid orange',
-                              borderRadius: '5px',
-                            }}
-                          />
-
-                          <Button
-                            color='success'
-                            size='sm'
-                            onClick={() => increaseQuantity(item.produit._id)}
-                          >
-                            +
+                            <i className='fas fa-trash-alt'></i>
                           </Button>
                         </div>
                       </div>
@@ -538,6 +558,19 @@ export default function UpdateCommande() {
               </Col>
             )}
           </Row>
+          {!isSubmitting && (
+            <div className='d-flex justify-content-center gap-2'>
+              <Button
+                color='warning'
+                onClick={() => {
+                  navigate('/commandes');
+                }}
+              >
+                <i className=' fas fa-angle-double-left me-2'></i>
+                Annuler la Commande
+              </Button>
+            </div>
+          )}
           {/* ------------------------------------------------------------- */}
           {/* Liste des produits */}
           <div>

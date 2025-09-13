@@ -165,7 +165,10 @@ export default function CommandeListe() {
     <React.Fragment>
       <div className='page-content'>
         <Container fluid>
-          <Breadcrumbs title='Commande' breadcrumbItem='Historique' />
+          <Breadcrumbs
+            title='Commande'
+            breadcrumbItem='Historique des Commandes'
+          />
           {/* -------------------------- */}
 
           <Row>

@@ -25,6 +25,7 @@ import FacturePaiement from './FacturePaiement';
 
 export default function PaiementsHistorique({ id, reliqua }) {
   const [form_modal, setForm_modal] = useState(false);
+  const [form_historique_modal, setForm_historique_modal] = useState(false);
   const [facture_modal, setFacture_modal] = useState(false);
   const [selectedPaiement, setSelectedPaiement] = useState(null);
   const [paiementHistoriqueToUpdate, setPaiementHistoriqueToUpdate] =
@@ -42,13 +43,17 @@ export default function PaiementsHistorique({ id, reliqua }) {
     useDeletePaiementHistorique();
 
   // Ouverture de Modal Form
-  function tog_form_modal() {
-    setForm_modal(!form_modal);
+  function tog_historique_form_modal() {
+    setForm_historique_modal(!form_historique_modal);
   }
 
   // Ouverture de Modal Form
   function tog_facture_modal() {
     setFacture_modal(!facture_modal);
+  }
+  // Ouverture de Modal Form
+  function tog_form_modal() {
+    setForm_modal(!form_modal);
   }
 
   // Calculer le Total Payés
@@ -68,17 +73,22 @@ export default function PaiementsHistorique({ id, reliqua }) {
             tog_form_modal={tog_form_modal}
             modal_title={formTitle}
             size='md'
+            bodyContent={<PaiementForm tog_form_modal={tog_form_modal} />}
+          />
+
+          {/* PaiementHistorique FORM */}
+
+          <FormModal
+            form_modal={form_historique_modal}
+            setForm_modal={setForm_historique_modal}
+            tog_form_modal={tog_historique_form_modal}
+            modal_title={formTitle}
+            size='md'
             bodyContent={
-              paiementsHistoriqueData?.length === 0 ? (
-                <PaiementForm tog_form_modal={tog_form_modal} />
-              ) : (
-                <PaiementsHistoriqueForm
-                  tog_form_modal={tog_form_modal}
-                  selectedPaiementHistoriqueToUpdate={
-                    paiementHistoriqueToUpdate
-                  }
-                />
-              )
+              <PaiementsHistoriqueForm
+                tog_form_modal={tog_historique_form_modal}
+                selectedPaiementHistoriqueToUpdate={paiementHistoriqueToUpdate}
+              />
             }
           />
 
@@ -109,7 +119,9 @@ export default function PaiementsHistorique({ id, reliqua }) {
                             onClick={() => {
                               setPaiementHistoriqueToUpdate(null);
                               setFormTitle('Nouveau Historique de Paiement');
-                              tog_form_modal();
+                              paiementsHistoriqueData?.length > 0
+                                ? tog_historique_form_modal()
+                                : tog_form_modal();
                             }}
                           >
                             <i className='fas fa-dollar-sign align-center me-1'></i>{' '}

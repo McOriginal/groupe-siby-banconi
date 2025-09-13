@@ -29,7 +29,8 @@ import { connectedUserRole } from '../Authentication/userInfos';
 export default function ProduitListe() {
   const [form_modal, setForm_modal] = useState(false);
   const { data: produits, isLoading, error } = useAllProduit();
-  const { mutate: deleteProduit } = useDeleteProduit();
+  const { mutate: deleteProduit, isLoading: isDeletingProduct } =
+    useDeleteProduit();
   const [produitToUpdate, setProduitToUpdate] = useState(null);
   const [formModalTitle, setFormModalTitle] = useState('Ajouter un Produit');
 
@@ -107,7 +108,7 @@ export default function ProduitListe() {
                       )}
                       <Col>
                         <p className='text-center font-size-15 mt-2'>
-                          Produit Total:{' '}
+                          Produit Enregistrées:{' '}
                           <span className='text-warning'>
                             {' '}
                             {produits?.length}{' '}
@@ -176,51 +177,55 @@ export default function ProduitListe() {
                         right: '5%',
                       }}
                     >
-                      <UncontrolledDropdown className='dropdown d-inline-block'>
-                        <DropdownToggle
-                          className='btn btn-soft-secondary btn-sm'
-                          tag='button'
-                        >
-                          <i className='bx bx-caret-down-square fs-2 text-info'></i>
-                        </DropdownToggle>
-                        <DropdownMenu className='dropdown-menu-end'>
-                          <DropdownItem
-                            className='edit-item-btn  text-secondary'
-                            onClick={() => {
-                              setFormModalTitle('Modifier les données');
-                              setProduitToUpdate(prod);
-                              tog_form_modal();
-                            }}
-                          >
-                            <i className='ri-pencil-fill align-bottom me-2 '></i>
-                            Modifier
-                          </DropdownItem>
-                          <DropdownItem
-                            className='edit-item-btn text-warning'
-                            onClick={() => {
-                              navigateToProduitApprovisonnement(prod?._id);
-                            }}
-                          >
-                            <i className='bx bx-analyse align-bottom me-2 '></i>
-                            Approvisonner
-                          </DropdownItem>
+                      {isDeletingProduct && <LoadingSpiner />}
 
-                          <DropdownItem
-                            className='remove-item-btn text-danger '
-                            onClick={() => {
-                              deleteButton(
-                                prod?._id,
-                                prod?.name,
-                                deleteProduit
-                              );
-                            }}
+                      {!isDeletingProduct && (
+                        <UncontrolledDropdown className='dropdown d-inline-block'>
+                          <DropdownToggle
+                            className='btn btn-soft-secondary btn-sm'
+                            tag='button'
                           >
-                            {' '}
-                            <i className='ri-delete-bin-fill align-bottom me-2 '></i>{' '}
-                            Supprimer{' '}
-                          </DropdownItem>
-                        </DropdownMenu>
-                      </UncontrolledDropdown>
+                            <i className='bx bx-caret-down-square fs-2 text-info'></i>
+                          </DropdownToggle>
+                          <DropdownMenu className='dropdown-menu-end'>
+                            <DropdownItem
+                              className='edit-item-btn  text-secondary'
+                              onClick={() => {
+                                setFormModalTitle('Modifier les données');
+                                setProduitToUpdate(prod);
+                                tog_form_modal();
+                              }}
+                            >
+                              <i className='ri-pencil-fill align-bottom me-2 '></i>
+                              Modifier
+                            </DropdownItem>
+                            <DropdownItem
+                              className='edit-item-btn text-warning'
+                              onClick={() => {
+                                navigateToProduitApprovisonnement(prod?._id);
+                              }}
+                            >
+                              <i className='bx bx-analyse align-bottom me-2 '></i>
+                              Approvisonner
+                            </DropdownItem>
+
+                            <DropdownItem
+                              className='remove-item-btn text-danger '
+                              onClick={() => {
+                                deleteButton(
+                                  prod?._id,
+                                  prod?.name,
+                                  deleteProduit
+                                );
+                              }}
+                            >
+                              {' '}
+                              <i className='ri-delete-bin-fill align-bottom me-2 '></i>{' '}
+                              Supprimer{' '}
+                            </DropdownItem>
+                          </DropdownMenu>
+                        </UncontrolledDropdown>
+                      )}
                     </div>
                   )}
                   <img

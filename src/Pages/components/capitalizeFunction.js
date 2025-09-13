@@ -16,20 +16,15 @@ export const formatPhoneNumber = (number) => {
 export const formatPrice = (number) => {
   if (number == null) return 'null';
 
+  // Toujours transformer en string
   const str = number.toString();
 
-  if (str.length === 4) {
-    return str.slice(0, 1) + ' ' + str.slice(1); // 1 234
-  }
+  // Séparer la partie entière et décimale
+  const [entier, decimal] = str.split('.');
 
-  if (str.length === 5) {
-    return str.slice(0, 2) + ' ' + str.slice(2); // 12 345
-  }
+  // Formater la partie entière (123456 → 123 456)
+  const entierFormate = entier.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
-  if (str.length >= 6) {
-    // Ajoute un espace tous les 3 chiffres à partir de la droite
-    return str.replace(/\B(?=(\d{3})+(?!\d))/g, ' '); // 123 456, 1 234 567, etc.
-  }
-
-  return str; // pour les nombres < 1000, on retourne tel quel
+  // Si décimal existe → on le rattache
+  return decimal ? `${entierFormate}.${decimal}` : entierFormate;
 };
