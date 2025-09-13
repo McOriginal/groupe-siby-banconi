@@ -51,6 +51,10 @@ const commandeSchema = new mongoose.Schema(
       default: 'cash',
       required: true,
     },
+    commandeDate: {
+      type: Date,
+      default: Date.now,
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
