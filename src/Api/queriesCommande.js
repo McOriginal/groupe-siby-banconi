@@ -4,8 +4,14 @@ import api from './api';
 // Créer une nouvelle Commande
 export const useCreateCommande = () => {
   const queryClient = useQueryClient();
+  const authUser = localStorage.getItem('authUser');
   return useMutation({
-    mutationFn: (data) => api.post('/commandes/createCommande', data),
+    mutationFn: (data) =>
+      api.post('/commandes/createCommande', data, {
+        headers: {
+          Authorization: `Bearer ${authUser?.token}`,
+        },
+      }),
     onSuccess: () => queryClient.invalidateQueries(['commandes']),
   });
 };

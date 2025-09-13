@@ -30,6 +30,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAllProduit } from '../../Api/queriesProduits';
 import { useOneCommande, useUpdateCommande } from '../../Api/queriesCommande';
 import showToastAlert from '../components/ToasMessage';
+import { connectedUserId } from '../Authentication/userInfos';
 
 export default function UpdateCommande() {
   // State de navigation
@@ -155,6 +156,9 @@ export default function UpdateCommande() {
       phoneNumber: selectedCommande?.commandeData?.phoneNumber || 0,
       adresse: selectedCommande?.commandeData?.adresse || 'non défini',
       statut: selectedCommande?.commandeData?.statut || 'livré',
+      comDate:
+        selectedCommande?.commandeData?.commandeDate?.substring(0, 10) ||
+        new Date().toISOString().substring(0, 10),
     },
     validationSchema: Yup.object({
       fullName: Yup.string()
@@ -187,6 +191,9 @@ export default function UpdateCommande() {
           customerPrice: item.customerPrice,
         })),
         totalAmount,
+        commandeDate:
+          values.comDate || new Date().toISOString().substring(0, 10),
+        user: connectedUserId,
       };
 
       // On passe au Modification de COMMANDE dans la table
@@ -366,6 +373,34 @@ export default function UpdateCommande() {
                             validation.errors.statut ? (
                               <FormFeedback type='invalid'>
                                 {validation.errors.statut}
+                              </FormFeedback>
+                            ) : null}
+                          </FormGroup>
+                        </Col>
+                        <Col md='6'>
+                          <FormGroup className='mb-3'>
+                            <Label htmlFor='comDate'>Date de Commande</Label>
+                            <Input
+                              name='comDate'
+                              type='date'
+                              max={new Date().toISOString().split('T')[0]}
+                              className='form-control border-1 border-dark'
+                              id='comDate'
+                              onChange={validation.handleChange}
+                              onBlur={validation.handleBlur}
+                              value={validation.values.comDate || ''}
+                              invalid={
+                                validation.touched.comDate &&
+                                validation.errors.comDate
+                                  ? true
+                                  : false
+                              }
+                            />
+
+                            {validation.touched.comDate &&
+                            validation.errors.comDate ? (
+                              <FormFeedback type='invalid'>
+                                {validation.errors.comDate}
                               </FormFeedback>
                             ) : null}
                           </FormGroup>

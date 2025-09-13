@@ -27,6 +27,8 @@ export const useLogin = () => {
           user: response.data.user,
         })
       );
+      // Ajouter le token par défaut pour Axios
+      //  api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       // console.log('Utilisateur connecté:', response.data.user);
 

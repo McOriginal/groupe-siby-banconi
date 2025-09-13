@@ -131,6 +131,7 @@ export default function NewCommande() {
       phoneNumber: undefined || 0,
       adresse: 'non défini',
       statut: 'livré',
+      comDate: new Date().toISOString().substring(0, 10),
     },
     validationSchema: Yup.object({
       fullName: Yup.string()
@@ -140,6 +141,7 @@ export default function NewCommande() {
       phoneNumber: Yup.number().required('Ce champ est obligatoire'),
       adresse: Yup.string().required('Ce champ est obligatoire'),
       statut: Yup.string().required('Ce champ est obligatoire'),
+      comDate: Yup.date(),
     }),
 
     onSubmit: (values, { resetForm }) => {
@@ -163,6 +165,7 @@ export default function NewCommande() {
           customerPrice: item.customerPrice,
         })),
         totalAmount,
+        commandeDate: values.comDate || new Date().substring(0, 10),
       };
 
       // Vérification du stock pour chaque produit
@@ -349,6 +352,34 @@ export default function NewCommande() {
                           validation.errors.statut ? (
                             <FormFeedback type='invalid'>
                               {validation.errors.statut}
+                            </FormFeedback>
+                          ) : null}
+                        </FormGroup>
+                      </Col>
+                      <Col md='6'>
+                        <FormGroup className='mb-3'>
+                          <Label htmlFor='comDate'>Date de Commande</Label>
+                          <Input
+                            name='comDate'
+                            type='date'
+                            max={new Date().toISOString().split('T')[0]}
+                            className='form-control border-1 border-dark'
+                            id='comDate'
+                            onChange={validation.handleChange}
+                            onBlur={validation.handleBlur}
+                            value={validation.values.comDate || ''}
+                            invalid={
+                              validation.touched.comDate &&
+                              validation.errors.comDate
+                                ? true
+                                : false
+                            }
+                          />
+
+                          {validation.touched.comDate &&
+                          validation.errors.comDate ? (
+                            <FormFeedback type='invalid'>
+                              {validation.errors.comDate}
                             </FormFeedback>
                           ) : null}
                         </FormGroup>
