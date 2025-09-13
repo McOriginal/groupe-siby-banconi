@@ -335,7 +335,7 @@ export default function CommandeListe() {
                                   </th>
                                   <th scope='row'>
                                     {new Date(
-                                      comm?.createdAt
+                                      comm?.commandeDate ?? comm?.createdAt
                                     ).toLocaleDateString('fr-Fr', {
                                       weekday: 'short',
                                       year: 'numeric',
