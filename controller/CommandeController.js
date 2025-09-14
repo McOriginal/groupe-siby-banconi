@@ -30,26 +30,6 @@ exports.createCommande = async (req, res) => {
           message: `Stock insuffisant ou produit introuvable pour: ${prod.name}`,
         });
       }
-
-      // if (!prod) {
-      //   throw new Error(`Produit ${produit} non trouvé`);
-      // }
-
-      // // Vérifier si le stock est suffisant
-      // // Si le stock est insuffisant, retourner une erreur
-      // if (prod.stock < quantity) {
-      //   console.log(
-      //     `Stock insuffisant pour ${prod.name}. Disponible : ${prod.stock}`
-      //   );
-      //   return res.status(404).json({
-      //     message: `Stock insuffisant pour: ${prod.name} Stock: ${prod.stock}`,
-      //   });
-      // }
-
-      // Si le stock est suffisant, décrémenter le stock
-      // et sauvegarder le produit
-      // prod.stock -= quantity;
-      // await prod.save({ session });
     }
 
     // -----------------------------------------------------------
@@ -71,6 +51,86 @@ exports.createCommande = async (req, res) => {
   } catch (error) {
     console.log('Erreur de validation de Commande :', error);
     res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+// --------------------------------------------------------------------------
+// --------- Modifier une Commande ----------------------------------
+
+exports.updateCommande = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { commandeId } = req.params;
+    const { fullName, phoneNumber, adresse, statut, items, totalAmount } =
+      req.body;
+
+    const existingCommande = await Commande.findById(commandeId).session(
+      session
+    );
+    if (!existingCommande) {
+      throw new Error('Commande non trouvée');
+    }
+
+    // Étape 1 : Restaurer les anciens stocks
+    for (const item of existingCommande.items) {
+      const produit = await Produit.findById(item.produit).session(session);
+      if (!produit) throw new Error(`Produit ${item.produit} non trouvé`);
+      produit.stock += item.quantity;
+      await produit.save({ session });
+    }
+
+    // Étape 2 : Vérifier stock des nouveaux items
+    for (const { produit, quantity } of items) {
+      const prod = await Produit.findById(produit).session(session);
+      if (!prod) throw new Error(`Produit ${produit} non trouvé`);
+      if (prod.stock < quantity) {
+        throw new Error(`Stock insuffisant pour le produit : ${prod.name}`);
+      }
+    }
+
+    // Étape 3 : Décrémenter le nouveau stock
+    for (const { produit, quantity } of items) {
+      const prod = await Produit.findById(produit).session(session);
+      prod.stock -= quantity;
+      await prod.save({ session });
+    }
+
+    // Étape 4 : Mettre à jour la commande
+    existingCommande.fullName = fullName || 'non défini';
+    existingCommande.phoneNumber = phoneNumber;
+    existingCommande.adresse = adresse;
+    existingCommande.statut = statut;
+    existingCommande.items = items;
+    existingCommande.totalAmount = totalAmount;
+
+    await existingCommande.save({ session });
+
+    const paiement = await Paiement.findOne({ commande: commandeId }),
+      paiementId = paiement ? paiement._id : null;
+    if (paiementId) {
+      const paiementRecord = await Paiement.findById(paiementId).session(
+        session
+      );
+      if (paiementRecord) {
+        paiementRecord.totalAmount = totalAmount;
+        await paiementRecord.save({ session });
+      }
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res
+      .status(200)
+      .json({ message: 'Commande mise à jour avec succès' });
+  } catch (error) {
+    console.log(error);
+    await session.abortTransaction();
+    session.endSession();
+    console.error(error);
+    return res.status(400).json({ message: error.message });
   }
 };
 
@@ -219,85 +279,5 @@ exports.deleteCommande = async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     return res.status(400).json({ message: err.message });
-  }
-};
-
-// --------------------------------------------------------------------------
-// --------- Modifier une Commande ----------------------------------
-
-exports.updateCommande = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const { commandeId } = req.params;
-    const { fullName, phoneNumber, adresse, statut, items, totalAmount } =
-      req.body;
-
-    const existingCommande = await Commande.findById(commandeId).session(
-      session
-    );
-    if (!existingCommande) {
-      throw new Error('Commande non trouvée');
-    }
-
-    // Étape 1 : Restaurer les anciens stocks
-    for (const item of existingCommande.items) {
-      const produit = await Produit.findById(item.produit).session(session);
-      if (!produit) throw new Error(`Produit ${item.produit} non trouvé`);
-      produit.stock += item.quantity;
-      await produit.save({ session });
-    }
-
-    // Étape 2 : Vérifier stock des nouveaux items
-    for (const { produit, quantity } of items) {
-      const prod = await Produit.findById(produit).session(session);
-      if (!prod) throw new Error(`Produit ${produit} non trouvé`);
-      if (prod.stock < quantity) {
-        throw new Error(`Stock insuffisant pour le produit : ${prod.name}`);
-      }
-    }
-
-    // Étape 3 : Décrémenter le nouveau stock
-    for (const { produit, quantity } of items) {
-      const prod = await Produit.findById(produit).session(session);
-      prod.stock -= quantity;
-      await prod.save({ session });
-    }
-
-    // Étape 4 : Mettre à jour la commande
-    existingCommande.fullName = fullName || 'non défini';
-    existingCommande.phoneNumber = phoneNumber;
-    existingCommande.adresse = adresse;
-    existingCommande.statut = statut;
-    existingCommande.items = items;
-    existingCommande.totalAmount = totalAmount;
-
-    await existingCommande.save({ session });
-
-    const paiement = await Paiement.findOne({ commande: commandeId }),
-      paiementId = paiement ? paiement._id : null;
-    if (paiementId) {
-      const paiementRecord = await Paiement.findById(paiementId).session(
-        session
-      );
-      if (paiementRecord) {
-        paiementRecord.totalAmount = totalAmount;
-        await paiementRecord.save({ session });
-      }
-    }
-
-    await session.commitTransaction();
-    session.endSession();
-
-    return res
-      .status(200)
-      .json({ message: 'Commande mise à jour avec succès' });
-  } catch (error) {
-    console.log(error);
-    await session.abortTransaction();
-    session.endSession();
-    console.error(error);
-    return res.status(400).json({ message: error.message });
   }
 };

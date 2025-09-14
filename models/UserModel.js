@@ -24,6 +24,11 @@ const UserSchema = new mongoose.Schema(
       type: String,
       enum: ['admin', 'user'],
     },
+    boutique: {
+      type: String,
+      enum: [1, 2],
+      required: true,
+    },
   },
   {
     timestamps: true,

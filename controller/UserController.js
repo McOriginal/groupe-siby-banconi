@@ -7,6 +7,13 @@ const nodemailer = require('nodemailer');
 exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
+    // Limiter le nombre d'utilisateurs à 5
+    const userCount = await User.countDocuments();
+    if (userCount >= 5) {
+      return res
+        .status(400)
+        .json({ message: 'Vous ne pouvez pas créer plus de (5 Comptes).' });
+    }
     // Vérifie si l'utilisateur existe déjà
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -78,6 +85,66 @@ exports.login = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Erreur lors de la connexion.' });
+  }
+};
+
+// Get All Users
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password'); // Exclure le mot de passe
+    res.status(200).json(users);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};
+
+// Get One User
+
+exports.getOneUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await User.findById(userId).select('-password'); // Exclure le mot de passe
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur introuvable.' });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Erreur serveur.' });
+  }
+};
+
+// Update User
+exports.updateUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { name, email, role } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur introuvable.' });
+    }
+
+    // Vérifier si l'email est modifié et s'il est déjà utilisé
+    if (email && email !== user.email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+        return res
+          .status(400)
+          .json({ message: 'Un utilisateur avec cet email existe déjà.' });
+      }
+      user.email = email;
+    }
+
+    if (name) user.name = name;
+    if (role) user.role = role;
+
+    await user.save();
+    res.status(200).json({ message: 'Utilisateur mis à jour avec succès.' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'Erreur serveur.' });
   }
 };
 

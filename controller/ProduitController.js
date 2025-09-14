@@ -37,6 +37,28 @@ exports.createProduit = async (req, res) => {
   }
 };
 
+// Middleware pour mettre à jour les produits sans user
+exports.cisseProd = async (req, res) => {
+  try {
+    const userId = '68b2e06c5389fec81cf995f3'; // ID utilisateur à associer
+    // Récupérer les produits après mise à jour
+    const result = await Produit.find({
+      user: userId,
+    });
+
+    return res.status(200).json({
+      status: 'success',
+      prodNumber: result.length,
+      products: result,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      status: 'error',
+      message: err.message,
+    });
+  }
+};
+
 // Mettre à jour une Produit
 exports.updateProduit = async (req, res) => {
   try {
