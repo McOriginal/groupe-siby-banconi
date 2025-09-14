@@ -61,7 +61,7 @@ exports.updatePaiement = async (req, res) => {
 exports.getAllPaiements = async (req, res) => {
   try {
     const paiements = await Paiement.find()
-      // Trie par date de création, du plus récent au plus ancien
+      .populate('user')
       .sort({ createdAt: -1 })
       .populate('commande');
     return res.status(200).json(paiements);
@@ -73,10 +73,12 @@ exports.getAllPaiements = async (req, res) => {
 // Trouver un PAIEMENT
 exports.getPaiement = async (req, res) => {
   try {
-    const paiements = await Paiement.findById(req.params.id).populate({
-      path: 'commande',
-      populate: { path: 'items.produit' },
-    });
+    const paiements = await Paiement.findById(req.params.id)
+      .populate('user')
+      .populate({
+        path: 'commande',
+        populate: { path: 'items.produit' },
+      });
 
     return res.status(200).json(paiements);
   } catch (err) {

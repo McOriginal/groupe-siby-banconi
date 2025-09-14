@@ -33,16 +33,14 @@ exports.getAllLivraisonHistorique = async (req, res) => {
     const livraison = await LivraisonHistorique.find({
       commande: req.params.id,
     })
-      .sort({ createdAt: -1 })
-      .populate('commande');
+      .populate('user')
+      .populate('commande')
+      .sort({ createdAt: -1 });
 
     // Vérfion pour chaque produit livré si la quantité livré correspond au quantité commandée alors on met à jours le status de commande par "Livré"
-    const commande = await Commande.findById(req.params.id).populate(
-      'items.produit'
-    );
-    // if (!commande) {
-    //   return res.status(404).json({ message: 'Commande non trouvée' });
-    // }
+    const commande = await Commande.findById(req.params.id)
+      .populate('items.produit')
+      .populate('user');
     const totalCommandeQuantity = commande.items.reduce((acc, item) => {
       return acc + item.quantity;
     }, 0);
@@ -66,7 +64,9 @@ exports.getAllLivraisonHistorique = async (req, res) => {
 // Afficher une seule Livraison
 exports.getOneLivraisonHistorique = async (req, res) => {
   try {
-    const livraison = await LivraisonHistorique.findById(req.params.id);
+    const livraison = await LivraisonHistorique.findById(
+      req.params.id
+    ).populate('user');
     return res.status(200).json(livraison);
   } catch (e) {
     return res.status(404).json({ message: e.message });

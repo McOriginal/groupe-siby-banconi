@@ -26,7 +26,8 @@ exports.getAllDevis = async (req, res) => {
     const devisListe = await Devis.find()
       // Trie par date de création, du plus récent au plus ancien
       .sort({ createdAt: -1 })
-      .populate('items.produit');
+      .populate('items.produit')
+      .populate('user');
 
     return res.status(201).json(devisListe);
   } catch (e) {
@@ -37,9 +38,9 @@ exports.getAllDevis = async (req, res) => {
 // Trouver une seulle Devis
 exports.getOneDevis = async (req, res) => {
   try {
-    const devisData = await Devis.findById(req.params.id).populate(
-      'items.produit'
-    );
+    const devisData = await Devis.findById(req.params.id)
+      .populate('items.produit')
+      .populate('user');
 
     return res.status(201).json(devisData);
   } catch (e) {

@@ -105,8 +105,8 @@ exports.updateProduit = async (req, res) => {
 //  Afficher les Produit avec une stock minimum de (1)
 exports.getAllProduits = async (req, res) => {
   try {
-    const produits = await Produit.find({ stock: { $gt: 0 } })
-      // Trie par date de création, du plus récent au plus ancien
+    const produits = await Produit.find()
+      .populate('user')
       .sort({ createdAt: -1 });
 
     return res.status(200).json(produits);
@@ -120,8 +120,9 @@ exports.getAllProduitWithStockFinish = async (req, res) => {
   try {
     // Tous les produits dont le stock mximum est 3
     const produits = await Produit.find({ stock: { $lt: 10 } })
-      // Trie par date de création, du plus récent au plus ancien
+      .populate('user')
       .sort({ createdAt: -1 });
+    // Trie par date de création, du plus récent au plus ancien
 
     return res.status(200).json(produits);
   } catch (err) {
@@ -132,7 +133,7 @@ exports.getAllProduitWithStockFinish = async (req, res) => {
 //  Afficher une seule Produit
 exports.getOneProduit = async (req, res) => {
   try {
-    const produits = await Produit.findById(req.params.id);
+    const produits = await Produit.findById(req.params.id).populate('user');
     return res.status(200).json(produits);
   } catch (err) {
     return res.status(400).json({ status: 'error', message: err.message });
@@ -142,7 +143,7 @@ exports.getOneProduit = async (req, res) => {
 //  Afficher Produit lors de l'approvisionnemnet
 exports.getOneProduitWhenApprovisionne = async (req, res) => {
   try {
-    const produits = await Produit.findById(req.params.id);
+    const produits = await Produit.findById(req.params.id).populate('user');
     return res.status(200).json(produits);
   } catch (err) {
     return res.status(400).json({ status: 'error', message: err.message });

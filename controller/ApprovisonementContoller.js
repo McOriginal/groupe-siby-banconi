@@ -76,6 +76,7 @@ exports.getAllApprovisonements = async (req, res) => {
       // Trie par date de création, du plus récent au plus ancien
       .sort({ createdAt: -1 })
       .populate('produit')
+      .populate('user')
       .populate('fournisseur');
     return res.status(200).json(approvisonements);
   } catch (error) {
@@ -88,6 +89,7 @@ exports.getApprovisonementById = async (req, res) => {
   try {
     const approvisonement = await Approvisonement.findById(req.params.id)
       .populate('Produit')
+      .populate('user')
       .populate('fournisseur');
 
     if (!approvisonement) {

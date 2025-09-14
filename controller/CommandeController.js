@@ -140,7 +140,8 @@ exports.getAllCommandes = async (req, res) => {
     const commandesListe = await Commande.find()
       // Trie par date de création, du plus récent au plus ancien
       .sort({ createdAt: -1 })
-      .populate('items.produit');
+      .populate('items.produit')
+      .populate('user');
 
     // Afficher les COMMANDES en fonction des PAIEMENTS effectués
     const factures = await Paiement.find()
@@ -148,6 +149,7 @@ exports.getAllCommandes = async (req, res) => {
         path: 'commande',
         populate: { path: 'items.produit' },
       })
+      .populate('user')
       .sort({ createdAt: -1 });
     return res.status(201).json({ commandesListe, factures });
   } catch (e) {

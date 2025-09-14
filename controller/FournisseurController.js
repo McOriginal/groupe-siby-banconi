@@ -171,7 +171,7 @@ exports.updateFournisseur = async (req, res) => {
 exports.getAllFournisseurs = async (req, res) => {
   try {
     const fournisseurs = await Fournisseur.find()
-      // Trie par date de création, du plus récent au plus ancien
+      .populate('user')
       .sort({ createdAt: -1 });
     return res.status(200).json(fournisseurs);
   } catch (e) {
@@ -182,7 +182,9 @@ exports.getAllFournisseurs = async (req, res) => {
 // Récupérer un Fournisseur par ID
 exports.getFournisseur = async (req, res) => {
   try {
-    const fournisseur = await Fournisseur.findById(req.params.id);
+    const fournisseur = await Fournisseur.findById(req.params.id).populate(
+      'user'
+    );
     if (!fournisseur)
       return res
         .status(404)

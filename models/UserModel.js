@@ -25,8 +25,8 @@ const UserSchema = new mongoose.Schema(
       enum: ['admin', 'user'],
     },
     boutique: {
-      type: String,
-      enum: [1, 2],
+      type: Number,
+      enum: [0, 1, 2],
       required: true,
     },
   },

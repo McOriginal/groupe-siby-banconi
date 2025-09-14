@@ -7,6 +7,8 @@ const nodemailer = require('nodemailer');
 exports.register = async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
+    const lowerName = name.toLowerCase();
+
     // Limiter le nombre d'utilisateurs à 5
     const userCount = await User.countDocuments();
     if (userCount >= 5) {
@@ -15,7 +17,7 @@ exports.register = async (req, res) => {
         .json({ message: 'Vous ne pouvez pas créer plus de (5 Comptes).' });
     }
     // Vérifie si l'utilisateur existe déjà
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email, name: lowerName });
     if (existingUser) {
       return res
         .status(400)
@@ -27,7 +29,7 @@ exports.register = async (req, res) => {
 
     // Créer l'utilisateur
     await User.create({
-      name,
+      name: lowerName,
       email,
       password: hashedPassword,
       role,
@@ -119,28 +121,33 @@ exports.getOneUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const userId = req.params.id;
-    const { name, email, role } = req.body;
+    const { name, email, role, boutique } = req.body;
+    const lowerName = name.toLowerCase();
+    const existingUser = await User.findOne({
+      email,
+      name: lowerName,
+      _id: { $ne: userId },
+    });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ message: 'Un utilisateur avec cet email existe déjà.' });
+    }
 
-    const user = await User.findById(userId);
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        name: lowerName,
+        email,
+        role,
+        boutique,
+      },
+      { new: true }
+    );
     if (!user) {
       return res.status(404).json({ message: 'Utilisateur introuvable.' });
     }
 
-    // Vérifier si l'email est modifié et s'il est déjà utilisé
-    if (email && email !== user.email) {
-      const emailExists = await User.findOne({ email });
-      if (emailExists) {
-        return res
-          .status(400)
-          .json({ message: 'Un utilisateur avec cet email existe déjà.' });
-      }
-      user.email = email;
-    }
-
-    if (name) user.name = name;
-    if (role) user.role = role;
-
-    await user.save();
     res.status(200).json({ message: 'Utilisateur mis à jour avec succès.' });
   } catch (error) {
     console.log(error);

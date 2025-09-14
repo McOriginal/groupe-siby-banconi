@@ -126,10 +126,9 @@ exports.getAllPaiementsHistorique = async (req, res) => {
     const paiements = await PaiementHistorique.find({
       commande: req.params.id,
     })
-      // commande: new mongoose.Types.ObjectId(req.params.id),
-      // Trie par date de création, du plus récent au plus ancien
-      .sort({ createdAt: -1 })
-      .populate('commande');
+      .populate('user')
+      .populate('commande')
+      .sort({ createdAt: -1 });
 
     return res.status(200).json(paiements);
   } catch (err) {
@@ -139,12 +138,12 @@ exports.getAllPaiementsHistorique = async (req, res) => {
 // Historique des paiements d’un étudiant
 exports.getPaiementHistorique = async (req, res) => {
   try {
-    const paiements = await PaiementHistorique.findById(req.params.id).populate(
-      {
+    const paiements = await PaiementHistorique.findById(req.params.id)
+      .populate('user')
+      .populate({
         path: 'commande',
         populate: { path: 'items.produit' },
-      }
-    );
+      });
 
     return res.status(200).json(paiements);
   } catch (err) {
