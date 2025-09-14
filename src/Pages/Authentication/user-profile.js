@@ -10,7 +10,6 @@ import withRouter from '../../components/Common/withRouter';
 //Import Breadcrumb
 import Breadcrumb from '../../components/Common/Breadcrumb';
 
-import avatar from '../../assets/images/user_profile_image.png';
 import {
   connectedUserEmail,
   connectedUserName,
@@ -18,7 +17,7 @@ import {
 } from './userInfos';
 import { AuthContext } from '../../Auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { companyName } from '../CompanyInfo/CompanyInfo';
+import { companyLogo, companyName } from '../CompanyInfo/CompanyInfo';
 // actions
 
 const UserProfile = () => {
@@ -46,7 +45,7 @@ const UserProfile = () => {
                       style={{ width: '80px', height: '80px' }}
                     >
                       <img
-                        src={avatar}
+                        src={companyLogo}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -70,7 +69,7 @@ const UserProfile = () => {
                       </div>
                     </div>
 
-                    <div className='mt-4 d-flex flex-column gap-4'>
+                    <div className='mt-4 d-flex flex-wrap gap-4'>
                       {connectedUserRole === 'admin' && (
                         <Button
                           color='info'
@@ -79,6 +78,12 @@ const UserProfile = () => {
                           Créer un Compte
                         </Button>
                       )}
+                      <Button
+                        color='info'
+                        onClick={() => navigate('/usersProfileListe')}
+                      >
+                        Liste des Profile
+                      </Button>
                       <Button
                         color='warning'
                         onClick={() => navigate('/updatePassword')}

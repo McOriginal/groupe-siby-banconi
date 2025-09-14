@@ -12,6 +12,10 @@ import outil_10 from '../../assets/images/outil (10).png';
 import outil_11 from '../../assets/images/outil (11).png';
 import outil_12 from '../../assets/images/outil (12).png';
 import outil_13 from '../../assets/images/outil (13).png';
+import avatar from '../../assets/images/user_profile_image.png';
+import comImg from './../../assets/images/passer-la-commande.png';
+import rechargeImg from './../../assets/images/recharge.png';
+import carImg from './../../assets/images/car.png';
 
 const companyName = 'Quincaillerie Général Groupe Siby';
 
@@ -49,4 +53,8 @@ export {
   outil_11,
   outil_12,
   outil_13,
+  avatar,
+  comImg,
+  rechargeImg,
+  carImg,
 };

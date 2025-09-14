@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from './api'; // instance Axios avec baseURL + token auto
 
 // Création d'un nouvel utilisateur
@@ -58,5 +58,32 @@ export const useSendVerifyCodePasswordPassword = () => {
 export const useResetPassword = () => {
   return useMutation({
     mutationFn: (data) => api.put('/users/resetPassword', data),
+  });
+};
+
+// Get All Users
+export const useGetAllUsers = () => {
+  return useQuery({
+    queryKey: ['users'],
+    queryFn: () => api.get('/users/getAllUsers').then((res) => res.data),
+  });
+};
+
+// Get One User
+export const useGetOneUser = (id) => {
+  return useQuery({
+    queryKey: ['users', id],
+    queryFn: () => api.get(`/users/getOneUser/${id}`).then((res) => res.data),
+    enabled: Boolean(id),
+    staleTime: 1000 * 60 * 1,
+  });
+};
+
+// Update User
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => api.put(`/users/updateUser/${id}`, data),
+    onSuccess: () => queryClient.invalidateQueries(['users']),
   });
 };

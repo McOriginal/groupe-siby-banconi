@@ -2,8 +2,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://backend-quincaillerie-groupe-siby.onrender.com/api',
-  // 'http://localhost:5000/api',
+  baseURL:
+    // 'https://backend-quincaillerie-groupe-siby.onrender.com/api',
+    'http://localhost:5000/api',
 
   headers: {
     'Content-Type': 'application/json',

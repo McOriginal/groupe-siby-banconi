@@ -31,6 +31,8 @@ import NewCommande from '../Pages/Commandes/NewCommande.js';
 import DevisListe from '../Pages/Devis/DevisListe.js';
 import NewDevis from '../Pages/Devis/NewDevis.js';
 import UpdateDevis from '../Pages/Devis/UpdateDevis.js';
+import UsersProfilesListe from '../Pages/Authentication/UsersProfilesListe.js';
+import ProfileDetail from '../Pages/Authentication/ProfileDetail.js';
 
 const sharedRoutes = [
   // Produit de la Boutique
@@ -87,6 +89,15 @@ const authProtectedRoutes = [
 
   // Profile
   { path: '/userprofile', component: <UserProfile /> },
+
+  // Details du Profile
+  { path: '/userProfileDetails/:id', component: <ProfileDetail /> },
+
+  // Modifier un Profile
+  { path: '/updateUser/:id', component: <UserProfile /> },
+
+  // Liste des Utilisateurs
+  { path: '/usersProfileListe', component: <UsersProfilesListe /> },
 
   // Produit de la Boutique
   { path: '/produits', component: <ProduitListe /> },

@@ -42,10 +42,11 @@ export default function ProduitListe() {
     const search = searchTerm.toLowerCase();
 
     return (
-      prod?.name?.toLowerCase().includes(search) ||
-      prod?.category?.toLowerCase().includes(search) ||
-      prod?.stock?.toString().includes(search) ||
-      prod?.price?.toString().includes(search)
+      prod?.stock > 0 &&
+      (prod?.name?.toLowerCase().includes(search) ||
+        prod?.category?.toLowerCase().includes(search) ||
+        prod?.stock?.toString().includes(search) ||
+        prod?.price?.toString().includes(search))
     );
   });
 
@@ -109,9 +110,9 @@ export default function ProduitListe() {
                       <Col>
                         <p className='text-center font-size-15 mt-2'>
                           Produit Enregistrées:{' '}
-                          <span className='text-warning'>
+                          <span className='text-warning text-bold'>
                             {' '}
-                            {produits?.length}{' '}
+                            {filterSearchProduits?.length}{' '}
                           </span>
                         </p>
                       </Col>
