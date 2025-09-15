@@ -30,7 +30,7 @@ export default function PaiementsListe() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterReliqua, setFilterReliqua] = useState(false);
   const [todayPaiement, setTodayPaiement] = useState(false);
-  const [selectedBoutique, setSelectedBoutique] = useState('');
+  const [selectedBoutique, setSelectedBoutique] = useState(null);
 
   // Fonction de Rechercher
   const filterSearchPaiement = paiementsData

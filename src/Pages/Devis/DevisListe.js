@@ -62,7 +62,7 @@ export default function DevisListe() {
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedBoutique, setSelectedBoutique] = useState('');
+  const [selectedBoutique, setSelectedBoutique] = useState(null);
   // Fonction de Recherche dans la barre de recherche
   const filterDevis = devisData
     ?.filter((fac) => {
