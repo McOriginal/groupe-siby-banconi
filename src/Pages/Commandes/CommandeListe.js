@@ -113,7 +113,7 @@ export default function CommandeListe() {
   const [todayCommande, setTodayCommande] = useState(false);
   const [delivredCommande, setDelivredCommande] = useState(false);
   const [notDelivredCommande, setNotdelivredCommande] = useState(false);
-  const [selectedBoutique, setSelectedBoutique] = useState('');
+  const [selectedBoutique, setSelectedBoutique] = useState(undefined);
   // Fonction de Recherche dans la barre de recherche
   const filterCommandes = commandes?.commandesListe
     ?.filter((comm) => {
@@ -182,6 +182,14 @@ export default function CommandeListe() {
     'TYPE after parsing connectedUserBoutique: ',
     typeof connectedUserBoutique
   );
+  console.log(
+    'selectedBoutique == connectedUserBoutique: ',
+    selectedBoutique == connectedUserBoutique
+  ); // true
+  console.log(
+    'selectedBoutique === connectedUserBoutique: ',
+    selectedBoutique === connectedUserBoutique
+  ); // false
 
   return (
     <React.Fragment>
