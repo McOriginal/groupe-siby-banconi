@@ -99,6 +99,27 @@ const FacturePaiement = ({
               <CardBody>
                 <FactureHeader />
 
+                {selectedPaiementHistorique?.commande?.statut === 'livré' &&
+                  reliqua === 0 && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: '20px',
+                        transform: 'rotate(-45deg)',
+                        opacity: '0.5',
+                        border: '1px dashed #003f9f',
+                        color: ' #003f9f',
+                        fontSize: ' 34px',
+                        fontweight: 'bold',
+                        width: '100%',
+                        textAlign: 'cente',
+                        display: 'flex',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <p> Payé et Livré</p>
+                    </div>
+                  )}
                 <div
                   sm='12'
                   className='d-flex justify-content-around align-items-center mt-4 px-2 '

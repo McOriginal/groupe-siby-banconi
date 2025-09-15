@@ -24,6 +24,7 @@ import {
   connectedUserBoutique,
   connectedUserRole,
 } from '../../Authentication/userInfos';
+import FactureLivraison from './FactureLivraison';
 
 export default function LivraisonHistorique({ id, commandeItems }) {
   const [form_modal, setForm_modal] = useState(false);
@@ -40,11 +41,18 @@ export default function LivraisonHistorique({ id, commandeItems }) {
 
   const [livraisonToUpdate, setLivraisonToUpdate] = useState(null);
   const [formTitle, setFormTitle] = useState('');
+  const [facture_modal, setFacture_modal] = useState(false);
+  const [selectedLivraison, setSelectedLivraison] = useState(null);
+  const [lastLivraisonDate, setLastLivraisonDate] = useState(null);
   // Ouverture de Modal Form
   function tog_form_modal() {
     setForm_modal(!form_modal);
   }
 
+  // Ouverture de Modal Form
+  function tog_facture_modal() {
+    setFacture_modal(!facture_modal);
+  }
   // State de Recherche
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -89,6 +97,13 @@ export default function LivraisonHistorique({ id, commandeItems }) {
       <div className='page-content'>
         <Container fluid>
           {/* -------------------------- */}
+          <FactureLivraison
+            tog_show_modal={setFacture_modal}
+            show_modal={facture_modal}
+            selectedLivraisonHistoriqueCommandes={selectedLivraison}
+            delivredProducts={productDelivredResult}
+            lastDelivreDate={lastLivraisonDate}
+          />
           <FormModal
             form_modal={form_modal}
             setForm_modal={setForm_modal}
@@ -112,6 +127,22 @@ export default function LivraisonHistorique({ id, commandeItems }) {
                 </CardTitle>
                 <CardBody>
                   <div id='Livraison HistoriqueList'>
+                    <Button
+                      color='secondary'
+                      className='add-btn my-4 text-center d-flex justify-content-center align-items-center'
+                      id='create-btn'
+                      onClick={() => {
+                        setSelectedLivraison(
+                          livraisonHistoriqueData[0]?.commande
+                        );
+                        setLastLivraisonDate(livraisonHistoriqueData[0]);
+
+                        tog_facture_modal();
+                      }}
+                    >
+                      <i className='bx bx-show align-center me-1'></i> Reçue de
+                      Livraison
+                    </Button>
                     <Row className='g-4 mb-3 justify-content-between align-items-center'>
                       {connectedUserRole === 'admin' &&
                         connectedUserBoutique ===
