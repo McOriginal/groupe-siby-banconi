@@ -2,7 +2,7 @@ let connectedUserId = null;
 let connectedUserName = null;
 let connectedUserEmail = null;
 let connectedUserRole = null;
-let connectedUserBoutique = null;
+let connectedUserBoutique = undefined;
 
 const authUser = localStorage.getItem('authUser');
 
