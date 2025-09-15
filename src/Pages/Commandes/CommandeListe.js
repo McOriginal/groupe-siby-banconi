@@ -192,14 +192,16 @@ export default function CommandeListe() {
                       <div className='mb-3'>
                         <h6>Filter par Boutique </h6>
                         <select
-                          value={selectedBoutique}
-                          onChange={(e) => setSelectedBoutique(e.target.value)}
+                          value={parseInt(selectedBoutique)}
+                          onChange={(e) =>
+                            setSelectedBoutique(parseInt(e.target.value))
+                          }
                           className='form-select border border-dark rounded '
                           style={{ cursor: 'pointer' }}
                         >
                           <option value=''>Toutes</option>
                           <option value={connectedUserBoutique}>
-                            {connectedUserBoutique} - Ma Boutique
+                            {parseInt(connectedUserBoutique)} - Ma Boutique
                           </option>
                           {connectedUserBoutique === 1 ? (
                             <option value='2'>Boutique - 2</option>
