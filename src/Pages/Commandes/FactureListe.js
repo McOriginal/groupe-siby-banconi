@@ -53,7 +53,7 @@ export default function FactureListe() {
   const contentRef = useRef();
   const reactToPrintFn = useReactToPrint({ contentRef });
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedBoutique, setSelectedBoutique] = useState('');
+  const [selectedBoutique, setSelectedBoutique] = useState(null);
   // Fonction de Recherche dans la barre de recherche
   const filterCommandesFacture = commandes?.factures
     ?.filter((fac) => {
@@ -70,8 +70,8 @@ export default function FactureListe() {
       );
     })
     ?.filter((item) => {
-      if (selectedBoutique) {
-        return item.user?.boutique === parseInt(selectedBoutique);
+      if (selectedBoutique !== null) {
+        return Number(item.user?.boutique) === selectedBoutique;
       }
       return true;
     });
@@ -84,18 +84,19 @@ export default function FactureListe() {
             <div className=' d-flex align-items-center gap-3 mb-4 justify-content-between flex-wrap'>
               {/* Selectonner la boutique */}
               <div className='mb-3'>
-                <h6>Filter par Boutique </h6>
+                <h6>Filtrer par Boutique </h6>
                 <select
-                  value={parseInt(selectedBoutique)}
-                  onChange={(e) =>
-                    setSelectedBoutique(parseInt(e.target.value))
-                  }
+                  value={selectedBoutique ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setSelectedBoutique(v === '' ? null : Number(v));
+                  }}
                   className='form-select border border-dark rounded '
                   style={{ cursor: 'pointer' }}
                 >
                   <option value=''>Toutes</option>
-                  <option value={connectedUserBoutique}>
-                    {parseInt(connectedUserBoutique)} - Ma Boutique
+                  <option value={connectedUserBoutique ?? 0}>
+                    {connectedUserBoutique ?? 0} - Ma Boutique
                   </option>
                   {connectedUserBoutique === 1 ? (
                     <option value='2'>Boutique - 2</option>

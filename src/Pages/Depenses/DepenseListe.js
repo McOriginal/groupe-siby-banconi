@@ -16,7 +16,7 @@ export default function DepenseListe() {
   const { mutate: deleteDepense, isDeleting } = useDeleteDepense();
   const [depenseToUpdate, setDepenseToUpdate] = useState(null);
   const [todayExpense, setTodayExpense] = useState(false);
-  const [selectedBoutique, setSelectedBoutique] = useState('');
+  const [selectedBoutique, setSelectedBoutique] = useState(null);
 
   // Search State
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,8 +36,8 @@ export default function DepenseListe() {
       );
     })
     ?.filter((item) => {
-      if (selectedBoutique) {
-        return item.user?.boutique === parseInt(selectedBoutique);
+      if (selectedBoutique !== null) {
+        return Number(item.user?.boutique) === selectedBoutique;
       }
       return true;
     })
@@ -152,14 +152,17 @@ export default function DepenseListe() {
                       <div className='d-flex gap-2 justify-content-center align-items-center my-3 '>
                         <h6>Boutique </h6>
                         <select
-                          value={selectedBoutique}
-                          onChange={(e) => setSelectedBoutique(e.target.value)}
+                          value={selectedBoutique ?? ''}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setSelectedBoutique(v === '' ? null : Number(v));
+                          }}
                           className='form-select border border-dark rounded '
                           style={{ cursor: 'pointer' }}
                         >
                           <option value=''>Toutes</option>
-                          <option value={connectedUserBoutique}>
-                            {connectedUserBoutique} - Ma Boutique
+                          <option value={connectedUserBoutique ?? 0}>
+                            {connectedUserBoutique ?? 0} - Ma Boutique
                           </option>
                           {connectedUserBoutique === 1 ? (
                             <option value='2'>Boutique - 2</option>

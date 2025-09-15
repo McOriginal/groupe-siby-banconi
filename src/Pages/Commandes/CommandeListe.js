@@ -113,7 +113,7 @@ export default function CommandeListe() {
   const [todayCommande, setTodayCommande] = useState(false);
   const [delivredCommande, setDelivredCommande] = useState(false);
   const [notDelivredCommande, setNotdelivredCommande] = useState(false);
-  const [selectedBoutique, setSelectedBoutique] = useState(undefined);
+  const [selectedBoutique, setSelectedBoutique] = useState(null);
   // Fonction de Recherche dans la barre de recherche
   const filterCommandes = commandes?.commandesListe
     ?.filter((comm) => {
@@ -171,25 +171,6 @@ export default function CommandeListe() {
   const commandesEnCours = filterCommandes?.filter(
     (comm) => comm?.statut.toLowerCase() === 'en cours'
   );
-  console.log('VALUE selectedBoutique: ', selectedBoutique);
-  console.log('TYPE selectedBoutique: ', typeof selectedBoutique);
-  console.log('INT selectedBoutique: ', parseInt(selectedBoutique));
-  console.log('TYPE after parsing selectedBoutique: ', typeof selectedBoutique);
-  console.log('VALUE connectedUserBoutique: ', connectedUserBoutique);
-  console.log('TYPE connectedUserBoutique: ', typeof connectedUserBoutique);
-  console.log('INT connectedUserBoutique: ', parseInt(connectedUserBoutique));
-  console.log(
-    'TYPE after parsing connectedUserBoutique: ',
-    typeof connectedUserBoutique
-  );
-  console.log(
-    'selectedBoutique == connectedUserBoutique: ',
-    selectedBoutique == connectedUserBoutique
-  ); // true
-  console.log(
-    'selectedBoutique === connectedUserBoutique: ',
-    selectedBoutique === connectedUserBoutique
-  ); // false
 
   return (
     <React.Fragment>

@@ -50,8 +50,8 @@ export default function PaiementsListe() {
       );
     })
     ?.filter((item) => {
-      if (selectedBoutique) {
-        return item.user?.boutique === parseInt(selectedBoutique);
+      if (selectedBoutique !== null) {
+        return Number(item.user?.boutique) === selectedBoutique;
       }
       return true;
     })
@@ -219,16 +219,17 @@ export default function PaiementsListe() {
                       <Col className='d-flex gap-2 justify-content-center align-items-center my-3 '>
                         <h6>Boutique </h6>
                         <select
-                          value={parseInt(selectedBoutique)}
-                          onChange={(e) =>
-                            setSelectedBoutique(parseInt(e.target.value))
-                          }
+                          value={selectedBoutique ?? ''}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setSelectedBoutique(v === '' ? null : Number(v));
+                          }}
                           className='form-select border border-dark rounded '
                           style={{ cursor: 'pointer' }}
                         >
                           <option value=''>Toutes</option>
-                          <option value={connectedUserBoutique}>
-                            {parseInt(connectedUserBoutique)} - Ma Boutique
+                          <option value={connectedUserBoutique ?? 0}>
+                            {connectedUserBoutique ?? 0} - Ma Boutique
                           </option>
                           {connectedUserBoutique === 1 ? (
                             <option value='2'>Boutique - 2</option>
