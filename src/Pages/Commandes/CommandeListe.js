@@ -211,7 +211,7 @@ export default function CommandeListe() {
                       <div className='mb-3'>
                         <h6>Filtrer par Boutique </h6>
                         <select
-                          value={selectedBoutique}
+                          value={selectedBoutique ?? 0}
                           onChange={(e) =>
                             setSelectedBoutique(parseInt(e.target.value))
                           }
