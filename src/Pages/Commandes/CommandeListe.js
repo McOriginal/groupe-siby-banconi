@@ -130,8 +130,8 @@ export default function CommandeListe() {
       );
     })
     ?.filter((item) => {
-      if (selectedBoutique) {
-        return item.user?.boutique === selectedBoutique;
+      if (selectedBoutique !== null) {
+        return Number(item.user?.boutique) === selectedBoutique;
       }
       return true;
     })
@@ -211,10 +211,11 @@ export default function CommandeListe() {
                       <div className='mb-3'>
                         <h6>Filtrer par Boutique </h6>
                         <select
-                          value={selectedBoutique ?? 0}
-                          onChange={(e) =>
-                            setSelectedBoutique(parseInt(e.target.value))
-                          }
+                          value={selectedBoutique ?? ''}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setSelectedBoutique(v === '' ? null : Number(v));
+                          }}
                           className='form-select border border-dark rounded '
                           style={{ cursor: 'pointer' }}
                         >
@@ -444,9 +445,9 @@ export default function CommandeListe() {
                                             <i className=' bx bx-show-alt text-white'></i>
                                           </button>
                                         </div>
-                                        {connectedUserRole === 'admin' &&
-                                          connectedUserBoutique ===
-                                            comm.user.boutique && (
+                                        {connectedUserBoutique !== null &&
+                                          Number(comm.user?.boutique) ===
+                                            Number(connectedUserBoutique) && (
                                             <div className='d-flex gap-2'>
                                               <div className='edit'>
                                                 <button
