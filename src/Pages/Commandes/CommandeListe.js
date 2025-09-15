@@ -131,7 +131,7 @@ export default function CommandeListe() {
     })
     ?.filter((item) => {
       if (selectedBoutique) {
-        return item.user?.boutique === selectedBoutique;
+        return item.user?.boutique === parseInt(selectedBoutique);
       }
       return true;
     })

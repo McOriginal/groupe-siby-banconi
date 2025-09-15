@@ -2,7 +2,7 @@ let connectedUserId = null;
 let connectedUserName = null;
 let connectedUserEmail = null;
 let connectedUserRole = null;
-let connectedUserBoutique = undefined;
+let connectedUserBoutique = null;
 
 const authUser = localStorage.getItem('authUser');
 
@@ -14,7 +14,7 @@ if (authUser) {
     connectedUserName = dataParse?.user?.name || null;
     connectedUserEmail = dataParse?.user?.email || null;
     connectedUserRole = dataParse?.user?.role || null;
-    connectedUserBoutique = parseInt(dataParse?.user?.boutique);
+    connectedUserBoutique = dataParse?.user?.boutique;
   } catch (error) {
     console.error('Erreur lors du parsing de authUser :', error);
   }
