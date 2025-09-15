@@ -131,7 +131,7 @@ export default function CommandeListe() {
     })
     ?.filter((item) => {
       if (selectedBoutique) {
-        return item.user?.boutique === parseInt(selectedBoutique);
+        return item.user?.boutique === selectedBoutique;
       }
       return true;
     })
@@ -201,7 +201,7 @@ export default function CommandeListe() {
                     <div className=' d-flex align-items-center gap-3 mb-4 justify-content-between flex-wrap'>
                       {/* Selectonner la boutique */}
                       <div className='mb-3'>
-                        <h6>Filter par Boutique </h6>
+                        <h6>Filtrer par Boutique </h6>
                         <select
                           value={selectedBoutique}
                           onChange={(e) => setSelectedBoutique(e.target.value)}
