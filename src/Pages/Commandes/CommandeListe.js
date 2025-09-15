@@ -172,6 +172,7 @@ export default function CommandeListe() {
     (comm) => comm?.statut.toLowerCase() === 'en cours'
   );
 
+  console.log('VALUE: ', selectedBoutique);
   return (
     <React.Fragment>
       <div className='page-content'>
