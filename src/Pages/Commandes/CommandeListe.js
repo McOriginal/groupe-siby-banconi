@@ -219,7 +219,7 @@ export default function CommandeListe() {
                           style={{ cursor: 'pointer' }}
                         >
                           <option value=''>Toutes</option>
-                          <option value={connectedUserBoutique}>
+                          <option value={connectedUserBoutique ?? 0}>
                             {connectedUserBoutique ?? 0} - Ma Boutique
                           </option>
                           {connectedUserBoutique === 1 ? (
