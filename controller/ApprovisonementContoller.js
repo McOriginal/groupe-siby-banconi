@@ -44,17 +44,17 @@ exports.createApprovisonement = async (req, res) => {
     );
 
     // 3. Création de la dépense
-    await Depense.create(
-      [
-        {
-          user: req.user.id,
-          totalAmount: formatPrice * formatQuantity,
-          motifDepense: `Approvisionnement de ${formatQuantity} unité(s) du produit ${updatedProduct.name}`,
-          dateOfDepense: approvisonement[0].deliveryDate,
-        },
-      ],
-      { session }
-    );
+    // await Depense.create(
+    //   [
+    //     {
+    //       user: req.user.id,
+    //       totalAmount: formatPrice * formatQuantity,
+    //       motifDepense: `Approvisionnement de ${formatQuantity} unité(s) du produit ${updatedProduct.name}`,
+    //       dateOfDepense: approvisonement[0].deliveryDate,
+    //     },
+    //   ],
+    //   { session }
+    // );
 
     await session.commitTransaction();
     session.endSession();

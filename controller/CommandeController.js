@@ -160,17 +160,19 @@ exports.getAllCommandes = async (req, res) => {
 // Trouver une seulle COMMANDE
 exports.getOneCommande = async (req, res) => {
   try {
-    const commandeData = await Commande.findById(req.params.id).populate(
-      'items.produit'
-    );
+    const commandeData = await Commande.findById(req.params.id)
+      .populate('items.produit')
+      .populate('user');
 
     // ID de PAIEMENT correspondant au COMMANDE
     const paiementCommande = await Paiement.findOne({
       commande: req.params.id,
-    }).populate({
-      path: 'commande',
-      populate: { path: 'items.produit' },
-    });
+    })
+      .populate({
+        path: 'commande',
+        populate: { path: 'items.produit' },
+      })
+      .populate('user');
     return res.status(201).json({ commandeData, paiementCommande });
   } catch (e) {
     return res.status(404).json(e);
