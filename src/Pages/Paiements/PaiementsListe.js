@@ -12,7 +12,10 @@ import { deleteButton } from '../components/AlerteModal';
 import { useAllPaiements, useDeletePaiement } from '../../Api/queriesPaiement';
 import PaiementForm from './PaiementForm';
 import ReçuPaiement from './ReçuPaiement';
-import { connectedUserRole } from '../Authentication/userInfos';
+import {
+  connectedUserBoutique,
+  connectedUserRole,
+} from '../Authentication/userInfos';
 
 export default function PaiementsListe() {
   const [form_modal, setForm_modal] = useState(false);
@@ -27,6 +30,8 @@ export default function PaiementsListe() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterReliqua, setFilterReliqua] = useState(false);
   const [todayPaiement, setTodayPaiement] = useState(false);
+  const [selectedBoutique, setSelectedBoutique] = useState('');
+
   // Fonction de Rechercher
   const filterSearchPaiement = paiementsData
     ?.filter((paiement) => {
@@ -43,6 +48,12 @@ export default function PaiementsListe() {
           new Date(paiement?.paiementDate).toLocaleDateString()
         ).includes(search)
       );
+    })
+    ?.filter((item) => {
+      if (selectedBoutique) {
+        return item.user?.boutique === parseInt(selectedBoutique);
+      }
+      return true;
     })
     ?.filter((paiement) => {
       if (!filterReliqua) return true; // pas de filtre
@@ -205,6 +216,30 @@ export default function PaiementsListe() {
                           </label>
                         </div>
                       </Col>
+                      <Col className='d-flex gap-2 justify-content-center align-items-center my-3 '>
+                        <h6>Boutique </h6>
+                        <select
+                          value={selectedBoutique}
+                          onChange={(e) => setSelectedBoutique(e.target.value)}
+                          className='form-select border border-dark rounded '
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <option value=''>Toutes</option>
+                          <option value={connectedUserBoutique}>
+                            {connectedUserBoutique} - Ma Boutique
+                          </option>
+                          {connectedUserBoutique === 1 ? (
+                            <option value='2'>Boutique - 2</option>
+                          ) : connectedUserBoutique === 2 ? (
+                            <option value='1'>Boutique - 1</option>
+                          ) : (
+                            <optgroup label='autres'>
+                              <option value='1'>Boutique - 1</option>
+                              <option value='2'>Boutique - 2</option>
+                            </optgroup>
+                          )}
+                        </select>
+                      </Col>
                     </Row>
                     {error && (
                       <div className='text-danger text-center'>
@@ -343,42 +378,45 @@ export default function PaiementsListe() {
                                               <i className='bx bx-show align-center text-white'></i>
                                             </button>
                                           </div>
-                                          {connectedUserRole === 'admin' && (
-                                            <div className='edit'>
-                                              <button
-                                                className='btn btn-sm btn-success edit-item-btn'
-                                                onClick={() => {
-                                                  setFormModalTitle(
-                                                    'Modifier les données'
-                                                  );
-                                                  setPaiementToUpdate(paiement);
-                                                  tog_form_modal();
-                                                }}
-                                              >
-                                                <i className='ri-pencil-fill text-white'></i>
-                                              </button>
-                                            </div>
-                                          )}
-
-                                          {connectedUserRole === 'admin' && (
-                                            <div className='remove'>
-                                              <button
-                                                className='btn btn-sm btn-danger remove-item-btn'
-                                                onClick={() => {
-                                                  deleteButton(
-                                                    paiement?._id,
-                                                    `Paiement de ${formatPrice(
-                                                      paiement?.totalAmount
-                                                    )} F
+                                          {connectedUserRole === 'admin' &&
+                                            connectedUserBoutique ===
+                                              paiement.user.boutique && (
+                                              <div className='d-flex'>
+                                                <div className='edit mx-2'>
+                                                  <button
+                                                    className='btn btn-sm btn-success edit-item-btn'
+                                                    onClick={() => {
+                                                      setFormModalTitle(
+                                                        'Modifier les données'
+                                                      );
+                                                      setPaiementToUpdate(
+                                                        paiement
+                                                      );
+                                                      tog_form_modal();
+                                                    }}
+                                                  >
+                                                    <i className='ri-pencil-fill text-white'></i>
+                                                  </button>
+                                                </div>
+                                                <div className='remove'>
+                                                  <button
+                                                    className='btn btn-sm btn-danger remove-item-btn'
+                                                    onClick={() => {
+                                                      deleteButton(
+                                                        paiement?._id,
+                                                        `Paiement de ${formatPrice(
+                                                          paiement?.totalAmount
+                                                        )} F
                                                     `,
-                                                    deletePaiement
-                                                  );
-                                                }}
-                                              >
-                                                <i className='ri-delete-bin-fill text-white'></i>
-                                              </button>
-                                            </div>
-                                          )}
+                                                        deletePaiement
+                                                      );
+                                                    }}
+                                                  >
+                                                    <i className='ri-delete-bin-fill text-white'></i>
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            )}
                                         </div>
                                       )}
                                     </td>

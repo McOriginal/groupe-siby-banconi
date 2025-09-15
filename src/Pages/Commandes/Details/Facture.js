@@ -254,6 +254,7 @@ export default function Facture() {
                   selectedCommande?.paiementCommande?.totalPaye
                 : selectedCommande?.commandeData?.totalAmount
             }
+            boutique={selectedCommande?.commandeData?.user?.boutique}
           />
           {/* Historique de Paiement */}
 

@@ -10,7 +10,10 @@ import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import { useAllCommandes, useDeleteCommande } from '../../Api/queriesCommande';
 import { useNavigate } from 'react-router-dom';
-import { connectedUserRole } from '../Authentication/userInfos';
+import {
+  connectedUserBoutique,
+  connectedUserRole,
+} from '../Authentication/userInfos';
 
 export default function CommandeListe() {
   // Afficher toutes les commandes
@@ -110,7 +113,7 @@ export default function CommandeListe() {
   const [todayCommande, setTodayCommande] = useState(false);
   const [delivredCommande, setDelivredCommande] = useState(false);
   const [notDelivredCommande, setNotdelivredCommande] = useState(false);
-
+  const [selectedBoutique, setSelectedBoutique] = useState('');
   // Fonction de Recherche dans la barre de recherche
   const filterCommandes = commandes?.commandesListe
     ?.filter((comm) => {
@@ -121,8 +124,16 @@ export default function CommandeListe() {
         comm?.adresse.toLowerCase().includes(search) ||
         comm?.items?.length.toString().includes(search) ||
         comm?.statut.toLowerCase().includes(search) ||
-        new Date(comm?.createdAt).toLocaleDateString('fr-FR').includes(search)
+        new Date(comm?.commandeDate || comm?.createdAt)
+          .toLocaleDateString('fr-FR')
+          .includes(search)
       );
+    })
+    ?.filter((item) => {
+      if (selectedBoutique) {
+        return item.user?.boutique === parseInt(selectedBoutique);
+      }
+      return true;
     })
     ?.filter((item) => {
       if (todayCommande) {
@@ -176,16 +187,42 @@ export default function CommandeListe() {
               <Card>
                 <CardBody>
                   <div id='commandeList'>
-                    <div className=' d-flex align-items-center gap-3 mb-4 justify-content-end'>
-                      {searchTerm !== '' && (
-                        <Button
-                          color='danger'
-                          onClick={() => setSearchTerm('')}
+                    <div className=' d-flex align-items-center gap-3 mb-4 justify-content-between flex-wrap'>
+                      {/* Selectonner la boutique */}
+                      <div className='mb-3'>
+                        <h6>Filter par Boutique </h6>
+                        <select
+                          value={selectedBoutique}
+                          onChange={(e) => setSelectedBoutique(e.target.value)}
+                          className='form-select border border-dark rounded '
+                          style={{ cursor: 'pointer' }}
                         >
-                          <i className='fas fa-window-close'></i>
-                        </Button>
-                      )}
-                      <div className='search-box me-2'>
+                          <option value=''>Toutes</option>
+                          <option value={connectedUserBoutique}>
+                            {connectedUserBoutique} - Ma Boutique
+                          </option>
+                          {connectedUserBoutique === 1 ? (
+                            <option value='2'>Boutique - 2</option>
+                          ) : connectedUserBoutique === 2 ? (
+                            <option value='1'>Boutique - 1</option>
+                          ) : (
+                            <optgroup label='autres'>
+                              <option value='1'>Boutique - 1</option>
+                              <option value='2'>Boutique - 2</option>
+                            </optgroup>
+                          )}
+                        </select>
+                      </div>
+
+                      <div className='search-box me-2 d-flex align-items-center gap-2'>
+                        {searchTerm !== '' && (
+                          <Button
+                            color='danger'
+                            onClick={() => setSearchTerm('')}
+                          >
+                            <i className='fas fa-window-close'></i>
+                          </Button>
+                        )}
                         <input
                           type='text'
                           className='form-control search border border-dark rounded'
@@ -386,34 +423,36 @@ export default function CommandeListe() {
                                             <i className=' bx bx-show-alt text-white'></i>
                                           </button>
                                         </div>
-                                        {connectedUserRole === 'admin' && (
-                                          <div className='edit'>
-                                            <button
-                                              className='btn btn-sm btn-success edit-item-btn'
-                                              onClick={() => {
-                                                navigate(
-                                                  `/updateCommande/${comm?._id}`
-                                                );
-                                              }}
-                                            >
-                                              <i className='ri-pencil-fill text-white'></i>
-                                            </button>
-                                          </div>
-                                        )}
-                                        {connectedUserRole === 'admin' && (
-                                          <div className='remove'>
-                                            <button
-                                              className='btn btn-sm btn-danger remove-item-btn'
-                                              data-bs-toggle='modal'
-                                              data-bs-target='#deleteRecordModal'
-                                              onClick={() => {
-                                                deleteCommande(comm);
-                                              }}
-                                            >
-                                              <i className='ri-delete-bin-fill text-white'></i>
-                                            </button>
-                                          </div>
-                                        )}
+                                        {connectedUserRole === 'admin' &&
+                                          connectedUserBoutique ===
+                                            comm.user.boutique && (
+                                            <div className='d-flex gap-2'>
+                                              <div className='edit'>
+                                                <button
+                                                  className='btn btn-sm btn-success edit-item-btn'
+                                                  onClick={() => {
+                                                    navigate(
+                                                      `/updateCommande/${comm?._id}`
+                                                    );
+                                                  }}
+                                                >
+                                                  <i className='ri-pencil-fill text-white'></i>
+                                                </button>
+                                              </div>
+                                              <div className='remove'>
+                                                <button
+                                                  className='btn btn-sm btn-danger remove-item-btn'
+                                                  data-bs-toggle='modal'
+                                                  data-bs-target='#deleteRecordModal'
+                                                  onClick={() => {
+                                                    deleteCommande(comm);
+                                                  }}
+                                                >
+                                                  <i className='ri-delete-bin-fill text-white'></i>
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
                                       </div>
                                     )}
                                   </td>

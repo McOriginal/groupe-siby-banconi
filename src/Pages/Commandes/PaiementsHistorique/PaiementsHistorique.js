@@ -22,8 +22,12 @@ import {
 } from '../../../Api/queriesPaiementHistorique';
 import PaiementForm from '../../Paiements/PaiementForm';
 import FacturePaiement from './FacturePaiement';
+import {
+  connectedUserBoutique,
+  connectedUserRole,
+} from '../../Authentication/userInfos';
 
-export default function PaiementsHistorique({ id, reliqua }) {
+export default function PaiementsHistorique({ id, reliqua, boutique }) {
   const [form_modal, setForm_modal] = useState(false);
   const [form_historique_modal, setForm_historique_modal] = useState(false);
   const [facture_modal, setFacture_modal] = useState(false);
@@ -110,25 +114,31 @@ export default function PaiementsHistorique({ id, reliqua }) {
                   <div id='paiementsList'>
                     <Row className='g-4 mb-3'>
                       {/* {paiementsHistoriqueData?.length > 0 && ( */}
-                      <Col className='col-sm-auto'>
-                        <div className='d-flex gap-1'>
-                          <Button
-                            color='info'
-                            className='add-btn'
-                            id='create-btn'
-                            onClick={() => {
-                              setPaiementHistoriqueToUpdate(null);
-                              setFormTitle('Nouveau Historique de Paiement');
-                              paiementsHistoriqueData?.length > 0
-                                ? tog_historique_form_modal()
-                                : tog_form_modal();
-                            }}
-                          >
-                            <i className='fas fa-dollar-sign align-center me-1'></i>{' '}
-                            Ajouter un Paiement
-                          </Button>
-                        </div>
-                      </Col>
+                      {connectedUserRole === 'admin' &&
+                        connectedUserBoutique === boutique && (
+                          <Col className='col-sm-auto'>
+                            <div className='d-flex gap-1'>
+                              <Button
+                                color='info'
+                                className='add-btn'
+                                id='create-btn'
+                                onClick={() => {
+                                  setPaiementHistoriqueToUpdate(null);
+                                  setFormTitle(
+                                    'Nouveau Historique de Paiement'
+                                  );
+                                  paiementsHistoriqueData?.length > 0
+                                    ? tog_historique_form_modal()
+                                    : tog_form_modal();
+                                }}
+                              >
+                                <i className='fas fa-dollar-sign align-center me-1'></i>{' '}
+                                Ajouter un Paiement
+                              </Button>
+                            </div>
+                          </Col>
+                        )}
+
                       {/* )} */}
                       <Col>
                         <div className='d-flex flex-column justify-content-center align-items-end '>
@@ -160,7 +170,7 @@ export default function PaiementsHistorique({ id, reliqua }) {
 
                     <div className='table-responsive table-card mt-3 mb-1'>
                       {paiementsHistoriqueData?.length === 0 && (
-                        <div className='text-center text-mutate'>
+                        <div className='text-center text-secondary'>
                           Aucun Paiement Effectué !
                         </div>
                       )}
@@ -185,6 +195,7 @@ export default function PaiementsHistorique({ id, reliqua }) {
                                   Méthode de paiement
                                 </th>
                                 <th>Status</th>
+
                                 <th data-sort='action'>Action</th>
                               </tr>
                             </thead>
@@ -219,61 +230,66 @@ export default function PaiementsHistorique({ id, reliqua }) {
 
                                     <td>
                                       {isDeleting && <LoadingSpiner />}
-                                      {!isDeleting && (
-                                        <div className='d-flex gap-2 justify-content-center alitgn-items-center'>
-                                          <div>
-                                            <button
-                                              className='btn btn-sm btn-warning show-item-btn'
-                                              data-bs-toggle='modal'
-                                              data-bs-target='#edit'
-                                              onClick={() => {
-                                                setPaiementHistoriqueToUpdate(
-                                                  paiement
-                                                );
-                                                setFormTitle(
-                                                  'Modifier le Paiement'
-                                                );
-                                                tog_form_modal();
-                                              }}
-                                            >
-                                              <i className='bx bx-pencil align-center text-white'></i>
-                                            </button>
-                                          </div>
 
-                                          <div>
-                                            <button
-                                              className='btn btn-sm btn-secondary show-item-btn'
-                                              data-bs-toggle='modal'
-                                              data-bs-target='#showModal'
-                                              onClick={() => {
-                                                setSelectedPaiement(
-                                                  paiement?._id
-                                                );
-                                                tog_facture_modal();
-                                              }}
-                                            >
-                                              <i className='bx bx-show align-center text-white'></i>
-                                            </button>
-                                          </div>
-                                          <div className='remove'>
-                                            <button
-                                              className='btn btn-sm btn-danger remove-item-btn'
-                                              data-bs-toggle='modal'
-                                              data-bs-target='#deleteRecordModal'
-                                              onClick={() => {
-                                                deleteButton(
-                                                  paiement._id,
-                                                  `Paiement de ${paiement?.amount} F
-                                                   `,
-                                                  deletePaiementHistorique
-                                                );
-                                              }}
-                                            >
-                                              <i className='ri-delete-bin-fill text-white'></i>
-                                            </button>
-                                          </div>
+                                      <div className='d-flex gap-2 justify-content-center alitgn-items-center'>
+                                        <div>
+                                          <button
+                                            className='btn btn-sm btn-secondary show-item-btn'
+                                            data-bs-toggle='modal'
+                                            data-bs-target='#showModal'
+                                            onClick={() => {
+                                              setSelectedPaiement(
+                                                paiement?._id
+                                              );
+                                              tog_facture_modal();
+                                            }}
+                                          >
+                                            <i className='bx bx-show align-center text-white'></i>
+                                          </button>
                                         </div>
-                                      )}
+                                        {connectedUserRole === 'admin' &&
+                                          connectedUserBoutique ===
+                                            paiement?.user.boutique && (
+                                            <div className='d-flex gap-2'>
+                                              <div>
+                                                <button
+                                                  className='btn btn-sm btn-warning show-item-btn'
+                                                  data-bs-toggle='modal'
+                                                  data-bs-target='#edit'
+                                                  onClick={() => {
+                                                    setPaiementHistoriqueToUpdate(
+                                                      paiement
+                                                    );
+                                                    setFormTitle(
+                                                      'Modifier le Paiement'
+                                                    );
+                                                    tog_form_modal();
+                                                  }}
+                                                >
+                                                  <i className='bx bx-pencil align-center text-white'></i>
+                                                </button>
+                                              </div>
+
+                                              <div className='remove'>
+                                                <button
+                                                  className='btn btn-sm btn-danger remove-item-btn'
+                                                  data-bs-toggle='modal'
+                                                  data-bs-target='#deleteRecordModal'
+                                                  onClick={() => {
+                                                    deleteButton(
+                                                      paiement._id,
+                                                      `Paiement de ${paiement?.amount} F
+                                                   `,
+                                                      deletePaiementHistorique
+                                                    );
+                                                  }}
+                                                >
+                                                  <i className='ri-delete-bin-fill text-white'></i>
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
+                                      </div>
                                     </td>
                                   </tr>
                                 ))}

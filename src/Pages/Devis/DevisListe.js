@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Button,
   Card,
@@ -25,6 +25,10 @@ import { deleteButton } from '../components/AlerteModal';
 import FactureHeader from '../Commandes/Details/FactureHeader';
 import LogoFiligran from '../Commandes/Details/LogoFiligran';
 import { companyName } from '../CompanyInfo/CompanyInfo';
+import {
+  connectedUserBoutique,
+  connectedUserRole,
+} from '../Authentication/userInfos';
 
 // Export En PDF
 // ------------------------------------------
@@ -57,21 +61,86 @@ export default function DevisListe() {
 
   const navigate = useNavigate();
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedBoutique, setSelectedBoutique] = useState('');
+  // Fonction de Recherche dans la barre de recherche
+  const filterDevis = devisData
+    ?.filter((fac) => {
+      const search = searchTerm.toLowerCase();
+      return (
+        fac?.fullName.toLowerCase().includes(search) ||
+        fac?.phoneNumber.toString().includes(search) ||
+        fac?.adresse.toLowerCase().includes(search) ||
+        fac?.totalAmount?.toString().includes(search) ||
+        new Date(fac?.createdAt).toLocaleDateString('fr-FR').includes(search)
+      );
+    })
+    ?.filter((item) => {
+      if (selectedBoutique) {
+        return item.user?.boutique === parseInt(selectedBoutique);
+      }
+      return true;
+    });
+
   return (
     <React.Fragment>
       <div className='page-content'>
         <Container fluid>
           <Breadcrumbs title='Devis' breadcrumbItem='Liste de Devis' />
 
+          <Card className='p-4'>
+            <div className=' d-flex align-items-center gap-3 mb-4 justify-content-between flex-wrap'>
+              {/* Selectonner la boutique */}
+              <div className='mb-3'>
+                <h6>Filter par Boutique </h6>
+                <select
+                  value={selectedBoutique}
+                  onChange={(e) => setSelectedBoutique(e.target.value)}
+                  className='form-select border border-dark rounded '
+                  style={{ cursor: 'pointer' }}
+                >
+                  <option value=''>Toutes</option>
+                  <option value={connectedUserBoutique}>
+                    {connectedUserBoutique} - Ma Boutique
+                  </option>
+                  {connectedUserBoutique === 1 ? (
+                    <option value='2'>Boutique - 2</option>
+                  ) : connectedUserBoutique === 2 ? (
+                    <option value='1'>Boutique - 1</option>
+                  ) : (
+                    <optgroup label='autres'>
+                      <option value='1'>Boutique - 1</option>
+                      <option value='2'>Boutique - 2</option>
+                    </optgroup>
+                  )}
+                </select>
+              </div>
+
+              <div className='search-box me-2 d-flex align-items-center gap-2'>
+                {searchTerm !== '' && (
+                  <Button color='danger' onClick={() => setSearchTerm('')}>
+                    <i className='fas fa-window-close'></i>
+                  </Button>
+                )}
+                <input
+                  type='text'
+                  className='form-control search border border-dark rounded'
+                  placeholder='Rechercher...'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+          </Card>
           {error && (
             <div className='text-danger text-center'>
               Erreur de chargement des données
             </div>
           )}
           {isLoading && <LoadingSpiner />}
-          {!error && devisData?.length === 0 && (
+          {!error && filterDevis?.length === 0 && (
             <div className='mt-4 d-flex justify-content-center align-items-center flex-column'>
-              <p className='text-center font-size-18 text-danger'>
+              <p className='text-center font-size-18 text-secondary'>
                 Aucun Devis enregistré !
               </p>
 
@@ -85,8 +154,8 @@ export default function DevisListe() {
               </Button>
             </div>
           )}
-          {devisData?.length > 0 &&
-            devisData?.map((dev, index) => (
+          {filterDevis?.length > 0 &&
+            filterDevis?.map((dev, index) => (
               <div
                 key={index}
                 className='d-flex flex-column justify-content-center my-4'
@@ -111,26 +180,30 @@ export default function DevisListe() {
                   </div>
                 </Col>
                 {/* // ------------------------------------------- */}
-                <Col className='col-sm-auto mt-4'>
-                  <div className='d-flex gap-4  justify-content-center align-items-center'>
-                    <Button
-                      color='warning'
-                      onClick={() => navigate(`/updateDevis/${dev?._id}`)}
-                    >
-                      <i className='fas fa-edit align-center me-1'></i> Modifier
-                    </Button>
+                {connectedUserRole === 'admin' &&
+                  connectedUserBoutique === dev?.user.boutique && (
+                    <Col className='col-sm-auto mt-4'>
+                      <div className='d-flex gap-4  justify-content-center align-items-center'>
+                        <Button
+                          color='warning'
+                          onClick={() => navigate(`/updateDevis/${dev?._id}`)}
+                        >
+                          <i className='fas fa-edit align-center me-1'></i>{' '}
+                          Modifier
+                        </Button>
 
-                    <Button
-                      color='danger'
-                      onClick={() => {
-                        deleteButton(dev?._id, 'Ce Devis', deleteDevis);
-                      }}
-                    >
-                      <i className='fas fa-trash  me-1 '></i>
-                      Supprimer
-                    </Button>
-                  </div>
-                </Col>
+                        <Button
+                          color='danger'
+                          onClick={() => {
+                            deleteButton(dev?._id, 'Ce Devis', deleteDevis);
+                          }}
+                        >
+                          <i className='fas fa-trash  me-1 '></i>
+                          Supprimer
+                        </Button>
+                      </div>
+                    </Col>
+                  )}
                 {/* // ------------------------------------------- */}
                 <div ref={contentRef} id='facture'>
                   <Card

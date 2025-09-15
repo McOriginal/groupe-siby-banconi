@@ -72,27 +72,27 @@ const UserProfile = () => {
                     <div className='mt-4 d-flex flex-wrap gap-4'>
                       {connectedUserRole === 'admin' && (
                         <Button
-                          color='info'
+                          color='secondary'
                           onClick={() => navigate('/register')}
                         >
                           Créer un Compte
                         </Button>
                       )}
                       <Button
-                        color='info'
+                        color='secondary'
                         onClick={() => navigate('/usersProfileListe')}
                       >
                         Liste des Profile
                       </Button>
                       <Button
-                        color='warning'
+                        color='secondary'
                         onClick={() => navigate('/updatePassword')}
                       >
                         Changer mon mot de passe
                       </Button>
 
                       <Button color='danger' onClick={() => logout()}>
-                        Déconnecter
+                        Se Déconnecter
                       </Button>
                     </div>
                   </div>

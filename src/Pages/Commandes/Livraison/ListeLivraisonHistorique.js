@@ -20,6 +20,10 @@ import {
   useDeleteLivraisonHistorique,
 } from '../../../Api/queriesLivraisonHistorique';
 import LivraisonHistoriqueForm from './LivraisonHistoriqueForm';
+import {
+  connectedUserBoutique,
+  connectedUserRole,
+} from '../../Authentication/userInfos';
 
 export default function LivraisonHistorique({ id, commandeItems }) {
   const [form_modal, setForm_modal] = useState(false);
@@ -109,24 +113,27 @@ export default function LivraisonHistorique({ id, commandeItems }) {
                 <CardBody>
                   <div id='Livraison HistoriqueList'>
                     <Row className='g-4 mb-3 justify-content-between align-items-center'>
-                      <Col className='col-sm-auto'>
-                        <div className='d-flex gap-1'>
-                          <Button
-                            color='info'
-                            className='add-btn'
-                            id='create-btn'
-                            onClick={() => {
-                              setLivraisonToUpdate(null);
-                              setFormTitle('Ajouter une Livraison');
-                              tog_form_modal();
-                            }}
-                          >
-                            <i className='fas fa-plus align-center me-1'></i>{' '}
-                            Ajouter une Livraison
-                          </Button>
-                        </div>
-                      </Col>
-
+                      {connectedUserRole === 'admin' &&
+                        connectedUserBoutique ===
+                          commandeItems?.user?.boutique && (
+                          <Col className='col-sm-auto'>
+                            <div className='d-flex gap-1'>
+                              <Button
+                                color='info'
+                                className='add-btn'
+                                id='create-btn'
+                                onClick={() => {
+                                  setLivraisonToUpdate(null);
+                                  setFormTitle('Ajouter une Livraison');
+                                  tog_form_modal();
+                                }}
+                              >
+                                <i className='fas fa-plus align-center me-1'></i>{' '}
+                                Ajouter une Livraison
+                              </Button>
+                            </div>
+                          </Col>
+                        )}
                       <Col className='col-sm-auto'>
                         <div className='d-flex justify-content-sm-end gap-2'>
                           {searchTerm !== '' && (
@@ -223,7 +230,11 @@ export default function LivraisonHistorique({ id, commandeItems }) {
                                 </th>
 
                                 <th>Quantité Livré</th>
-                                <th data-sort='action'>Action</th>
+                                {connectedUserRole === 'admin' &&
+                                  connectedUserBoutique ===
+                                    commandeItems?.user?.boutique && (
+                                    <th data-sort='action'>Action</th>
+                                  )}
                               </tr>
                             </thead>
 
@@ -246,48 +257,52 @@ export default function LivraisonHistorique({ id, commandeItems }) {
                                         {formatPrice(livraison?.quantity)}
                                       </td>
 
-                                      <td>
-                                        {isDeleting && <LoadingSpiner />}
-                                        {!isDeleting && (
-                                          <div className='d-flex gap-2 justify-content-center alitgn-items-center'>
-                                            <div>
-                                              <button
-                                                className='btn btn-sm btn-warning show-item-btn'
-                                                data-bs-toggle='modal'
-                                                data-bs-target='#showModal'
-                                                onClick={() => {
-                                                  setLivraisonToUpdate(
-                                                    livraison
-                                                  );
-                                                  setFormTitle(
-                                                    'Modifier la Livraison'
-                                                  );
-                                                  tog_form_modal();
-                                                }}
-                                              >
-                                                <i className='bx bx-pencil align-center text-white'></i>
-                                              </button>
-                                            </div>
+                                      {connectedUserRole === 'admin' &&
+                                        connectedUserBoutique ===
+                                          commandeItems?.user?.boutique && (
+                                          <td>
+                                            {isDeleting && <LoadingSpiner />}
+                                            {!isDeleting && (
+                                              <div className='d-flex gap-2 justify-content-center alitgn-items-center'>
+                                                <div>
+                                                  <button
+                                                    className='btn btn-sm btn-warning show-item-btn'
+                                                    data-bs-toggle='modal'
+                                                    data-bs-target='#showModal'
+                                                    onClick={() => {
+                                                      setLivraisonToUpdate(
+                                                        livraison
+                                                      );
+                                                      setFormTitle(
+                                                        'Modifier la Livraison'
+                                                      );
+                                                      tog_form_modal();
+                                                    }}
+                                                  >
+                                                    <i className='bx bx-pencil align-center text-white'></i>
+                                                  </button>
+                                                </div>
 
-                                            <div className='remove'>
-                                              <button
-                                                className='btn btn-sm btn-danger remove-item-btn'
-                                                data-bs-toggle='modal'
-                                                data-bs-target='#deleteRecordModal'
-                                                onClick={() => {
-                                                  deleteButton(
-                                                    livraison?._id,
-                                                    livraison?.produit,
-                                                    deleteLivraisonHistorique
-                                                  );
-                                                }}
-                                              >
-                                                <i className='ri-delete-bin-fill text-white'></i>
-                                              </button>
-                                            </div>
-                                          </div>
+                                                <div className='remove'>
+                                                  <button
+                                                    className='btn btn-sm btn-danger remove-item-btn'
+                                                    data-bs-toggle='modal'
+                                                    data-bs-target='#deleteRecordModal'
+                                                    onClick={() => {
+                                                      deleteButton(
+                                                        livraison?._id,
+                                                        livraison?.produit,
+                                                        deleteLivraisonHistorique
+                                                      );
+                                                    }}
+                                                  >
+                                                    <i className='ri-delete-bin-fill text-white'></i>
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            )}
+                                          </td>
                                         )}
-                                      </td>
                                     </tr>
                                   )
                                 )}

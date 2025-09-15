@@ -7,6 +7,7 @@ import { capitalizeWords, formatPrice } from '../components/capitalizeFunction';
 import { deleteButton } from '../components/AlerteModal';
 import { useAllDepenses, useDeleteDepense } from '../../Api/queriesDepense';
 import DepenseForm from './DepenseForm';
+import { connectedUserBoutique } from '../Authentication/userInfos';
 
 export default function DepenseListe() {
   const [form_modal, setForm_modal] = useState(false);
@@ -15,6 +16,8 @@ export default function DepenseListe() {
   const { mutate: deleteDepense, isDeleting } = useDeleteDepense();
   const [depenseToUpdate, setDepenseToUpdate] = useState(null);
   const [todayExpense, setTodayExpense] = useState(false);
+  const [selectedBoutique, setSelectedBoutique] = useState('');
+
   // Search State
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -31,6 +34,12 @@ export default function DepenseListe() {
           .toString()
           .includes(search)
       );
+    })
+    ?.filter((item) => {
+      if (selectedBoutique) {
+        return item.user?.boutique === parseInt(selectedBoutique);
+      }
+      return true;
     })
     ?.filter((item) => {
       if (todayExpense) {
@@ -140,6 +149,30 @@ export default function DepenseListe() {
                           Depense d'Aujourd'hui
                         </label>
                       </div>
+                      <div className='d-flex gap-2 justify-content-center align-items-center my-3 '>
+                        <h6>Boutique </h6>
+                        <select
+                          value={selectedBoutique}
+                          onChange={(e) => setSelectedBoutique(e.target.value)}
+                          className='form-select border border-dark rounded '
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <option value=''>Toutes</option>
+                          <option value={connectedUserBoutique}>
+                            {connectedUserBoutique} - Ma Boutique
+                          </option>
+                          {connectedUserBoutique === 1 ? (
+                            <option value='2'>Boutique - 2</option>
+                          ) : connectedUserBoutique === 2 ? (
+                            <option value='1'>Boutique - 1</option>
+                          ) : (
+                            <optgroup label='autres'>
+                              <option value='1'>Boutique - 1</option>
+                              <option value='2'>Boutique - 2</option>
+                            </optgroup>
+                          )}
+                        </select>
+                      </div>
                     </div>
                     {error && (
                       <div className='text-danger text-center'>
@@ -182,7 +215,7 @@ export default function DepenseListe() {
                             <tbody className='list form-check-all'>
                               {filterSearchDepense?.length > 0 &&
                                 filterSearchDepense?.map((depense) => (
-                                  <tr key={depense._id}>
+                                  <tr key={depense._id} className='text-center'>
                                     <td>
                                       {new Date(
                                         depense.dateOfDepense

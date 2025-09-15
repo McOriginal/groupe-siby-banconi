@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Button,
   Card,
@@ -24,6 +24,7 @@ import html2pdf from 'html2pdf.js';
 import { useReactToPrint } from 'react-to-print';
 import FactureHeader from './Details/FactureHeader';
 import LogoFiligran from './Details/LogoFiligran';
+import { connectedUserBoutique } from '../Authentication/userInfos';
 
 // Export En PDF
 // ------------------------------------------
@@ -51,28 +52,93 @@ export default function FactureListe() {
   const { data: commandes, isLoading, error } = useAllCommandes();
   const contentRef = useRef();
   const reactToPrintFn = useReactToPrint({ contentRef });
-
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedBoutique, setSelectedBoutique] = useState('');
+  // Fonction de Recherche dans la barre de recherche
+  const filterCommandesFacture = commandes?.factures
+    ?.filter((fac) => {
+      const search = searchTerm.toLowerCase();
+      return (
+        fac?.commande?.fullName.toLowerCase().includes(search) ||
+        fac?.commande?.phoneNumber.toString().includes(search) ||
+        fac?.commande?.adresse.toLowerCase().includes(search) ||
+        fac?.totalAmount?.toString().includes(search) ||
+        fac?.totalPaye?.toString().includes(search) ||
+        new Date(fac?.commande?.commandeDate || fac?.paiementDate)
+          .toLocaleDateString('fr-FR')
+          .includes(search)
+      );
+    })
+    ?.filter((item) => {
+      if (selectedBoutique) {
+        return item.user?.boutique === parseInt(selectedBoutique);
+      }
+      return true;
+    });
   return (
     <React.Fragment>
       <div className='page-content'>
         <Container fluid>
           <Breadcrumbs title='Commande' breadcrumbItem='Liste de Factures' />
+          <Card className='p-4'>
+            <div className=' d-flex align-items-center gap-3 mb-4 justify-content-between flex-wrap'>
+              {/* Selectonner la boutique */}
+              <div className='mb-3'>
+                <h6>Filter par Boutique </h6>
+                <select
+                  value={selectedBoutique}
+                  onChange={(e) => setSelectedBoutique(e.target.value)}
+                  className='form-select border border-dark rounded '
+                  style={{ cursor: 'pointer' }}
+                >
+                  <option value=''>Toutes</option>
+                  <option value={connectedUserBoutique}>
+                    {connectedUserBoutique} - Ma Boutique
+                  </option>
+                  {connectedUserBoutique === 1 ? (
+                    <option value='2'>Boutique - 2</option>
+                  ) : connectedUserBoutique === 2 ? (
+                    <option value='1'>Boutique - 1</option>
+                  ) : (
+                    <optgroup label='autres'>
+                      <option value='1'>Boutique - 1</option>
+                      <option value='2'>Boutique - 2</option>
+                    </optgroup>
+                  )}
+                </select>
+              </div>
 
+              <div className='search-box me-2 d-flex align-items-center gap-2'>
+                {searchTerm !== '' && (
+                  <Button color='danger' onClick={() => setSearchTerm('')}>
+                    <i className='fas fa-window-close'></i>
+                  </Button>
+                )}
+                <input
+                  type='text'
+                  className='form-control search border border-dark rounded'
+                  placeholder='Rechercher...'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+          </Card>
           {error && (
             <div className='text-danger text-center'>
               Erreur de chargement des données
             </div>
           )}
           {isLoading && <LoadingSpiner />}
-          {commandes?.factures?.length === 0 && !isLoading && (
-            <div className='text-center text-danger'>
+          {filterCommandesFacture?.length === 0 && !isLoading && (
+            <div className='text-center text-secondary mt-4'>
               Aucune facture pour le moment.
             </div>
           )}
           {!error &&
             !isLoading &&
-            commandes?.factures?.length > 0 &&
-            commandes?.factures?.map((comm, index) => (
+            filterCommandesFacture?.length > 0 &&
+            filterCommandesFacture?.map((comm, index) => (
               <Row
                 key={comm._id}
                 className='d-flex flex-column justify-content-center'

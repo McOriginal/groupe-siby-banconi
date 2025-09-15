@@ -39,13 +39,13 @@ const SidebarData = [
   },
 
   {
-    label: 'Ventes / Commandes',
+    label: 'Historique de Commandes',
     icon: 'fas fa-server',
     isHasArrow: true,
     url: '/commandes',
   },
   {
-    label: 'Nouvelle Commande',
+    label: 'Ajouter une Commande',
     icon: 'fas fa-shopping-cart',
     isHasArrow: true,
     url: '/newCommande',
@@ -66,12 +66,16 @@ const SidebarData = [
     isMainMenu: true,
   },
   {
-    label: 'Comptabilité',
+    label: 'Paiements / Entrée',
+    icon: 'fas fa-dollar-sign',
+    isHasArrow: true,
+    url: '/paiements',
+  },
+  {
+    label: 'Depense / Sortie',
     icon: 'fas fa-euro-sign',
-    subItem: [
-      { sublabel: 'Paiement / Entrées ', link: '/paiements' },
-      { sublabel: 'Dépense / Sorties', link: '/depenses' },
-    ],
+    isHasArrow: true,
+    url: '/depenses',
   },
 
   // Devis

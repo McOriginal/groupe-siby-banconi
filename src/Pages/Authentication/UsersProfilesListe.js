@@ -71,9 +71,13 @@ export default function UsersProfilesListe() {
                       userProfileData.map((user) => (
                         <tr key={user._id}>
                           <td>{user.boutique > 0 ? user.boutique : '-----'}</td>
-                          <td className=''>{user.name}</td>
+                          <td className='text-uppercase'>{user.name}</td>
                           <td>{user.email}</td>
-                          <td>{user.role}</td>
+                          <td>
+                            {user.role === 'admin'
+                              ? 'Administrateur'
+                              : 'Utilisateur'}
+                          </td>
                           <td>
                             <button
                               onClick={() =>

@@ -92,7 +92,6 @@
   },
   "browserslist": {
     "production": [
-      
       ">0.2%",
       "not dead",
       "ie 11",
@@ -104,5 +103,12 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "overrides": {
+    "source-map-loader": {
+      "exclude": [
+        "node_modules/html2pdf.js"
+      ]
+    }
   }
 }
