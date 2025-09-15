@@ -131,7 +131,7 @@ export default function CommandeListe() {
     })
     ?.filter((item) => {
       if (selectedBoutique) {
-        return item.user?.boutique === parseInt(selectedBoutique);
+        return item.user?.boutique === selectedBoutique;
       }
       return true;
     })
@@ -212,13 +212,15 @@ export default function CommandeListe() {
                         <h6>Filtrer par Boutique </h6>
                         <select
                           value={selectedBoutique}
-                          onChange={(e) => setSelectedBoutique(e.target.value)}
+                          onChange={(e) =>
+                            setSelectedBoutique(parseInt(e.target.value))
+                          }
                           className='form-select border border-dark rounded '
                           style={{ cursor: 'pointer' }}
                         >
                           <option value=''>Toutes</option>
                           <option value={connectedUserBoutique}>
-                            {connectedUserBoutique} - Ma Boutique
+                            {connectedUserBoutique ?? 0} - Ma Boutique
                           </option>
                           {connectedUserBoutique === 1 ? (
                             <option value='2'>Boutique - 2</option>

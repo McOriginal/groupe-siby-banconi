@@ -14,7 +14,7 @@ if (authUser) {
     connectedUserName = dataParse?.user?.name || null;
     connectedUserEmail = dataParse?.user?.email || null;
     connectedUserRole = dataParse?.user?.role || null;
-    connectedUserBoutique = dataParse?.user?.boutique;
+    connectedUserBoutique = dataParse?.user?.boutique ?? 0;
   } catch (error) {
     console.error('Erreur lors du parsing de authUser :', error);
   }
