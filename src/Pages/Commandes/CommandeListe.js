@@ -171,11 +171,18 @@ export default function CommandeListe() {
   const commandesEnCours = filterCommandes?.filter(
     (comm) => comm?.statut.toLowerCase() === 'en cours'
   );
-
   console.log('VALUE selectedBoutique: ', selectedBoutique);
+  console.log('TYPE selectedBoutique: ', typeof selectedBoutique);
   console.log('INT selectedBoutique: ', parseInt(selectedBoutique));
+  console.log('TYPE after parsing selectedBoutique: ', typeof selectedBoutique);
   console.log('VALUE connectedUserBoutique: ', connectedUserBoutique);
+  console.log('TYPE connectedUserBoutique: ', typeof connectedUserBoutique);
   console.log('INT connectedUserBoutique: ', parseInt(connectedUserBoutique));
+  console.log(
+    'TYPE after parsing connectedUserBoutique: ',
+    typeof connectedUserBoutique
+  );
+
   return (
     <React.Fragment>
       <div className='page-content'>
@@ -196,16 +203,14 @@ export default function CommandeListe() {
                       <div className='mb-3'>
                         <h6>Filter par Boutique </h6>
                         <select
-                          value={parseInt(selectedBoutique)}
-                          onChange={(e) =>
-                            setSelectedBoutique(parseInt(e.target.value))
-                          }
+                          value={selectedBoutique}
+                          onChange={(e) => setSelectedBoutique(e.target.value)}
                           className='form-select border border-dark rounded '
                           style={{ cursor: 'pointer' }}
                         >
                           <option value=''>Toutes</option>
                           <option value={connectedUserBoutique}>
-                            {parseInt(connectedUserBoutique)} - Ma Boutique
+                            {connectedUserBoutique} - Ma Boutique
                           </option>
                           {connectedUserBoutique === 1 ? (
                             <option value='2'>Boutique - 2</option>
