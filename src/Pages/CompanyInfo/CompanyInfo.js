@@ -29,7 +29,7 @@ const companyOwnerName = 'Commerce Général';
 const companyAdresse =
   "Kabala sur la route d'université 50m avant de passer le pont";
 
-const companyTel = '+223 92-11-99-05 / 76-15-32-35 / 77-20-61-24 / 76-15-32-35';
+const companyTel = '+223 92-11-99-05 / 76-15-32-35 / 77-20-61-24 / 79-62-72-75';
 
 export {
   companyLogo,

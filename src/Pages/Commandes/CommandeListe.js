@@ -10,10 +10,7 @@ import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import { useAllCommandes, useDeleteCommande } from '../../Api/queriesCommande';
 import { useNavigate } from 'react-router-dom';
-import {
-  connectedUserBoutique,
-  connectedUserRole,
-} from '../Authentication/userInfos';
+import { connectedUserBoutique } from '../Authentication/userInfos';
 
 export default function CommandeListe() {
   // Afficher toutes les commandes

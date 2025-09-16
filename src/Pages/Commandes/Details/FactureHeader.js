@@ -54,13 +54,11 @@ export default function FactureHeader() {
         Commerce Général & Immobilier
       </h6>
       <div className='text-info font-size-11 d-flex flex-column gap-0 justify-content-center align-item-center text-center mb-2'>
-        <span>{companyServices1}</span>
-        <span>{companyServices2}</span>
-        <span>{companyAdresse}</span>
-        <span>
-          {' '}
-          <strong className='font-size-12'>Info: </strong> {companyTel}
-        </span>
+        <strong>{companyServices1}</strong>
+        <strong>{companyServices2}</strong>
+        <strong>{companyAdresse}</strong>
+
+        <strong className='font-size-12'>Info: {companyTel}</strong>
       </div>
       <div className='d-flex gap-3  justify-content-center align-item-center'>
         <CardImg src={outil_5} style={{ width: '50px' }} />

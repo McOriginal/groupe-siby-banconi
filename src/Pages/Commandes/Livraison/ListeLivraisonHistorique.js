@@ -127,22 +127,24 @@ export default function LivraisonHistorique({ id, commandeItems }) {
                 </CardTitle>
                 <CardBody>
                   <div id='Livraison HistoriqueList'>
-                    <Button
-                      color='secondary'
-                      className='add-btn my-4 text-center d-flex justify-content-center align-items-center'
-                      id='create-btn'
-                      onClick={() => {
-                        setSelectedLivraison(
-                          livraisonHistoriqueData[0]?.commande
-                        );
-                        setLastLivraisonDate(livraisonHistoriqueData[0]);
+                    {commandeItems?.statut !== 'livré' && (
+                      <Button
+                        color='secondary'
+                        className='add-btn my-4 text-center d-flex justify-content-center align-items-center'
+                        id='create-btn'
+                        onClick={() => {
+                          setSelectedLivraison(
+                            livraisonHistoriqueData[0]?.commande
+                          );
+                          setLastLivraisonDate(livraisonHistoriqueData[0]);
 
-                        tog_facture_modal();
-                      }}
-                    >
-                      <i className='bx bx-show align-center me-1'></i> Reçue de
-                      Livraison
-                    </Button>
+                          tog_facture_modal();
+                        }}
+                      >
+                        <i className='bx bx-show align-center me-1'></i> Reçue
+                        de Livraison
+                      </Button>
+                    )}
                     <Row className='g-4 mb-3 justify-content-between align-items-center'>
                       {connectedUserRole === 'admin' &&
                         connectedUserBoutique ===

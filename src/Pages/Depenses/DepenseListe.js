@@ -234,44 +234,47 @@ export default function DepenseListe() {
                                       {' F '}
                                     </td>
 
-                                    <td>
-                                      <div className='d-flex gap-2'>
-                                        <div className='edit'>
-                                          <button
-                                            className='btn btn-sm btn-success edit-item-btn'
-                                            onClick={() => {
-                                              setFormModalTitle(
-                                                'Modifier les données'
-                                              );
-                                              setDepenseToUpdate(depense);
-                                              tog_form_modal();
-                                            }}
-                                          >
-                                            <i className='ri-pencil-fill text-white'></i>
-                                          </button>
-                                        </div>
-                                        {isDeleting && <LoadingSpiner />}
-                                        {!isDeleting && (
-                                          <div className='remove'>
+                                    {connectedUserBoutique ===
+                                      depense?.user?.boutique && (
+                                      <td>
+                                        <div className='d-flex gap-2'>
+                                          <div className='edit'>
                                             <button
-                                              className='btn btn-sm btn-danger remove-item-btn'
-                                              data-bs-toggle='modal'
-                                              data-bs-target='#deleteRecordModal'
+                                              className='btn btn-sm btn-success edit-item-btn'
                                               onClick={() => {
-                                                deleteButton(
-                                                  depense._id,
-                                                  `depense de ${depense.totalAmount} F
-                                                   `,
-                                                  deleteDepense
+                                                setFormModalTitle(
+                                                  'Modifier les données'
                                                 );
+                                                setDepenseToUpdate(depense);
+                                                tog_form_modal();
                                               }}
                                             >
-                                              <i className='ri-delete-bin-fill text-white'></i>
+                                              <i className='ri-pencil-fill text-white'></i>
                                             </button>
                                           </div>
-                                        )}
-                                      </div>
-                                    </td>
+                                          {isDeleting && <LoadingSpiner />}
+                                          {!isDeleting && (
+                                            <div className='remove'>
+                                              <button
+                                                className='btn btn-sm btn-danger remove-item-btn'
+                                                data-bs-toggle='modal'
+                                                data-bs-target='#deleteRecordModal'
+                                                onClick={() => {
+                                                  deleteButton(
+                                                    depense._id,
+                                                    `depense de ${depense.totalAmount} F
+                                                   `,
+                                                    deleteDepense
+                                                  );
+                                                }}
+                                              >
+                                                <i className='ri-delete-bin-fill text-white'></i>
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </td>
+                                    )}
                                   </tr>
                                 ))}
                             </tbody>

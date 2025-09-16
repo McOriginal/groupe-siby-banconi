@@ -144,29 +144,7 @@ const ReçuPaiement = ({ show_modal, tog_show_modal, selectedPaiementID }) => {
                       <p> Payé Non Livré</p>
                     </div>
                   )}
-                {selectedPaiement?.commande?.statut === 'en attente' &&
-                  selectedPaiement?.totalAmount -
-                    selectedPaiement?.totalPaye ===
-                    0 && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: '20px',
-                        transform: 'rotate(-45deg)',
-                        opacity: '0.5',
-                        border: '1px dashed #720202',
-                        color: ' #720202',
-                        fontSize: ' 34px',
-                        fontweight: 'bold',
-                        width: '100%',
-                        textAlign: 'cente',
-                        display: 'flex',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <p> Payé Non Livré</p>
-                    </div>
-                  )}
+
                 {/* Payé Non Livré */}
                 <div
                   sm='12'
