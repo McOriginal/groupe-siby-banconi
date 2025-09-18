@@ -151,30 +151,30 @@ export default function DepenseListe() {
                       </div>
                       <div className='d-flex gap-2 justify-content-center align-items-center my-3 '>
                         <h6>Boutique </h6>
-                        <select
-                          value={selectedBoutique ?? ''}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setSelectedBoutique(v === '' ? null : Number(v));
-                          }}
-                          className='form-select border border-dark rounded '
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <option value=''>Toutes</option>
-                          <option value={connectedUserBoutique ?? 0}>
-                            {connectedUserBoutique ?? 0} - Ma Boutique
-                          </option>
-                          {connectedUserBoutique === 1 ? (
-                            <option value='2'>Boutique - 2</option>
-                          ) : connectedUserBoutique === 2 ? (
-                            <option value='1'>Boutique - 1</option>
-                          ) : (
-                            <optgroup label='autres'>
-                              <option value='1'>Boutique - 1</option>
-                              <option value='2'>Boutique - 2</option>
-                            </optgroup>
-                          )}
-                        </select>
+                       <select
+                  value={selectedBoutique ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setSelectedBoutique(v === '' ? null : Number(v));
+                  }}
+                  className='form-select border border-dark rounded '
+                  style={{ cursor: 'pointer' }}
+                >
+                  <option value=''>Toutes</option>
+                  <option value={connectedUserBoutique ?? 0}>
+                    {connectedUserBoutique ?? 0} - Ma Boutique
+                  </option>
+                  {connectedUserBoutique === 1 ? (
+                    <option value='2'>Boutique - 2</option>
+                  ) : connectedUserBoutique === 2 ? (
+                    <option value='1'>Boutique - 1</option>
+                  ) : (
+                    <optgroup label='autres'>
+                      <option value='1'>Boutique - 1</option>
+                      <option value='2'>Boutique - 2</option>
+                    </optgroup>
+                  )}
+                </select>
                       </div>
                     </div>
                     {error && (
