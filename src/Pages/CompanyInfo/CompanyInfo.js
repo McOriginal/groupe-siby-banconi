@@ -17,7 +17,7 @@ import comImg from './../../assets/images/passer-la-commande.png';
 import rechargeImg from './../../assets/images/recharge.png';
 import carImg from './../../assets/images/car.png';
 
-const companyName = 'Quincaillerie Général Groupe Siby';
+const companyName = 'Quincaillerie Générale Groupe Siby';
 
 const companyLittleName = 'Groupe Siby';
 const companyServices1 =
