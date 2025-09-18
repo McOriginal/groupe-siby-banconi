@@ -76,7 +76,9 @@ exports.updateDepense = async (req, res) => {
 // Get all expenses
 exports.getAllDepenses = async (req, res) => {
   try {
-    const depenses = await Depense.find().sort({ dateOfDepense: -1 });
+    const depenses = await Depense.find()
+      .populate('user')
+      .sort({ dateOfDepense: -1 });
     return res.status(200).json(depenses);
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -87,7 +89,7 @@ exports.getAllDepenses = async (req, res) => {
 exports.getDepenseById = async (req, res) => {
   try {
     const { id } = req.params;
-    const depense = await Depense.findById(id);
+    const depense = await Depense.findById(id).populate('user');
 
     if (!depense) {
       return res.status(404).json({ message: 'Dépense non trouvée.' });
