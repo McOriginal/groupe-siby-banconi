@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Approvisonement = require('../models/ApprovisonementModel');
 const Produit = require('../models/ProduitModel');
-const Depense = require('../models/DepenseModel');
 
 // Create a new approvisonement
 exports.createApprovisonement = async (req, res) => {
@@ -21,7 +20,7 @@ exports.createApprovisonement = async (req, res) => {
     // 1. Mise à jour du stock produit
     const updatedProduct = await Produit.findByIdAndUpdate(
       produit,
-      { $inc: { stock: formatQuantity } },
+      { $inc: { stock: formatQuantity }, achatPrice: price },
       { new: true, session }
     );
 

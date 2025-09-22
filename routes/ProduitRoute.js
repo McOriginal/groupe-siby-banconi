@@ -13,8 +13,6 @@ router.post(
 
 // Afficher une toutes les Produit
 router.get('/getAllProduits', produitController.getAllProduits);
-// Afficher une toutes les Produit de Cisse
-router.get('/cisseProducts', produitController.cisseProd);
 
 // Afficher une toutes les Produit sans Stcok
 router.get(

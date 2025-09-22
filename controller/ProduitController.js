@@ -4,11 +4,12 @@ const Commande = require('../models/CommandeModel');
 // Enregistrer un Produit
 exports.createProduit = async (req, res) => {
   try {
-    const { name, price, stock, ...resOfData } = req.body;
+    const { name, price, achatPrice, stock, ...resOfData } = req.body;
 
     const lowerName = name.toLowerCase();
     const formatStock = Number(stock);
     const formatPrice = Number(price);
+    const formatAchatPrice = Number(achatPrice);
 
     // Vérifier s'il existe déjà une matière avec ces critères
     const existingProduits = await Produit.findOne({
@@ -27,6 +28,7 @@ exports.createProduit = async (req, res) => {
       name: lowerName,
       stock: formatStock,
       price: formatPrice,
+      achatPrice: formatAchatPrice,
       user: req.user.id,
       ...resOfData,
     });
@@ -37,36 +39,15 @@ exports.createProduit = async (req, res) => {
   }
 };
 
-// Middleware pour mettre à jour les produits sans user
-exports.cisseProd = async (req, res) => {
-  try {
-    const userId = '68b2e06c5389fec81cf995f3'; // ID utilisateur à associer
-    // Récupérer les produits après mise à jour
-    const result = await Produit.find({
-      user: userId,
-    });
-
-    return res.status(200).json({
-      status: 'success',
-      prodNumber: result.length,
-      products: result,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      status: 'error',
-      message: err.message,
-    });
-  }
-};
-
 // Mettre à jour une Produit
 exports.updateProduit = async (req, res) => {
   try {
-    const { name, price, stock, ...resOfData } = req.body;
+    const { name, price, achatPrice, stock, ...resOfData } = req.body;
 
     const lowerName = name.toLowerCase();
     const formatPrice = Number(price);
     const formatStock = Number(stock);
+    const formatAchatPrice = Number(achatPrice);
 
     // Vérifier s'il existe déjà un produit avec ces critères
     const existingProduits = await Produit.findOne({
@@ -88,6 +69,7 @@ exports.updateProduit = async (req, res) => {
         name: lowerName,
         stock: formatStock,
         price: formatPrice,
+        achatPrice: formatAchatPrice,
         ...resOfData,
       },
       {

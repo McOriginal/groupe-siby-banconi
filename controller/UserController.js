@@ -79,6 +79,13 @@ exports.login = async (req, res) => {
       }
     );
 
+    // Si le token est expiré
+    if (!token) {
+      return res.status(401).json({
+        message: 'Votre session est expiré vous devez vous reconnecter.',
+      });
+    }
+
     // Retourner le token et les infos utilisateur
     res.status(200).json({
       message: 'Connexion réussie.',
