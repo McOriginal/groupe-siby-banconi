@@ -134,6 +134,12 @@ export default function DevisListe() {
                 />
               </div>
             </div>
+            <h5>
+              Total Enregistrée:{' '}
+              <span className='text-info'>
+                {formatPrice(filterDevis?.length)}
+              </span>
+            </h5>
           </Card>
           {error && (
             <div className='text-danger text-center'>

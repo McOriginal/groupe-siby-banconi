@@ -33,6 +33,7 @@ import NewDevis from '../Pages/Devis/NewDevis.js';
 import UpdateDevis from '../Pages/Devis/UpdateDevis.js';
 import UsersProfilesListe from '../Pages/Authentication/UsersProfilesListe.js';
 import ProfileDetail from '../Pages/Authentication/ProfileDetail.js';
+import Bilans from '../Pages/Bilans/Bilans.js';
 
 const sharedRoutes = [
   // Produit de la Boutique
@@ -109,7 +110,8 @@ const authProtectedRoutes = [
   { path: '/approvisonnements', component: <ApprovisonnementListe /> },
   { path: '/approvisonnement/:id', component: <ApprovisonnementForm /> },
 
-  // Raports
+  // Raports & Bilans
+  { path: '/bilans', component: <Bilans /> },
   { path: '/rapports', component: <Rapports /> },
 
   { path: '/register', component: <Register /> },

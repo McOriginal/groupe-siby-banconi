@@ -108,8 +108,14 @@ const SidebarData = [
 
   // Pharmacie
   {
-    label: 'Statistiques & Rapports',
+    label: 'Rapports & Bilans',
     isMainMenu: true,
+  },
+  {
+    label: 'Bilans',
+    icon: 'fas fa-balance-scale',
+    isHasArrow: true,
+    url: '/bilans',
   },
   {
     label: 'Rapports et Suivie',
