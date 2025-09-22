@@ -16,7 +16,6 @@ export default function DepenseListe() {
   const { mutate: deleteDepense, isDeleting } = useDeleteDepense();
   const [depenseToUpdate, setDepenseToUpdate] = useState(null);
   const [todayExpense, setTodayExpense] = useState(false);
-  const [selectedBoutique, setSelectedBoutique] = useState(null);
 
   // Search State
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,12 +34,7 @@ export default function DepenseListe() {
           .includes(search)
       );
     })
-    ?.filter((item) => {
-      if (selectedBoutique !== null) {
-        return Number(item.user?.boutique) === selectedBoutique;
-      }
-      return true;
-    })
+
     ?.filter((item) => {
       if (todayExpense) {
         return (
@@ -150,33 +144,6 @@ export default function DepenseListe() {
                           Depense d'Aujourd'hui
                         </label>
                       </div>
-                      <div className='d-flex gap-2 justify-content-center align-items-center my-3 '>
-                        <h6>Boutique </h6>
-                       <select
-                  value={selectedBoutique ?? ''}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSelectedBoutique(v === '' ? null : Number(v));
-                  }}
-                  className='form-select border border-dark rounded '
-                  style={{ cursor: 'pointer' }}
-                >
-                  <option value=''>Toutes</option>
-                  <option value={connectedUserBoutique ?? 0}>
-                    {connectedUserBoutique ?? 0} - Ma Boutique
-                  </option>
-                  {connectedUserBoutique === 1 ? (
-                    <option value='2'>Boutique - 2</option>
-                  ) : connectedUserBoutique === 2 ? (
-                    <option value='1'>Boutique - 1</option>
-                  ) : (
-                    <optgroup label='autres'>
-                      <option value='1'>Boutique - 1</option>
-                      <option value='2'>Boutique - 2</option>
-                    </optgroup>
-                  )}
-                </select>
-                      </div>
                     </div>
                     {error && (
                       <div className='text-danger text-center'>
@@ -235,47 +202,44 @@ export default function DepenseListe() {
                                       {' F '}
                                     </td>
 
-                                    {connectedUserBoutique ===
-                                      depense?.user?.boutique && (
-                                      <td>
-                                        <div className='d-flex gap-2'>
-                                          <div className='edit'>
+                                    <td>
+                                      <div className='d-flex gap-2'>
+                                        <div className='edit'>
+                                          <button
+                                            className='btn btn-sm btn-success edit-item-btn'
+                                            onClick={() => {
+                                              setFormModalTitle(
+                                                'Modifier les données'
+                                              );
+                                              setDepenseToUpdate(depense);
+                                              tog_form_modal();
+                                            }}
+                                          >
+                                            <i className='ri-pencil-fill text-white'></i>
+                                          </button>
+                                        </div>
+                                        {isDeleting && <LoadingSpiner />}
+                                        {!isDeleting && (
+                                          <div className='remove'>
                                             <button
-                                              className='btn btn-sm btn-success edit-item-btn'
+                                              className='btn btn-sm btn-danger remove-item-btn'
+                                              data-bs-toggle='modal'
+                                              data-bs-target='#deleteRecordModal'
                                               onClick={() => {
-                                                setFormModalTitle(
-                                                  'Modifier les données'
+                                                deleteButton(
+                                                  depense._id,
+                                                  `depense de ${depense.totalAmount} F
+                                                   `,
+                                                  deleteDepense
                                                 );
-                                                setDepenseToUpdate(depense);
-                                                tog_form_modal();
                                               }}
                                             >
-                                              <i className='ri-pencil-fill text-white'></i>
+                                              <i className='ri-delete-bin-fill text-white'></i>
                                             </button>
                                           </div>
-                                          {isDeleting && <LoadingSpiner />}
-                                          {!isDeleting && (
-                                            <div className='remove'>
-                                              <button
-                                                className='btn btn-sm btn-danger remove-item-btn'
-                                                data-bs-toggle='modal'
-                                                data-bs-target='#deleteRecordModal'
-                                                onClick={() => {
-                                                  deleteButton(
-                                                    depense._id,
-                                                    `depense de ${depense.totalAmount} F
-                                                   `,
-                                                    deleteDepense
-                                                  );
-                                                }}
-                                              >
-                                                <i className='ri-delete-bin-fill text-white'></i>
-                                              </button>
-                                            </div>
-                                          )}
-                                        </div>
-                                      </td>
-                                    )}
+                                        )}
+                                      </div>
+                                    </td>
                                   </tr>
                                 ))}
                             </tbody>

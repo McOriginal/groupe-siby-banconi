@@ -14,7 +14,7 @@ export function errorMessageAlert(message) {
     icon: 'error',
     title: message,
     showConfirmButton: false,
-    timer: 3000,
+    timer: 5000,
   });
 }
 

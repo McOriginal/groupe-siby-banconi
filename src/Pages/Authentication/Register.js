@@ -104,27 +104,26 @@ const Register = () => {
           <Row className='justify-content-center'>
             <Col lg={6} md={8} xl={4}>
               <Card className='mt-5'>
-                <CardBody className='p-4'>
+                <CardBody className='px-3'>
                   <div className='text-center mb-4'>
-                    <p className='font-size-16 text-muted text-center mb-4'>
-                      Création d'un nouveau compte
-                    </p>
                     <img
                       src={companyLogo}
                       alt=''
-                      height='54'
+                      height='120px'
+                      width='100px'
+                      style={{ objectFit: 'cover' }}
                       className='auth-logo logo-dark mx-auto'
                     />
                     <h2
-                      className=' mt-2 text-center'
-                      style={{ color: ' #b89794' }}
+                      className=' mt-1 text-center'
+                      style={{ color: ' #00078e' }}
                     >
                       {companyName}
                     </h2>
                     <h6
                       style={{
                         color: ' #ffff',
-                        background: ' #b89794',
+                        background: ' #00078e',
                         padding: '5px',
                         borderRadius: '5px',
                       }}
@@ -150,7 +149,8 @@ const Register = () => {
                           <Input
                             name='name'
                             type='text'
-                            placeholder='Enter name'
+                            placeholder="Nom d'utilisateur"
+                            className='border-1 border-dark'
                             onChange={validation.handleChange}
                             onBlur={validation.handleBlur}
                             value={validation.values.name || ''}
@@ -173,6 +173,7 @@ const Register = () => {
                           <Input
                             name='role'
                             type='select'
+                            className='form-control border-1 border-dark'
                             onChange={validation.handleChange}
                             onBlur={validation.handleBlur}
                             value={validation.values.role || ''}
@@ -197,8 +198,8 @@ const Register = () => {
                           <Input
                             id='email'
                             name='email'
-                            className='form-control'
-                            placeholder='Enter email'
+                            className='form-control border-1 border-dark'
+                            placeholder='Adresse email'
                             type='email'
                             onChange={validation.handleChange}
                             onBlur={validation.handleBlur}
@@ -226,8 +227,8 @@ const Register = () => {
                                 name='password'
                                 value={validation.values.password || ''}
                                 type={showPassword ? 'text' : 'password'}
-                                placeholder='Enter Password'
-                                className='form-controle border border-secondary'
+                                placeholder='Mot de Passe minimum (6) caractère'
+                                className='form-controle border-1 border-dark'
                                 onChange={validation.handleChange}
                                 onBlur={validation.handleBlur}
                                 invalid={

@@ -30,7 +30,6 @@ export default function PaiementsListe() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterReliqua, setFilterReliqua] = useState(false);
   const [todayPaiement, setTodayPaiement] = useState(false);
-  const [selectedBoutique, setSelectedBoutique] = useState(null);
 
   // Fonction de Rechercher
   const filterSearchPaiement = paiementsData
@@ -49,12 +48,7 @@ export default function PaiementsListe() {
         ).includes(search)
       );
     })
-    ?.filter((item) => {
-      if (selectedBoutique !== null) {
-        return Number(item.user?.boutique) === selectedBoutique;
-      }
-      return true;
-    })
+
     ?.filter((paiement) => {
       if (!filterReliqua) return true; // pas de filtre
       const reliqua = (paiement?.totalAmount || 0) - (paiement?.totalPaye || 0);
@@ -216,33 +210,6 @@ export default function PaiementsListe() {
                           </label>
                         </div>
                       </Col>
-                      <Col className='d-flex gap-2 justify-content-center align-items-center my-3 '>
-                        <h6>Boutique </h6>
-                        <select
-                          value={selectedBoutique ?? ''}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setSelectedBoutique(v === '' ? null : Number(v));
-                          }}
-                          className='form-select border border-dark rounded '
-                          style={{ cursor: 'pointer' }}
-                        >
-                          <option value=''>Toutes</option>
-                          <option value={connectedUserBoutique ?? 0}>
-                            {connectedUserBoutique ?? 0} - Ma Boutique
-                          </option>
-                          {connectedUserBoutique === 1 ? (
-                            <option value='2'>Boutique - 2</option>
-                          ) : connectedUserBoutique === 2 ? (
-                            <option value='1'>Boutique - 1</option>
-                          ) : (
-                            <optgroup label='autres'>
-                              <option value='1'>Boutique - 1</option>
-                              <option value='2'>Boutique - 2</option>
-                            </optgroup>
-                          )}
-                        </select>
-                      </Col>
                     </Row>
                     {error && (
                       <div className='text-danger text-center'>
@@ -381,45 +348,43 @@ export default function PaiementsListe() {
                                               <i className='bx bx-show align-center text-white'></i>
                                             </button>
                                           </div>
-                                          {connectedUserRole === 'admin' &&
-                                            connectedUserBoutique ===
-                                              paiement.user.boutique && (
-                                              <div className='d-flex'>
-                                                <div className='edit mx-2'>
-                                                  <button
-                                                    className='btn btn-sm btn-success edit-item-btn'
-                                                    onClick={() => {
-                                                      setFormModalTitle(
-                                                        'Modifier les données'
-                                                      );
-                                                      setPaiementToUpdate(
-                                                        paiement
-                                                      );
-                                                      tog_form_modal();
-                                                    }}
-                                                  >
-                                                    <i className='ri-pencil-fill text-white'></i>
-                                                  </button>
-                                                </div>
-                                                <div className='remove'>
-                                                  <button
-                                                    className='btn btn-sm btn-danger remove-item-btn'
-                                                    onClick={() => {
-                                                      deleteButton(
-                                                        paiement?._id,
-                                                        `Paiement de ${formatPrice(
-                                                          paiement?.totalAmount
-                                                        )} F
-                                                    `,
-                                                        deletePaiement
-                                                      );
-                                                    }}
-                                                  >
-                                                    <i className='ri-delete-bin-fill text-white'></i>
-                                                  </button>
-                                                </div>
+                                          {connectedUserRole === 'admin' && (
+                                            <div className='d-flex'>
+                                              <div className='edit mx-2'>
+                                                <button
+                                                  className='btn btn-sm btn-success edit-item-btn'
+                                                  onClick={() => {
+                                                    setFormModalTitle(
+                                                      'Modifier les données'
+                                                    );
+                                                    setPaiementToUpdate(
+                                                      paiement
+                                                    );
+                                                    tog_form_modal();
+                                                  }}
+                                                >
+                                                  <i className='ri-pencil-fill text-white'></i>
+                                                </button>
                                               </div>
-                                            )}
+                                              <div className='remove'>
+                                                <button
+                                                  className='btn btn-sm btn-danger remove-item-btn'
+                                                  onClick={() => {
+                                                    deleteButton(
+                                                      paiement?._id,
+                                                      `Paiement de ${formatPrice(
+                                                        paiement?.totalAmount
+                                                      )} F
+                                                    `,
+                                                      deletePaiement
+                                                    );
+                                                  }}
+                                                >
+                                                  <i className='ri-delete-bin-fill text-white'></i>
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
                                         </div>
                                       )}
                                     </td>

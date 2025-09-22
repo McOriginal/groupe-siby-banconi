@@ -33,6 +33,7 @@ const ProduitForm = ({ produitToEdit, tog_form_modal }) => {
     initialValues: {
       name: produitToEdit?.name || '',
       price: produitToEdit?.price || undefined,
+      achatPrice: produitToEdit?.price || undefined,
       stock: produitToEdit?.stock || undefined,
       imageUrl: produitToEdit?.imageUrl || '',
     },
@@ -42,6 +43,7 @@ const ProduitForm = ({ produitToEdit, tog_form_modal }) => {
         .positive('Le stock doit être un nombre positif')
         .required('Ce champ est obligatoire'),
       price: Yup.number().required('Ce champ est obligatoire'),
+      achatPrice: Yup.number().required('Ce champ est obligatoire'),
     }),
 
     onSubmit: (values, { resetForm }) => {
@@ -160,6 +162,32 @@ const ProduitForm = ({ produitToEdit, tog_form_modal }) => {
             {validation.touched.stock && validation.errors.stock ? (
               <FormFeedback type='invalid'>
                 {validation.errors.stock}
+              </FormFeedback>
+            ) : null}
+          </FormGroup>
+        </Col>
+
+        <Col md='6'>
+          <FormGroup className='mb-3'>
+            <Label htmlFor='achatPrice'>Prix d'Achat</Label>
+            <Input
+              name='achatPrice'
+              placeholder="Entrez les prix d'achat de produit"
+              type='number'
+              className='form-control border-1 border-dark'
+              id='achatPrice'
+              onChange={validation.handleChange}
+              onBlur={validation.handleBlur}
+              value={validation.values.achatPrice || ''}
+              invalid={
+                validation.touched.achatPrice && validation.errors.achatPrice
+                  ? true
+                  : false
+              }
+            />
+            {validation.touched.achatPrice && validation.errors.achatPrice ? (
+              <FormFeedback type='invalid'>
+                {validation.errors.achatPrice}
               </FormFeedback>
             ) : null}
           </FormGroup>

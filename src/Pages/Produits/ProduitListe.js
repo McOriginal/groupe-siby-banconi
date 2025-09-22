@@ -60,6 +60,11 @@ export default function ProduitListe() {
   function tog_form_modal() {
     setForm_modal(!form_modal);
   }
+
+  const sumTotalAchatPrice = filterSearchProduits?.reduce((value, item) => {
+    return (value += item?.achatPrice * item?.stock);
+  }, 0);
+
   return (
     <React.Fragment>
       <div className='page-content'>
@@ -88,9 +93,9 @@ export default function ProduitListe() {
               <Card>
                 <CardBody>
                   <div id='produitsList'>
-                    <Row className='g-4 mb-3'>
+                    <div className='d-flex justify-content-between align-items-center flex-wrap gab-2 mb-3'>
                       {connectedUserRole === 'admin' && (
-                        <Col className='col-sm-auto'>
+                        <div className='col-sm-auto'>
                           <div className='d-flex gap-1'>
                             <Button
                               color='info'
@@ -105,18 +110,10 @@ export default function ProduitListe() {
                               Ajouter un Produit
                             </Button>
                           </div>
-                        </Col>
+                        </div>
                       )}
-                      <Col>
-                        <p className='text-center font-size-15 mt-2'>
-                          Produit Enregistrées:{' '}
-                          <span className='text-warning text-bold'>
-                            {' '}
-                            {filterSearchProduits?.length}{' '}
-                          </span>
-                        </p>
-                      </Col>
-                      <Col>
+
+                      <div>
                         <div className='d-flex justify-content-sm-end gap-2'>
                           {searchTerm !== '' && (
                             <Button
@@ -136,8 +133,25 @@ export default function ProduitListe() {
                             />
                           </div>
                         </div>
-                      </Col>
-                    </Row>
+                      </div>
+                    </div>
+                    <Col className='d-flex flex-column justify-content-center align-items-center'>
+                      <p className='text-center font-size-15 mt-2'>
+                        Produit Enregistrées:{' '}
+                        <span className='text-warning text-bold'>
+                          {' '}
+                          {filterSearchProduits?.length}{' '}
+                        </span>
+                      </p>
+                      <p className='text-center font-size-15 mt-2'>
+                        Montant de Boutique:{' '}
+                        <span className='text-success text-bold'>
+                          {' '}
+                          {formatPrice(sumTotalAchatPrice)}
+                          {' F '}
+                        </span>
+                      </p>
+                    </Col>
                   </div>
                 </CardBody>
               </Card>
@@ -229,6 +243,15 @@ export default function ProduitListe() {
                       )}
                     </div>
                   )}
+                  <CardText
+                    style={{
+                      position: 'absolute',
+                      top: '5%',
+                      left: '5%',
+                    }}
+                  >
+                    {formatPrice(prod?.achatPrice)} F
+                  </CardText>
                   <img
                     className='img-fluid'
                     style={{

@@ -146,27 +146,24 @@ export default function LivraisonHistorique({ id, commandeItems }) {
                       </Button>
                     )}
                     <Row className='g-4 mb-3 justify-content-between align-items-center'>
-                      {connectedUserRole === 'admin' &&
-                        connectedUserBoutique ===
-                          commandeItems?.user?.boutique && (
-                          <Col className='col-sm-auto'>
-                            <div className='d-flex gap-1'>
-                              <Button
-                                color='info'
-                                className='add-btn'
-                                id='create-btn'
-                                onClick={() => {
-                                  setLivraisonToUpdate(null);
-                                  setFormTitle('Ajouter une Livraison');
-                                  tog_form_modal();
-                                }}
-                              >
-                                <i className='fas fa-plus align-center me-1'></i>{' '}
-                                Ajouter une Livraison
-                              </Button>
-                            </div>
-                          </Col>
-                        )}
+                      <Col className='col-sm-auto'>
+                        <div className='d-flex gap-1'>
+                          <Button
+                            color='info'
+                            className='add-btn'
+                            id='create-btn'
+                            onClick={() => {
+                              setLivraisonToUpdate(null);
+                              setFormTitle('Ajouter une Livraison');
+                              tog_form_modal();
+                            }}
+                          >
+                            <i className='fas fa-plus align-center me-1'></i>{' '}
+                            Ajouter une Livraison
+                          </Button>
+                        </div>
+                      </Col>
+
                       <Col className='col-sm-auto'>
                         <div className='d-flex justify-content-sm-end gap-2'>
                           {searchTerm !== '' && (
@@ -290,52 +287,50 @@ export default function LivraisonHistorique({ id, commandeItems }) {
                                         {formatPrice(livraison?.quantity)}
                                       </td>
 
-                                      {connectedUserRole === 'admin' &&
-                                        connectedUserBoutique ===
-                                          commandeItems?.user?.boutique && (
-                                          <td>
-                                            {isDeleting && <LoadingSpiner />}
-                                            {!isDeleting && (
-                                              <div className='d-flex gap-2 justify-content-center alitgn-items-center'>
-                                                <div>
-                                                  <button
-                                                    className='btn btn-sm btn-warning show-item-btn'
-                                                    data-bs-toggle='modal'
-                                                    data-bs-target='#showModal'
-                                                    onClick={() => {
-                                                      setLivraisonToUpdate(
-                                                        livraison
-                                                      );
-                                                      setFormTitle(
-                                                        'Modifier la Livraison'
-                                                      );
-                                                      tog_form_modal();
-                                                    }}
-                                                  >
-                                                    <i className='bx bx-pencil align-center text-white'></i>
-                                                  </button>
-                                                </div>
-
-                                                <div className='remove'>
-                                                  <button
-                                                    className='btn btn-sm btn-danger remove-item-btn'
-                                                    data-bs-toggle='modal'
-                                                    data-bs-target='#deleteRecordModal'
-                                                    onClick={() => {
-                                                      deleteButton(
-                                                        livraison?._id,
-                                                        livraison?.produit,
-                                                        deleteLivraisonHistorique
-                                                      );
-                                                    }}
-                                                  >
-                                                    <i className='ri-delete-bin-fill text-white'></i>
-                                                  </button>
-                                                </div>
+                                      {connectedUserRole === 'admin' && (
+                                        <td>
+                                          {isDeleting && <LoadingSpiner />}
+                                          {!isDeleting && (
+                                            <div className='d-flex gap-2 justify-content-center alitgn-items-center'>
+                                              <div>
+                                                <button
+                                                  className='btn btn-sm btn-warning show-item-btn'
+                                                  data-bs-toggle='modal'
+                                                  data-bs-target='#showModal'
+                                                  onClick={() => {
+                                                    setLivraisonToUpdate(
+                                                      livraison
+                                                    );
+                                                    setFormTitle(
+                                                      'Modifier la Livraison'
+                                                    );
+                                                    tog_form_modal();
+                                                  }}
+                                                >
+                                                  <i className='bx bx-pencil align-center text-white'></i>
+                                                </button>
                                               </div>
-                                            )}
-                                          </td>
-                                        )}
+
+                                              <div className='remove'>
+                                                <button
+                                                  className='btn btn-sm btn-danger remove-item-btn'
+                                                  data-bs-toggle='modal'
+                                                  data-bs-target='#deleteRecordModal'
+                                                  onClick={() => {
+                                                    deleteButton(
+                                                      livraison?._id,
+                                                      livraison?.produit,
+                                                      deleteLivraisonHistorique
+                                                    );
+                                                  }}
+                                                >
+                                                  <i className='ri-delete-bin-fill text-white'></i>
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
+                                        </td>
+                                      )}
                                     </tr>
                                   )
                                 )}

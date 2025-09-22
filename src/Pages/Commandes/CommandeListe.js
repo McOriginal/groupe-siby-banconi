@@ -110,7 +110,6 @@ export default function CommandeListe() {
   const [todayCommande, setTodayCommande] = useState(false);
   const [delivredCommande, setDelivredCommande] = useState(false);
   const [notDelivredCommande, setNotdelivredCommande] = useState(false);
-  const [selectedBoutique, setSelectedBoutique] = useState(null);
   // Fonction de Recherche dans la barre de recherche
   const filterCommandes = commandes?.commandesListe
     ?.filter((comm) => {
@@ -126,12 +125,7 @@ export default function CommandeListe() {
           .includes(search)
       );
     })
-    ?.filter((item) => {
-      if (selectedBoutique !== null) {
-        return Number(item.user?.boutique) === selectedBoutique;
-      }
-      return true;
-    })
+
     ?.filter((item) => {
       if (todayCommande) {
         return (
@@ -184,101 +178,65 @@ export default function CommandeListe() {
               <Card>
                 <CardBody>
                   <div id='commandeList'>
-                    <div className=' d-flex align-items-center gap-3 mb-4 justify-content-between flex-wrap'>
-                      {/* Selectonner la boutique */}
-                      <div className='mb-3'>
-                        <h6>Filtrer par Boutique </h6>
-                        <select
-                          value={selectedBoutique ?? ''}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setSelectedBoutique(v === '' ? null : Number(v));
-                          }}
-                          className='form-select border border-dark rounded '
-                          style={{ cursor: 'pointer' }}
+                    <div className='search-box me-2 d-flex align-items-center gap-2'>
+                      {searchTerm !== '' && (
+                        <Button
+                          color='danger'
+                          onClick={() => setSearchTerm('')}
                         >
-                          <option value=''>Toutes</option>
-                          <option value={connectedUserBoutique ?? 0}>
-                            {connectedUserBoutique ?? 0} - Ma Boutique
-                          </option>
-                          {connectedUserBoutique === 1 ? (
-                            <option value='2'>Boutique - 2</option>
-                          ) : connectedUserBoutique === 2 ? (
-                            <option value='1'>Boutique - 1</option>
-                          ) : (
-                            <optgroup label='autres'>
-                              <option value='1'>Boutique - 1</option>
-                              <option value='2'>Boutique - 2</option>
-                            </optgroup>
-                          )}
-                        </select>
-                      </div>
-
-                      <div className='search-box me-2 d-flex align-items-center gap-2'>
-                        {searchTerm !== '' && (
-                          <Button
-                            color='danger'
-                            onClick={() => setSearchTerm('')}
-                          >
-                            <i className='fas fa-window-close'></i>
-                          </Button>
-                        )}
-                        <input
-                          type='text'
-                          className='form-control search border border-dark rounded'
-                          placeholder='Rechercher...'
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                      </div>
+                          <i className='fas fa-window-close'></i>
+                        </Button>
+                      )}
+                      <input
+                        type='text'
+                        className='form-control search border border-dark rounded'
+                        placeholder='Rechercher...'
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
                     </div>
-                    <div className='d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4'>
-                      <div className='d-flex flex-column justify-content-center align-items-center gap-2 text-warning'>
-                        <label
-                          className='form-check-label'
-                          htmlFor='filterToday'
-                        >
-                          Commande d'Aujourd'hui
-                        </label>{' '}
-                        <input
-                          type='checkbox'
-                          className='form-check-input'
-                          id='filterToday'
-                          onChange={() => setTodayCommande(!todayCommande)}
-                        />
-                      </div>
-                      <div className='d-flex flex-column justify-content-center align-items-center gap-2 text-warning'>
-                        <label
-                          className='form-check-label'
-                          htmlFor='filterDelivredCommande'
-                        >
-                          Commandes En Cours
-                        </label>{' '}
-                        <input
-                          type='checkbox'
-                          className='form-check-input'
-                          id='filterDelivredCommande'
-                          onChange={() =>
-                            setDelivredCommande(!delivredCommande)
-                          }
-                        />
-                      </div>
-                      <div className='d-flex flex-column justify-content-center align-items-center gap-2 text-warning'>
-                        <label
-                          className='form-check-label'
-                          htmlFor='filterNotDelivredCommande'
-                        >
-                          Commande En Attente
-                        </label>
-                        <input
-                          type='checkbox'
-                          className='form-check-input'
-                          id='filterNotDelivredCommande'
-                          onChange={() =>
-                            setNotdelivredCommande(!notDelivredCommande)
-                          }
-                        />
-                      </div>
+                  </div>
+                  <div className='d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4'>
+                    <div className='d-flex flex-column justify-content-center align-items-center gap-2 text-warning'>
+                      <label className='form-check-label' htmlFor='filterToday'>
+                        Commande d'Aujourd'hui
+                      </label>{' '}
+                      <input
+                        type='checkbox'
+                        className='form-check-input'
+                        id='filterToday'
+                        onChange={() => setTodayCommande(!todayCommande)}
+                      />
+                    </div>
+                    <div className='d-flex flex-column justify-content-center align-items-center gap-2 text-warning'>
+                      <label
+                        className='form-check-label'
+                        htmlFor='filterDelivredCommande'
+                      >
+                        Commandes En Cours
+                      </label>{' '}
+                      <input
+                        type='checkbox'
+                        className='form-check-input'
+                        id='filterDelivredCommande'
+                        onChange={() => setDelivredCommande(!delivredCommande)}
+                      />
+                    </div>
+                    <div className='d-flex flex-column justify-content-center align-items-center gap-2 text-warning'>
+                      <label
+                        className='form-check-label'
+                        htmlFor='filterNotDelivredCommande'
+                      >
+                        Commande En Attente
+                      </label>
+                      <input
+                        type='checkbox'
+                        className='form-check-input'
+                        id='filterNotDelivredCommande'
+                        onChange={() =>
+                          setNotdelivredCommande(!notDelivredCommande)
+                        }
+                      />
                     </div>
 
                     <Row className='mt-4'>
@@ -423,36 +381,32 @@ export default function CommandeListe() {
                                             <i className=' bx bx-show-alt text-white'></i>
                                           </button>
                                         </div>
-                                        {connectedUserBoutique !== null &&
-                                          Number(comm.user?.boutique) ===
-                                            Number(connectedUserBoutique) && (
-                                            <div className='d-flex gap-2'>
-                                              <div className='edit'>
-                                                <button
-                                                  className='btn btn-sm btn-success edit-item-btn'
-                                                  onClick={() => {
-                                                    navigate(
-                                                      `/updateCommande/${comm?._id}`
-                                                    );
-                                                  }}
-                                                >
-                                                  <i className='ri-pencil-fill text-white'></i>
-                                                </button>
-                                              </div>
-                                              <div className='remove'>
-                                                <button
-                                                  className='btn btn-sm btn-danger remove-item-btn'
-                                                  data-bs-toggle='modal'
-                                                  data-bs-target='#deleteRecordModal'
-                                                  onClick={() => {
-                                                    deleteCommande(comm);
-                                                  }}
-                                                >
-                                                  <i className='ri-delete-bin-fill text-white'></i>
-                                                </button>
-                                              </div>
-                                            </div>
-                                          )}
+                                        <div className='d-flex gap-2'>
+                                          <div className='edit'>
+                                            <button
+                                              className='btn btn-sm btn-success edit-item-btn'
+                                              onClick={() => {
+                                                navigate(
+                                                  `/updateCommande/${comm?._id}`
+                                                );
+                                              }}
+                                            >
+                                              <i className='ri-pencil-fill text-white'></i>
+                                            </button>
+                                          </div>
+                                          <div className='remove'>
+                                            <button
+                                              className='btn btn-sm btn-danger remove-item-btn'
+                                              data-bs-toggle='modal'
+                                              data-bs-target='#deleteRecordModal'
+                                              onClick={() => {
+                                                deleteCommande(comm);
+                                              }}
+                                            >
+                                              <i className='ri-delete-bin-fill text-white'></i>
+                                            </button>
+                                          </div>
+                                        </div>
                                       </div>
                                     )}
                                   </td>

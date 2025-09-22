@@ -124,25 +124,27 @@ const Login = () => {
             <Row className='justify-content-center'>
               <Col lg={6} md={8} xl={4}>
                 <Card className='border border-info border-2'>
-                  <CardBody className='p-4'>
+                  <CardBody className='px-4'>
                     <div>
                       <div className='text-center'>
                         <img
                           src={companyLogo}
                           alt=''
-                          height='54'
+                          height='120px'
+                          width='100px'
+                          style={{ objectFit: 'cover' }}
                           className='auth-logo logo-dark mx-auto'
                         />
                         <h2
-                          className=' mt-2 text-center'
-                          style={{ color: ' #b89794' }}
+                          className=' mt-1 text-center'
+                          style={{ color: ' #00078e' }}
                         >
                           {companyName}
                         </h2>
                         <h6
                           style={{
                             color: ' #ffff',
-                            background: ' #b89794',
+                            background: ' #00078e',
                             padding: '5px',
                             borderRadius: '5px',
                           }}
@@ -168,7 +170,7 @@ const Login = () => {
                               <Label className='form-label'>Email</Label>
                               <Input
                                 name='email'
-                                className='form-control'
+                                className='form-control border-1 border-dark'
                                 placeholder='Enter email'
                                 type='email'
                                 onChange={validation.handleChange}
@@ -197,7 +199,7 @@ const Login = () => {
                                     value={validation.values.password || ''}
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder='Enter Password'
-                                    className='form-controle border border-secondary'
+                                    className='form-controle border-1 border-dark'
                                     onChange={validation.handleChange}
                                     onBlur={validation.handleBlur}
                                     invalid={

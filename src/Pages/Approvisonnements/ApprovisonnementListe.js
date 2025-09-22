@@ -33,9 +33,7 @@ export default function ApprovisonnementListe() {
 
   // Supprimer une approvisonnement
   const { mutate: deleteApprovisonnement } = useDeleteApprovisonnement();
-  const [selectedBoutique, setSelectedBoutique] = useState(
-    connectedUserBoutique
-  );
+
   // State de chargement pour le Bouton
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -46,31 +44,24 @@ export default function ApprovisonnementListe() {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Fonction pour la recherche
-  const filterSearchApprovisonnement = approvisonnementData
-    ?.filter((appro) => {
-      const search = searchTerm.toLowerCase();
+  const filterSearchApprovisonnement = approvisonnementData?.filter((appro) => {
+    const search = searchTerm.toLowerCase();
 
-      return (
-        `${appro?.fournisseur?.firstName} ${appro?.fournisseur?.lasttName}`
-          .toLowerCase()
-          .includes(search) ||
-        (appro?.fournisseur?.phoneNumber || '').toString().includes(search) ||
-        appro?.fournisseur?.adresse.toLowerCase().includes(search) ||
-        appro?.produit?.name.toLowerCase().includes(search) ||
-        appro?.quantity.toString().includes(search) ||
-        appro?.price.toString().includes(search) ||
-        new Date(appro?.delivryDate)
-          .toLocaleDateString('fr-Fr')
-          .toString()
-          .includes(search)
-      );
-    })
-    ?.filter((item) => {
-      if (selectedBoutique) {
-        return item.user?.boutique === parseInt(selectedBoutique);
-      }
-      return item.user?.boutique === connectedUserBoutique;
-    });
+    return (
+      `${appro?.fournisseur?.firstName} ${appro?.fournisseur?.lasttName}`
+        .toLowerCase()
+        .includes(search) ||
+      (appro?.fournisseur?.phoneNumber || '').toString().includes(search) ||
+      appro?.fournisseur?.adresse.toLowerCase().includes(search) ||
+      appro?.produit?.name.toLowerCase().includes(search) ||
+      appro?.quantity.toString().includes(search) ||
+      appro?.price.toString().includes(search) ||
+      new Date(appro?.delivryDate)
+        .toLocaleDateString('fr-Fr')
+        .toString()
+        .includes(search)
+    );
+  });
 
   // ---------------------------
   // Fonction pour exeuter l'annulation de la décrementation des stocks
@@ -155,32 +146,6 @@ export default function ApprovisonnementListe() {
               <Card>
                 <CardBody>
                   <Row className='g-4 mb-3'>
-                    <Col className='d-flex gap-2 justify-content-center align-items-center my-3 '>
-                      <h6>Boutique </h6>
-                      <select
-                        value={parseInt(selectedBoutique)}
-                        onChange={(e) =>
-                          setSelectedBoutique(parseInt(e.target.value))
-                        }
-                        className='form-select border border-dark rounded '
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <option value=''>Toutes</option>
-                        <option value={connectedUserBoutique}>
-                          {parseInt(connectedUserBoutique)} - Ma Boutique
-                        </option>
-                        {connectedUserBoutique === 1 ? (
-                          <option value='2'>Boutique - 2</option>
-                        ) : connectedUserBoutique === 2 ? (
-                          <option value='1'>Boutique - 1</option>
-                        ) : (
-                          <optgroup label='autres'>
-                            <option value='1'>Boutique - 1</option>
-                            <option value='2'>Boutique - 2</option>
-                          </optgroup>
-                        )}
-                      </select>
-                    </Col>
                     <Col>
                       <p className='text-center font-size-15 mt-2'>
                         Approvisonnement Total:{' '}
@@ -297,50 +262,46 @@ export default function ApprovisonnementListe() {
                                       appro?.fournisseur?.adresse
                                     )}
                                   </td>
-                                  {connectedUserRole === 'admin' &&
-                                    connectedUserBoutique ===
-                                      appro.user.boutique && (
-                                      <td>
-                                        <div className='d-flex gap-2'>
-                                          {isDeleting && <LoadingSpiner />}{' '}
-                                          {!isDeleting && (
-                                            <div className='remove'>
-                                              <button
-                                                className='btn btn-sm btn-warning remove-item-btn'
-                                                data-bs-toggle='modal'
-                                                data-bs-target='#deleteRecordModal'
-                                                onClick={(e) => {
-                                                  handleCancelApprovisonnement(
-                                                    appro
-                                                  );
-                                                  e.stopPropagation();
-                                                }}
-                                              >
-                                                Annuler
-                                              </button>
-                                            </div>
-                                          )}
-                                          {!isDeleting && (
-                                            <div className='remove'>
-                                              <button
-                                                className='btn btn-sm btn-danger remove-item-btn'
-                                                data-bs-toggle='modal'
-                                                data-bs-target='#deleteRecordModal'
-                                                onClick={() => {
-                                                  deleteButton(
-                                                    appro?._id,
-                                                    appro?.produit?.name,
-                                                    deleteApprovisonnement
-                                                  );
-                                                }}
-                                              >
-                                                <i className='ri-delete-bin-fill text-white'></i>
-                                              </button>
-                                            </div>
-                                          )}
+                                  <td>
+                                    <div className='d-flex gap-2'>
+                                      {isDeleting && <LoadingSpiner />}{' '}
+                                      {!isDeleting && (
+                                        <div className='remove'>
+                                          <button
+                                            className='btn btn-sm btn-warning remove-item-btn'
+                                            data-bs-toggle='modal'
+                                            data-bs-target='#deleteRecordModal'
+                                            onClick={(e) => {
+                                              handleCancelApprovisonnement(
+                                                appro
+                                              );
+                                              e.stopPropagation();
+                                            }}
+                                          >
+                                            Annuler
+                                          </button>
                                         </div>
-                                      </td>
-                                    )}
+                                      )}
+                                      {!isDeleting && (
+                                        <div className='remove'>
+                                          <button
+                                            className='btn btn-sm btn-danger remove-item-btn'
+                                            data-bs-toggle='modal'
+                                            data-bs-target='#deleteRecordModal'
+                                            onClick={() => {
+                                              deleteButton(
+                                                appro?._id,
+                                                appro?.produit?.name,
+                                                deleteApprovisonnement
+                                              );
+                                            }}
+                                          >
+                                            <i className='ri-delete-bin-fill text-white'></i>
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </td>
                                 </tr>
                               ))}
                             </tbody>

@@ -62,25 +62,17 @@ export default function DevisListe() {
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedBoutique, setSelectedBoutique] = useState(null);
   // Fonction de Recherche dans la barre de recherche
-  const filterDevis = devisData
-    ?.filter((fac) => {
-      const search = searchTerm.toLowerCase();
-      return (
-        fac?.fullName.toLowerCase().includes(search) ||
-        fac?.phoneNumber.toString().includes(search) ||
-        fac?.adresse.toLowerCase().includes(search) ||
-        fac?.totalAmount?.toString().includes(search) ||
-        new Date(fac?.createdAt).toLocaleDateString('fr-FR').includes(search)
-      );
-    })
-    ?.filter((item) => {
-      if (selectedBoutique !== null) {
-        return Number(item.user?.boutique) === selectedBoutique;
-      }
-      return true;
-    });
+  const filterDevis = devisData?.filter((fac) => {
+    const search = searchTerm.toLowerCase();
+    return (
+      fac?.fullName.toLowerCase().includes(search) ||
+      fac?.phoneNumber.toString().includes(search) ||
+      fac?.adresse.toLowerCase().includes(search) ||
+      fac?.totalAmount?.toString().includes(search) ||
+      new Date(fac?.createdAt).toLocaleDateString('fr-FR').includes(search)
+    );
+  });
 
   return (
     <React.Fragment>
@@ -91,33 +83,6 @@ export default function DevisListe() {
           <Card className='p-4'>
             <div className=' d-flex align-items-center gap-3 mb-4 justify-content-between flex-wrap'>
               {/* Selectonner la boutique */}
-              <div className='mb-3'>
-                <h6>Filtrer par Boutique </h6>
-                <select
-                  value={selectedBoutique ?? ''}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSelectedBoutique(v === '' ? null : Number(v));
-                  }}
-                  className='form-select border border-dark rounded '
-                  style={{ cursor: 'pointer' }}
-                >
-                  <option value=''>Toutes</option>
-                  <option value={connectedUserBoutique ?? 0}>
-                    {connectedUserBoutique ?? 0} - Ma Boutique
-                  </option>
-                  {connectedUserBoutique === 1 ? (
-                    <option value='2'>Boutique - 2</option>
-                  ) : connectedUserBoutique === 2 ? (
-                    <option value='1'>Boutique - 1</option>
-                  ) : (
-                    <optgroup label='autres'>
-                      <option value='1'>Boutique - 1</option>
-                      <option value='2'>Boutique - 2</option>
-                    </optgroup>
-                  )}
-                </select>
-              </div>
 
               <div className='search-box me-2 d-flex align-items-center gap-2'>
                 {searchTerm !== '' && (
@@ -189,30 +154,26 @@ export default function DevisListe() {
                   </div>
                 </Col>
                 {/* // ------------------------------------------- */}
-                {connectedUserRole === 'admin' &&
-                  connectedUserBoutique === dev?.user.boutique && (
-                    <Col className='col-sm-auto mt-4'>
-                      <div className='d-flex gap-4  justify-content-center align-items-center'>
-                        <Button
-                          color='warning'
-                          onClick={() => navigate(`/updateDevis/${dev?._id}`)}
-                        >
-                          <i className='fas fa-edit align-center me-1'></i>{' '}
-                          Modifier
-                        </Button>
+                <Col className='col-sm-auto mt-4'>
+                  <div className='d-flex gap-4  justify-content-center align-items-center'>
+                    <Button
+                      color='warning'
+                      onClick={() => navigate(`/updateDevis/${dev?._id}`)}
+                    >
+                      <i className='fas fa-edit align-center me-1'></i> Modifier
+                    </Button>
 
-                        <Button
-                          color='danger'
-                          onClick={() => {
-                            deleteButton(dev?._id, 'Ce Devis', deleteDevis);
-                          }}
-                        >
-                          <i className='fas fa-trash  me-1 '></i>
-                          Supprimer
-                        </Button>
-                      </div>
-                    </Col>
-                  )}
+                    <Button
+                      color='danger'
+                      onClick={() => {
+                        deleteButton(dev?._id, 'Ce Devis', deleteDevis);
+                      }}
+                    >
+                      <i className='fas fa-trash  me-1 '></i>
+                      Supprimer
+                    </Button>
+                  </div>
+                </Col>
                 {/* // ------------------------------------------- */}
                 <div ref={contentRef} id='facture'>
                   <Card
