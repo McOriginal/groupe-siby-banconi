@@ -13,7 +13,7 @@ const BarChartEntreSortie = () => {
 
   const sumPaiementTotalAmoutByMonth = (paiement) => {
     const monthlySums = new Array(12).fill(0);
-    paiement.forEach((paie) => {
+    paiement?.forEach((paie) => {
       const date = new Date(paie.paiementDate);
       if (!isNaN(date)) {
         const month = date.getMonth();
@@ -55,7 +55,7 @@ const BarChartEntreSortie = () => {
     datasets: [
       {
         label: 'Entrée (Paiements)',
-        data: sumPaiementTotalAmoutByMonth(paiementsData),
+        data: sumPaiementTotalAmoutByMonth(paiementsData?.paiements),
         backgroundColor: ' #328E6E',
         barThickness: 10,
       },

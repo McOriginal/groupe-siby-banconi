@@ -17,25 +17,14 @@ const RapportByDay = () => {
   // Calcul de Nombre total de COMMANDE pour le mois sélectionné
   const totalCommandesNumber = useMemo(() => {
     return commandes?.commandesListe?.filter((item) => {
-      const date = new Date(item.createdAt).toISOString().slice(0, 10);
+      const date = new Date(item.commandeDate).toISOString().slice(0, 10);
       return date === selectedDate;
     }).length;
   }, [commandes, selectedDate]);
 
-  // Calcul le total de COMMANDE pour le mois sélectionné
-  // const totalCommandeAmount = useMemo(() => {
-  //   return commandes?.commandesListe?.reduce((acc, item) => {
-  //     const date = new Date(item.createdAt).toISOString().slice(0, 10);
-  //     if (date === selectedDate) {
-  //       acc += Number(item.totalAmount || 0);
-  //     }
-  //     return acc;
-  //   }, 0);
-  // }, [commandes, selectedDate]);
-
-  // Calcul le total de somme Paiyés pour le mois sélectionné
+  // Calcul le total de somme Payés pour le mois sélectionné
   const totalPaiements = useMemo(() => {
-    return paiementsData?.reduce((acc, item) => {
+    return paiementsData?.paiements?.reduce((acc, item) => {
       const date = new Date(item?.paiementDate).toISOString().slice(0, 10);
       if (date === selectedDate) {
         acc += Number(item?.totalAmount || 0);
@@ -45,7 +34,7 @@ const RapportByDay = () => {
   }, [paiementsData, selectedDate]);
   // Calcul le total de somme Paiyés pour le mois sélectionné
   const totalPaiementsAmountPayed = useMemo(() => {
-    return paiementsData?.reduce((acc, item) => {
+    return paiementsData?.paiements?.reduce((acc, item) => {
       const date = new Date(item?.paiementDate).toISOString().slice(0, 10);
       if (date === selectedDate) {
         acc += Number(item?.totalPaye || 0);
@@ -57,20 +46,10 @@ const RapportByDay = () => {
   // Calcul le total de somme Impayés pour le mois sélectionné
   const totalAmountNotPayed = totalPaiements - totalPaiementsAmountPayed || 0;
 
-  // useMemo(() => {
-  //   return paiementsData?.reduce((acc, item) => {
-  //     const date = new Date(item?.paiementDate).toISOString().slice(0, 10);
-  //     if (date === selectedDate) {
-  //       acc += Number(item?.totalAmount - item?.totalPaye || 0);
-  //     }
-  //     return acc;
-  //   }, 0);
-  // }, [paiementsData, selectedDate]);
-
   // Calcul le total pour Dépenses pour le mois sélectionné
   const totalDepenses = useMemo(() => {
-    return depenseData.reduce((acc, item) => {
-      const date = new Date(item.createdAt).toISOString().slice(0, 10);
+    return depenseData?.reduce((acc, item) => {
+      const date = new Date(item.dateOfDepense).toISOString().slice(0, 10);
       if (date === selectedDate) {
         acc += Number(item.totalAmount || 0);
       }
@@ -82,6 +61,37 @@ const RapportByDay = () => {
   const profit = useMemo(() => {
     return totalPaiements - totalDepenses;
   }, [totalPaiements, totalDepenses]);
+
+  // Calcule de CA , REVENUE, BENEFICE
+  // const { totalCA, totalAchat, benefice } = useMemo(() => {
+  const { totalAchat, benefice } = useMemo(() => {
+    if (!paiementsData?.paiements) {
+      return { totalAchat: 0, benefice: 0 };
+    }
+
+    // On filtre d'abord les paiements par date sélectionnée
+    const paiementsFiltres = paiementsData.paiements.filter((item) => {
+      const date = new Date(item?.paiementDate).toISOString().slice(0, 10);
+      return date === selectedDate;
+    });
+
+    // let totalCA = 0; // chiffre d’affaires
+    let totalAchat = 0; // coût d’achat
+
+    paiementsFiltres.forEach((paiement) => {
+      paiement.commande?.items.forEach((item) => {
+        const produit = item?.produit;
+        if (!produit) return;
+
+        // totalCA += (item?.customerPrice || 0) * (item?.quantity || 0);
+        totalAchat += (produit?.achatPrice || 0) * (item?.quantity || 0);
+      });
+    });
+
+    const benefice = totalPaiementsAmountPayed - totalAchat;
+
+    return { totalAchat, benefice };
+  }, [paiementsData, selectedDate, totalPaiementsAmountPayed]);
 
   return (
     <React.Fragment>
@@ -101,6 +111,7 @@ const RapportByDay = () => {
                 <div className='d-flex align-items-center justify-content-between mb-3'>
                   <Input
                     className='form-control serach'
+                    style={{ cursor: 'pointer' }}
                     type='date'
                     max={new Date().toISOString().split('T')[0]} // Limiter à la date actuelle
                     value={selectedDate} // Valeur par défaut à la date actuelle
@@ -125,18 +136,18 @@ const RapportByDay = () => {
           <Col sm={6} lg={4}>
             <Card
               style={{
-                background: 'linear-gradient(to top right , #3E0703, #cbcaa5)',
+                background: ' #250902',
                 justifyContent: 'center',
                 alignItems: 'center',
                 height: '100px',
               }}
             >
               {' '}
-              <h5 className='mb-1 text-white'>Bénéfice (Revenue)</h5>
+              <h5 className='mb-1 text-white'>Bénéfice </h5>
               {profit <= 0 ? (
-                <h4 className='text-danger'>{formatPrice(profit)} F</h4>
+                <h4 className='text-danger'>{formatPrice(benefice)} F</h4>
               ) : (
-                <h4 className='text-success'>{formatPrice(profit)} F</h4>
+                <h4 className='text-success'>{formatPrice(benefice)} F</h4>
               )}
             </Card>{' '}
           </Col>
@@ -144,23 +155,37 @@ const RapportByDay = () => {
           <Col sm={6} lg={4}>
             <Card
               style={{
-                background: 'linear-gradient(to top right , #3E0703, #cbcaa5)',
+                background: ' #38040e',
                 justifyContent: 'center',
                 alignItems: 'center',
                 height: '100px',
               }}
             >
-              <h5 className='my-1' style={{ color: ' #00f504' }}>
-                {formatPrice(totalPaiementsAmountPayed)} F
-              </h5>
-
               <p className='text-white'>
-                Entrées (Paiements)
+                Revenue (Chiffre d'Affaires)
                 <i
                   className='fas fa-level-down-alt ms-2 fs-4'
                   style={{ color: '#00f504' }}
                 ></i>
               </p>
+              <h5 className='my-1' style={{ color: ' #00f504' }}>
+                {formatPrice(totalPaiementsAmountPayed)} F
+              </h5>
+            </Card>{' '}
+          </Col>
+          <Col sm={6} lg={4}>
+            <Card
+              style={{
+                background: ' #640d14',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100px',
+              }}
+            >
+              <p className='text-white'>Achat sur Revenue</p>
+              <h5 className='my-1' style={{ color: ' #00f504' }}>
+                {formatPrice(totalAchat)} F
+              </h5>
             </Card>{' '}
           </Col>
 
@@ -168,7 +193,7 @@ const RapportByDay = () => {
           <Col sm={6} lg={4}>
             <Card
               style={{
-                background: 'linear-gradient(to top right , #3E0703, #cbcaa5)',
+                background: ' #f58549',
                 justifyContent: 'center',
                 alignItems: 'center',
                 height: '100px',
@@ -179,7 +204,7 @@ const RapportByDay = () => {
                 {formatPrice(totalDepenses)} F
               </h4>
               <p className='text-white'>
-                Sortie (Dépenses)
+                Dépenses
                 <i
                   className='fas fa-level-up-alt ms-2 fs-4'
                   style={{ color: ' #901E3E' }}
@@ -192,7 +217,7 @@ const RapportByDay = () => {
           <Col sm={6} lg={4}>
             <Card
               style={{
-                background: 'linear-gradient(to top right , #3E0703, #cbcaa5)',
+                background: ' #ad2831',
                 justifyContent: 'center',
                 alignItems: 'center',
                 height: '100px',
@@ -205,36 +230,37 @@ const RapportByDay = () => {
             </Card>{' '}
           </Col>
 
-          <Col md={8}>
+          <Col sm={6} lg={4}>
             <Card
               style={{
                 background: 'linear-gradient(to top right , #3E0703, #cbcaa5)',
                 justifyContent: 'center',
-                alignItems: 'center',
+                alignItems: 'start',
                 height: '100px',
+                padding: '0 10px',
               }}
             >
-              <h5 className='my-1 text-light'>
-                À Payé:{' '}
+              <h6 className='my-1 text-light'>
+                Total À Payé:{' '}
                 <span className='text-light'>
                   {' '}
                   {formatPrice(totalPaiements)} F
                 </span>
-              </h5>
-              <h5 className='my-1 text-light'>
+              </h6>
+              <h6 className='my-1 text-light'>
                 Net Payé:{' '}
                 <span className='text-success'>
                   {' '}
                   {formatPrice(totalPaiementsAmountPayed)} F
                 </span>
-              </h5>
-              <h5 className='my-1 text-light'>
+              </h6>
+              <h6 className='my-1 text-light'>
                 Impayé:{' '}
                 <span className='text-danger'>
                   {' '}
                   {formatPrice(totalAmountNotPayed)} F
                 </span>
-              </h5>
+              </h6>
             </Card>
           </Col>
         </Row>

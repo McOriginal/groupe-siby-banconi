@@ -17,22 +17,18 @@ const RapportBySemaine = () => {
   const recentCommande = useMemo(
     () =>
       commandes?.commandesListe?.filter((item) => {
-        const t = new Date(item.createdAt).getTime();
+        const t = new Date(item.commandeDate).getTime();
         return t >= sevenDaysAgo;
       }),
     [commandes, sevenDaysAgo]
   );
   // Calcul de la somme total de Commande pour le 7 dernier jour
-  const totalCommandeNumber = recentCommande.length;
-  // const totalCommandeAmount = recentCommande.reduce(
-  //   (acc, item) => acc + Number(item.totalAmount || 0),
-  //   0
-  // );
+  const totalCommandeNumber = recentCommande?.length;
 
   // Recente Paiements Amount Paye
   const recentPaiement = useMemo(
     () =>
-      paiementsData?.filter((item) => {
+      paiementsData?.paiements?.filter((item) => {
         const paie = new Date(item.paiementDate).getTime();
         return paie >= sevenDaysAgo;
       }),
@@ -40,12 +36,12 @@ const RapportBySemaine = () => {
   );
 
   // Calculer le total de Somme à Payé pour le 7 dernier jour
-  const totalPaiementsAmount = recentPaiement.reduce(
+  const totalPaiementsAmount = recentPaiement?.reduce(
     (acc, item) => acc + Number(item.totalAmount || 0),
     0
   );
   // Calculer le total de Somme Payé pour le 7 dernier jour
-  const totalPaiementsPaye = recentPaiement.reduce(
+  const totalPaiementsPaye = recentPaiement?.reduce(
     (acc, item) => acc + Number(item.totalPaye || 0),
     0
   );
@@ -73,6 +69,37 @@ const RapportBySemaine = () => {
     return totalPaiementsPaye - totalDepenses;
   }, [totalPaiementsPaye, totalDepenses]);
 
+  // Calcule de CA , REVENUE, BENEFICE
+  // const { totalCA, totalAchat, benefice } = useMemo(() => {
+  const { totalAchat, benefice } = useMemo(() => {
+    if (!paiementsData?.paiements) {
+      return { totalAchat: 0, benefice: 0 };
+    }
+
+    // On filtre d'abord les paiements par date sélectionnée
+    const paiementsFiltres = paiementsData.paiements.filter((item) => {
+      const date = new Date(item?.paiementDate).getTime();
+      return date >= sevenDaysAgo;
+    });
+
+    // let totalCA = 0; // chiffre d’affaires
+    let totalAchat = 0; // coût d’achat
+
+    paiementsFiltres.forEach((paiement) => {
+      paiement.commande?.items.forEach((item) => {
+        const produit = item?.produit;
+        if (!produit) return;
+
+        // totalCA += (item?.customerPrice || 0) * (item?.quantity || 0);
+        totalAchat += (produit?.achatPrice || 0) * (item?.quantity || 0);
+      });
+    });
+
+    const benefice = totalPaiementsPaye - totalAchat;
+
+    return { totalAchat, benefice };
+  }, [paiementsData, sevenDaysAgo, totalPaiementsPaye]);
+
   return (
     <React.Fragment>
       <Card style={{ boxShadow: '0px 0px 10px rgba(123, 123, 123, 0.28)' }}>
@@ -98,11 +125,11 @@ const RapportBySemaine = () => {
               }}
             >
               {' '}
-              <h5 className='mb-1 text-white'>Bénéfice (Revenue)</h5>
+              <h5 className='mb-1 text-white'>Bénéfice</h5>
               {profit <= 0 ? (
-                <h4 className='text-danger'>{formatPrice(profit)} F</h4>
+                <h4 className='text-danger'>{formatPrice(benefice)} F</h4>
               ) : (
-                <h4 className='text-success'>{formatPrice(profit)} F</h4>
+                <h4 className='text-success'>{formatPrice(benefice)} F</h4>
               )}
             </Card>{' '}
           </Col>
@@ -120,7 +147,28 @@ const RapportBySemaine = () => {
                 {formatPrice(totalPaiementsPaye)} F
               </h4>
               <p className='text-white'>
-                Entrée (Paiements)
+                Revenue (Chiffre d'Affaire)
+                <i
+                  className='fas fa-level-down-alt ms-2 fs-4'
+                  style={{ color: '#B6F500' }}
+                ></i>
+              </p>
+            </Card>{' '}
+          </Col>
+          <Col sm={6} lg={4}>
+            <Card
+              style={{
+                background: 'linear-gradient(to top right , #090979, #222831)',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100px',
+              }}
+            >
+              <h4 className='mb-1' style={{ color: '#B6F500' }}>
+                {formatPrice(totalAchat)} F
+              </h4>
+              <p className='text-white'>
+                Achat sur Revenue
                 <i
                   className='fas fa-level-down-alt ms-2 fs-4'
                   style={{ color: '#B6F500' }}
@@ -144,7 +192,7 @@ const RapportBySemaine = () => {
                 {formatPrice(totalDepenses)} F
               </h4>
               <p className='text-white'>
-                Dépenses (Sortie)
+                Dépenses
                 <i
                   className='fas fa-level-up-alt ms-2 fs-4'
                   style={{ color: '#CB0404' }}
@@ -167,7 +215,7 @@ const RapportBySemaine = () => {
               <p className='text-white'>Commandes</p>
             </Card>{' '}
           </Col>
-          <Col md={8}>
+          <Col sm={6} lg={4}>
             <Card
               style={{
                 background: 'linear-gradient(to top right , #090979, #222831)',
@@ -177,14 +225,14 @@ const RapportBySemaine = () => {
               }}
             >
               <h5 className='my-1 text-light'>
-                À Payé:{' '}
+                Total À Payé:{' '}
                 <span className='text-light ps-2'>
                   {' '}
                   {formatPrice(totalPaiementsAmount)} F
                 </span>
               </h5>
               <h5 className='my-1 text-light'>
-                Payé:{' '}
+                Net Payé:{' '}
                 <span className='text-success ps-2'>
                   {' '}
                   {formatPrice(totalPaiementsPaye)} F

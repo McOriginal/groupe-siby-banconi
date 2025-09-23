@@ -13,8 +13,8 @@ const BarChartCommandePaiement = () => {
 
   const countCommandeByMonth = (item) => {
     const monthlyCounts = new Array(12).fill(0);
-    item.forEach((comm) => {
-      const date = new Date(comm.createdAt);
+    item?.forEach((comm) => {
+      const date = new Date(comm.commandeDate);
       if (!isNaN(date)) {
         const month = date.getMonth();
         monthlyCounts[month]++;
@@ -25,8 +25,8 @@ const BarChartCommandePaiement = () => {
 
   const sumTotalAmountToPayeByMonth = (items) => {
     const monthlySums = new Array(12).fill(0);
-    items.forEach((item) => {
-      const date = new Date(item.createdAt);
+    items?.forEach((item) => {
+      const date = new Date(item.paiementDate);
       if (!isNaN(date)) {
         const month = date.getMonth();
         monthlySums[month] += Number(item.totalAmount || 0);
@@ -36,8 +36,8 @@ const BarChartCommandePaiement = () => {
   };
   const sumTotalAmountPayeByMonth = (items) => {
     const monthlySums = new Array(12).fill(0);
-    items.forEach((item) => {
-      const date = new Date(item.createdAt);
+    items?.forEach((item) => {
+      const date = new Date(item.paiementDate);
       if (!isNaN(date)) {
         const month = date.getMonth();
         monthlySums[month] += Number(item.totalPaye || 0);
@@ -47,8 +47,8 @@ const BarChartCommandePaiement = () => {
   };
   const sumTotalAmountNotPayeByMonth = (items) => {
     const monthlySums = new Array(12).fill(0);
-    items.forEach((item) => {
-      const date = new Date(item.createdAt);
+    items?.forEach((item) => {
+      const date = new Date(item.paiementDate);
       if (!isNaN(date)) {
         const month = date.getMonth();
         monthlySums[month] += Number(item.totalAmount - item.totalPaye || 0);
@@ -56,20 +56,6 @@ const BarChartCommandePaiement = () => {
     });
     return monthlySums;
   };
-
-  // const sumTotalTraitement = () => {
-  //   return commandes.reduce((acc, traitement) => {
-  //     acc += Number(traitement.totalAmount || 0);
-  //     return acc;
-  //   }, 0);
-  // };
-
-  // const sumTotalOrdonnance = () => {
-  //   return ordonnanceData.reduce((acc, ordonnance) => {
-  //     acc += Number(ordonnance.totalAmount || 0);
-  //     return acc;
-  //   }, 0);
-  // };
 
   const labels = [
     'Jan',
@@ -97,20 +83,20 @@ const BarChartCommandePaiement = () => {
       },
       {
         label: `Somme à Payé  `,
-        data: sumTotalAmountToPayeByMonth(paiements),
+        data: sumTotalAmountToPayeByMonth(paiements?.paiements),
         backgroundColor: ' #FFD63A',
         barThickness: 10,
       },
 
       {
         label: `Somme Payé`,
-        data: sumTotalAmountPayeByMonth(paiements),
+        data: sumTotalAmountPayeByMonth(paiements?.paiements),
         backgroundColor: ' #4cd13a',
         barThickness: 10,
       },
       {
         label: `Somme Impayé`,
-        data: sumTotalAmountNotPayeByMonth(paiements),
+        data: sumTotalAmountNotPayeByMonth(paiements?.paiements),
         backgroundColor: ' #d13a3a',
         barThickness: 10,
       },

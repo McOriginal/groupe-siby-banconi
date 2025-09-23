@@ -12,10 +12,7 @@ import { deleteButton } from '../components/AlerteModal';
 import { useAllPaiements, useDeletePaiement } from '../../Api/queriesPaiement';
 import PaiementForm from './PaiementForm';
 import ReçuPaiement from './ReçuPaiement';
-import {
-  connectedUserBoutique,
-  connectedUserRole,
-} from '../Authentication/userInfos';
+import { connectedUserRole } from '../Authentication/userInfos';
 
 export default function PaiementsListe() {
   const [form_modal, setForm_modal] = useState(false);
@@ -32,7 +29,7 @@ export default function PaiementsListe() {
   const [todayPaiement, setTodayPaiement] = useState(false);
 
   // Fonction de Rechercher
-  const filterSearchPaiement = paiementsData
+  const filterSearchPaiement = paiementsData?.paiements
     ?.filter((paiement) => {
       const search = searchTerm.toLowerCase();
       return (
@@ -73,6 +70,42 @@ export default function PaiementsListe() {
   const sumTotalPaye = filterSearchPaiement?.reduce((curr, item) => {
     return (curr += item?.totalPaye);
   }, 0);
+
+  // ------------------------------------------------------------------------
+  // total de prix d'achat
+  // const v = paiementsData?.map((item) => item?.commande?.items);
+
+  // // Aplatir tous les items en un seul tableau
+  // const flattenedItems = v?.flat() || [];
+
+  // // Créer un Set pour éviter les doublons
+  // const uniqueProducts = new Map();
+
+  // flattenedItems.forEach((item) => {
+  //   if (item?.produit?._id && !uniqueProducts.has(item.produit._id)) {
+  //     uniqueProducts.set(item.produit._id, item.produit.achatPrice || 0);
+  //   }
+  // });
+
+  // // Faire la somme uniquement des produits uniques
+  // const totalAchatPrice = [...uniqueProducts.values()].reduce(
+  //   (curr, price) => curr + price,
+  //   0
+  // );
+
+  // console.log('totalAchatPrice:', totalAchatPrice);
+
+  // const sumTotalCustomerPrice = paiementsData?.reduce(
+  //   (curr, item) => curr + item.totalPaye,
+  //   0
+  // );
+  // console.log('VALUES Customer Price: ', sumTotalCustomerPrice);
+
+  // // total de bénéfice
+  // const sumTotalBenefice = sumTotalCustomerPrice - totalAchatPrice;
+
+  // console.log('VALUES Benefice: ', sumTotalBenefice);
+  // // console.log('VALUES benefice: ', sumTotalBenefice);
 
   // Ouverture de Modal Form
   function tog_form_modal() {

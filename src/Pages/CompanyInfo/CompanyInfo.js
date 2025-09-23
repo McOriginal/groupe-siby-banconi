@@ -26,10 +26,9 @@ const companyServices2 = 'Location des Voitures et Appartements meublés';
 
 const companyOwnerName = 'Commerce Général';
 
-const companyAdresse =
-  "Kabala sur la route d'université 50m avant de passer le pont";
+const companyAdresse = "Banconi Razel à 100m de l'impôts de la Commune I";
 
-const companyTel = '+223 92-11-99-05 / 76-15-32-35 / 77-20-61-24 / 79-62-72-75';
+const companyTel = '+223 76-96-82-97 / 71-76-11-11 / 76-23-29-07 / 71-81-85-55';
 
 export {
   companyLogo,

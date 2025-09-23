@@ -9,6 +9,7 @@ const SelectedMounthTotalResult = () => {
   const { data: commandes = [] } = useAllCommandes();
   const { data: paiementsData = [] } = useAllPaiements();
   const { data: depenseData = [] } = useAllDepenses();
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
   const monthOptions = [
     'Janvier',
@@ -25,30 +26,17 @@ const SelectedMounthTotalResult = () => {
     'Décembre',
   ];
 
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-
   // Calcul de Nombre total de COMMANDE pour le mois sélectionné
   const totalCommandesNumber = useMemo(() => {
     return commandes?.commandesListe?.filter((item) => {
-      const date = new Date(item.createdAt);
+      const date = new Date(item.commandeDate);
       return !isNaN(date) && date.getMonth() === selectedMonth;
     }).length;
   }, [commandes, selectedMonth]);
 
-  // Calcul de somme total de Commandes pour le mois sélectionné
-  // const totalTraitementAmount = useMemo(() => {
-  //   return commandes?.commandesListe?.reduce((acc, item) => {
-  //     const date = new Date(item.createdAt);
-  //     if (!isNaN(date) && date.getMonth() === selectedMonth) {
-  //       acc += Number(item.totalAmount || 0);
-  //     }
-  //     return acc;
-  //   }, 0);
-  // }, [commandes, selectedMonth]);
-
   // Calcul de somme total de Paiements pour le mois sélectionné
   const totalPaiementsToPaye = useMemo(() => {
-    return paiementsData?.reduce((acc, item) => {
+    return paiementsData?.paiements?.reduce((acc, item) => {
       const date = new Date(item.paiementDate);
       if (!isNaN(date) && date.getMonth() === selectedMonth) {
         acc += Number(item.totalAmount || 0);
@@ -59,7 +47,7 @@ const SelectedMounthTotalResult = () => {
 
   // Calcul de somme total Payé pour le mois sélectionné
   const totalPaiementsAmountPaye = useMemo(() => {
-    return paiementsData?.reduce((acc, item) => {
+    return paiementsData?.paiements?.reduce((acc, item) => {
       const date = new Date(item.paiementDate);
       if (!isNaN(date) && date.getMonth() === selectedMonth) {
         acc += Number(item.totalPaye || 0);
@@ -74,8 +62,8 @@ const SelectedMounthTotalResult = () => {
 
   // Calcul de total pour Dépenses pour le mois sélectionné
   const totalDepenses = useMemo(() => {
-    return depenseData.reduce((acc, item) => {
-      const date = new Date(item.createdAt);
+    return depenseData?.reduce((acc, item) => {
+      const date = new Date(item.dateOfDepense);
       if (!isNaN(date) && date.getMonth() === selectedMonth) {
         acc += Number(item.totalAmount || 0);
       }
@@ -87,6 +75,38 @@ const SelectedMounthTotalResult = () => {
   const profit = useMemo(() => {
     return totalPaiementsToPaye - totalDepenses;
   }, [totalPaiementsToPaye, totalDepenses]);
+
+  // Calcule de CA , REVENUE, BENEFICE
+  // const { totalCA, totalAchat, benefice } = useMemo(() => {
+  const { totalAchat, benefice } = useMemo(() => {
+    if (!paiementsData?.paiements) {
+      return { totalAchat: 0, benefice: 0 };
+    }
+
+    // On filtre d'abord les paiements par date sélectionnée
+    const paiementsFiltres = paiementsData.paiements.filter((item) => {
+      const date = new Date(item?.paiementDate);
+
+      return date.getMonth() === selectedMonth;
+    });
+
+    // let totalCA = 0; // chiffre d’affaires
+    let totalAchat = 0; // coût d’achat
+
+    paiementsFiltres.forEach((paiement) => {
+      paiement.commande?.items.forEach((item) => {
+        const produit = item?.produit;
+        if (!produit) return;
+
+        // totalCA += (item?.customerPrice || 0) * (item?.quantity || 0);
+        totalAchat += (produit?.achatPrice || 0) * (item?.quantity || 0);
+      });
+    });
+
+    const benefice = totalPaiementsAmountPaye - totalAchat;
+
+    return { totalAchat, benefice };
+  }, [paiementsData, selectedMonth, totalPaiementsAmountPaye]);
 
   return (
     <React.Fragment>
@@ -120,7 +140,7 @@ const SelectedMounthTotalResult = () => {
             </Card>
           </Col>
           <Col md={4}>
-            <h4 className='text-center mt-5' style={{ color: '#BE5B50' }}>
+            <h4 className='text-center mt-5' style={{ color: ' #BE5B50' }}>
               Rapports Mensuel
             </h4>
           </Col>
@@ -132,18 +152,18 @@ const SelectedMounthTotalResult = () => {
           <Col sm={6} lg={4}>
             <Card
               style={{
-                background: 'linear-gradient(to top right , #654ea3, #eaafc8)',
+                background: ' #0d1b2a',
                 justifyContent: 'center',
                 alignItems: 'center',
                 height: '100px',
               }}
             >
               {' '}
-              <h5 className='mb-1 text-white'>Bénéfice (Revenue)</h5>
+              <h5 className='mb-1 text-white'>Bénéfice</h5>
               {profit <= 0 ? (
-                <h4 className='text-danger'>{formatPrice(profit)} F</h4>
+                <h4 className='text-danger'>{formatPrice(benefice)} F</h4>
               ) : (
-                <h4 className='text-success'>{formatPrice(profit)} F</h4>
+                <h4 className='text-success'>{formatPrice(benefice)} F</h4>
               )}
             </Card>{' '}
           </Col>
@@ -151,22 +171,37 @@ const SelectedMounthTotalResult = () => {
           <Col sm={6} lg={4}>
             <Card
               style={{
-                background: 'linear-gradient(to top right ,#654ea3, #eaafc8)',
+                background: ' #1b263b',
                 justifyContent: 'center',
                 alignItems: 'center',
                 height: '100px',
               }}
             >
-              <h4 className='mb-1' style={{ color: '#B6F500' }}>
-                {formatPrice(totalPaiementsAmountPaye)} F
-              </h4>
               <p className='text-white'>
-                Entrée (Paiements)
+                Revenue (Chiffre d'Affaire)
                 <i
                   className='fas fa-level-down-alt ms-2 fs-4'
                   style={{ color: '#B6F500' }}
                 ></i>
               </p>
+              <h4 className='mb-1' style={{ color: ' #B6F500' }}>
+                {formatPrice(totalPaiementsAmountPaye)} F
+              </h4>
+            </Card>{' '}
+          </Col>
+          <Col sm={6} lg={4}>
+            <Card
+              style={{
+                background: ' #415a77',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100px',
+              }}
+            >
+              <p className='text-white'>Achat sur Revenue</p>
+              <h4 className='mb-1' style={{ color: '#B6F500' }}>
+                {formatPrice(totalAchat)} F
+              </h4>
             </Card>{' '}
           </Col>
 
@@ -174,23 +209,23 @@ const SelectedMounthTotalResult = () => {
           <Col sm={6} lg={4}>
             <Card
               style={{
-                background: 'linear-gradient(to top right , #654ea3, #eaafc8)',
+                background: ' #778da9',
                 justifyContent: 'center',
                 alignItems: 'center',
                 height: '100px',
               }}
             >
               {' '}
-              <h4 className='mb-1' style={{ color: '#901E3E' }}>
-                {formatPrice(totalDepenses)} F
-              </h4>
               <p className='text-white'>
-                Sortie (Dépenses)
+                Dépenses
                 <i
                   className='fas fa-level-up-alt ms-2 fs-4'
                   style={{ color: '#901E3E' }}
                 ></i>
               </p>
+              <h4 className='mb-1' style={{ color: '#901E3E' }}>
+                {formatPrice(totalDepenses)} F
+              </h4>
             </Card>{' '}
           </Col>
 
@@ -198,40 +233,41 @@ const SelectedMounthTotalResult = () => {
           <Col sm={6} lg={4}>
             <Card
               style={{
-                background: 'linear-gradient(to top right ,#654ea3, #eaafc8)',
+                background: ' #0077b6',
                 justifyContent: 'center',
                 alignItems: 'center',
                 height: '100px',
               }}
             >
-              <h5 className='text-warning my-1'>{totalCommandesNumber}</h5>
               <p className='text-white'>Commandes</p>
+              <h5 className='text-warning my-1'>{totalCommandesNumber}</h5>
             </Card>{' '}
           </Col>
-          <Col md={8}>
+          <Col sm={6} lg={4}>
             <Card
               style={{
-                background: 'linear-gradient(to top right , #654ea3, #eaafc8)',
+                background: ' #03045e',
                 justifyContent: 'center',
-                alignItems: 'center',
+                alignItems: 'start',
                 height: '100px',
+                padding: '0px 10px',
               }}
             >
-              <h5 className='my-1'>
-                À Payé:{' '}
+              <h5 className='my-1 text-light'>
+                Total À Payé:{' '}
                 <span className='text-light ps-3'>
                   {' '}
                   {formatPrice(totalPaiementsToPaye)} F
                 </span>
               </h5>
-              <h5 className='my-1'>
-                Payé:{' '}
+              <h5 className='my-1 text-light'>
+                Net Payé:{' '}
                 <span className='text-success ps-3'>
                   {' '}
                   {formatPrice(totalPaiementsAmountPaye)} F
                 </span>
               </h5>
-              <h5 className='my-1'>
+              <h5 className='my-1 text-light'>
                 Impayé:{' '}
                 <span className='text-danger ps-3'>
                   {' '}
