@@ -34,6 +34,7 @@ import UpdateDevis from '../Pages/Devis/UpdateDevis.js';
 import UsersProfilesListe from '../Pages/Authentication/UsersProfilesListe.js';
 import ProfileDetail from '../Pages/Authentication/ProfileDetail.js';
 import Bilans from '../Pages/Bilans/Bilans.js';
+import TopProduits from '../Pages/Produits/TopProduits.js';
 
 const sharedRoutes = [
   // Produit de la Boutique
@@ -103,8 +104,11 @@ const authProtectedRoutes = [
   // Produit de la Boutique
   { path: '/produits', component: <ProduitListe /> },
 
-  // Médicament Pharmaceutique
+  // Produit
   { path: '/produit_no_stock', component: <ProduitSansStock /> },
+
+  // Top Produits
+  { path: '/topProduits', component: <TopProduits /> },
 
   // approvisonnements
   { path: '/approvisonnements', component: <ApprovisonnementListe /> },

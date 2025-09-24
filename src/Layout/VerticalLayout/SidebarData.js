@@ -26,6 +26,12 @@ const SidebarData = [
     url: '/produit_no_stock',
   },
   {
+    label: 'Top Produits',
+    icon: 'fas fa-star',
+    isHasArrow: true,
+    url: '/topProduits',
+  },
+  {
     label: 'Approvisonnement',
     // icon: 'bx bx-rotate-right',
     icon: 'fas fa-redo-alt',

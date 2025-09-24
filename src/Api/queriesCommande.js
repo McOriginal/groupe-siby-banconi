@@ -43,15 +43,14 @@ export const useOneCommande = (id) =>
     staleTime: 1000 * 60 * 5, //chaque 5 minutes rafraichir les données
   });
 
-// Ajouter une COMMANDE et Decrementer la quantité au Stock de PRODUIT
-// export const useDecrementMultipleStocks = () => {
-//   const queryClient = useQueryClient();
-//   return useMutation({
-//     mutationFn: (items) =>
-//       api.post('/commandes/decrementMultipleStocks', { items }),
-//     onSuccess: () => queryClient.invalidateQueries(['commandes']),
-//   });
-// };
+// Liste des Produits les plus Commandés
+export const useGetTopProduitCommande = () => {
+  return useQuery({
+    queryKey: ['commandes'],
+    queryFn: () =>
+      api.get('/commandes/topProduitsCommande').then((res) => res.data),
+  });
+};
 
 // Supprimer une Commande
 export const useDeleteCommande = () => {
