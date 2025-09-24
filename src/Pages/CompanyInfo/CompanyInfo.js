@@ -7,7 +7,7 @@ import outil_5 from '../../assets/images/outil (5).png';
 import outil_6 from '../../assets/images/outil (6).png';
 import outil_7 from '../../assets/images/outil (7).png';
 import outil_8 from '../../assets/images/outil (8).png';
-import outil_9 from '../../assets/images/outil (9).png';
+import outil_9 from '../../assets/images/outil (9).jpeg';
 import outil_10 from '../../assets/images/outil (10).png';
 import outil_11 from '../../assets/images/outil (11).png';
 import outil_12 from '../../assets/images/outil (12).png';
