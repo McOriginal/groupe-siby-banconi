@@ -14,3 +14,6 @@ jobs:
 
       - name: Execution de Render Deploy Hook
         run: curl -X POST ${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}
+
+      - name: Statut de Deploiement
+        run: echo "Succès"
