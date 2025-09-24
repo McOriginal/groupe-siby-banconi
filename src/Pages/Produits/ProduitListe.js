@@ -44,7 +44,6 @@ export default function ProduitListe() {
     return (
       prod?.stock > 0 &&
       (prod?.name?.toLowerCase().includes(search) ||
-        prod?.category?.toLowerCase().includes(search) ||
         prod?.stock?.toString().includes(search) ||
         prod?.price?.toString().includes(search))
     );

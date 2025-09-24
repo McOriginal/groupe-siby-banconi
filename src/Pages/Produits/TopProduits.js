@@ -22,16 +22,16 @@ export default function TopProduits() {
 
   // Recherche State
   const [searchTerm, setSearchTerm] = useState('');
-
   // Fontion pour Rechercher
   const filterSearchProduits = produits?.filter((prod) => {
     const search = searchTerm.toLowerCase();
 
     return (
       prod?.name?.toLowerCase().includes(search) ||
-      prod?.category?.toLowerCase().includes(search) ||
       prod?.stock?.toString().includes(search) ||
-      prod?.price?.toString().includes(search)
+      prod?.totalQuantity?.toString().includes(search) ||
+      prod?.price?.toString().includes(search) ||
+      prod?.achatPrice?.toString().includes(search)
     );
   });
 
