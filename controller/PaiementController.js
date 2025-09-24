@@ -61,10 +61,29 @@ exports.updatePaiement = async (req, res) => {
 exports.getAllPaiements = async (req, res) => {
   try {
     const paiements = await Paiement.find()
-      .populate('user')
       .populate({ path: 'commande', populate: { path: 'items.produit' } })
+      .populate('user')
       .sort({ createdAt: -1 });
-    return res.status(200).json(paiements);
+
+    // Calcul du chiffre d'affaires et du coût d'achat
+    let totalCA = 0; // chiffre d'affaires
+    let totalAchat = 0; // coût d'achat
+
+    paiements.forEach((paiement) => {
+      paiement.commande?.items.forEach((item) => {
+        const produit = item.produit;
+
+        const ca = item.customerPrice * item.quantity; // revenu
+        const achat = produit.achatPrice * item.quantity; // coût d'achat
+
+        totalCA += ca;
+        totalAchat += achat;
+      });
+    });
+
+    const benefice = totalCA - totalAchat;
+
+    return res.status(200).json({ paiements, totalCA, totalAchat, benefice });
   } catch (err) {
     res.status(400).json({ status: 'error', message: err.message });
   }

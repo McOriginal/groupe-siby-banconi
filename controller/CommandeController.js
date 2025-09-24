@@ -285,3 +285,43 @@ exports.deleteCommande = async (req, res) => {
     return res.status(400).json({ message: err.message });
   }
 };
+
+// Produits les plus Commandés
+exports.getTopProduits = async (req, res) => {
+  try {
+    const results = await Commande.aggregate([
+      { $unwind: '$items' }, // décompose le tableau items
+      {
+        $group: {
+          _id: '$items.produit',
+          totalQuantity: { $sum: '$items.quantity' },
+        },
+      },
+      {
+        $lookup: {
+          from: 'produits',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'produit',
+        },
+      },
+      { $unwind: '$produit' },
+      { $sort: { totalQuantity: -1 } }, // tri du plus acheté au moins acheté
+      // { $limit: limit }, // limiter le nombre de résultats
+      {
+        $project: {
+          _id: 0,
+          produitId: '$produit._id',
+          name: '$produit.name',
+          imageUrl: '$produit.imageUrl',
+          price: '$produit.price',
+          achatPrice: '$produit.achatPrice',
+          totalQuantity: 1,
+        },
+      },
+    ]);
+    return res.status(200).json(results);
+  } catch (error) {
+    return res.status(404).json({ message: error });
+  }
+};
