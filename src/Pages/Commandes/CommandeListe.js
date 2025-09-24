@@ -178,7 +178,10 @@ export default function CommandeListe() {
               <Card>
                 <CardBody>
                   <div id='commandeList'>
-                    <div className='search-box me-2 d-flex align-items-center gap-2'>
+                    <div
+                      className='search-box me-2 d-flex align-items-center gap-2'
+                      style={{ width: '200px' }}
+                    >
                       {searchTerm !== '' && (
                         <Button
                           color='danger'

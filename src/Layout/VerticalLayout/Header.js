@@ -74,7 +74,9 @@ const Header = (props) => {
                   }}
                   alt='logo'
                 />
-                <h5 className='text-info'>{companyLittleName}</h5>
+                {window.screen.width >= 998 && (
+                  <h5 className='text-info'>{companyLittleName}</h5>
+                )}
               </span>
             </div>
 
