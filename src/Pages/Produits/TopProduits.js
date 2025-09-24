@@ -20,21 +20,6 @@ import defaultImg from './../../assets/images/no_image.png';
 export default function TopProduits() {
   const { data: produits, isLoading, error } = useGetTopProduitCommande();
 
-  // Recherche State
-  const [searchTerm, setSearchTerm] = useState('');
-  // Fontion pour Rechercher
-  const filterSearchProduits = (produits || [])?.filter((prod) => {
-    const search = searchTerm.toLowerCase();
-
-    return (
-      prod?.name?.toLowerCase().includes(search) ||
-      prod?.stock?.toString().includes(search) ||
-      prod?.totalQuantity?.toString().includes(search) ||
-      prod?.price?.toString().includes(search) ||
-      prod?.achatPrice?.toString().includes(search)
-    );
-  });
-
   return (
     <React.Fragment>
       <div className='page-content'>
@@ -59,7 +44,7 @@ export default function TopProduits() {
                           </span>
                         </p>
                       </Col>
-                      <Col>
+                      {/* <Col>
                         <div className='d-flex justify-content-sm-end gap-2'>
                           {searchTerm !== '' && (
                             <Button
@@ -79,7 +64,7 @@ export default function TopProduits() {
                             />
                           </div>
                         </div>
-                      </Col>
+                      </Col> */}
                     </Row>
                   </div>
                 </CardBody>
@@ -93,15 +78,15 @@ export default function TopProduits() {
                 Erreur lors de chargement des données
               </div>
             )}
-            {!error && !isLoading && filterSearchProduits?.length === 0 && (
+            {!error && !isLoading && produits?.length === 0 && (
               <div className='text-center'>
                 Aucun Produit sans stock pour le moment
               </div>
             )}
             {!error &&
               !isLoading &&
-              filterSearchProduits?.length > 0 &&
-              filterSearchProduits?.map((prod, index) => (
+              produits?.length > 0 &&
+              produits?.map((prod, index) => (
                 <Card
                   key={index}
                   style={{
