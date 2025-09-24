@@ -31,7 +31,7 @@ const ProfileMenu = (props) => {
           tag='button'
         >
           <span className='fw-bold font-size-11 text-warning d-inline-block ms-2 me-2'>
-            {connectedUserName}
+            {connectedUserName.toUpperCase()}
           </span>
           <i className='mdi mdi-chevron-down d-xl-inline-block' />
         </DropdownToggle>

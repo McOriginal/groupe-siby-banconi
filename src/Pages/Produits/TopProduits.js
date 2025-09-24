@@ -14,8 +14,8 @@ import Breadcrumbs from '../../components/Common/Breadcrumb';
 import LoadingSpiner from '../components/LoadingSpiner';
 import { capitalizeWords, formatPrice } from '../components/capitalizeFunction';
 
-import defaultImg from './../../assets/images/no_image.png';
 import { useGetTopProduitCommande } from '../../Api/queriesCommande';
+import defaultImg from './../../assets/images/no_image.png';
 
 export default function TopProduits() {
   const { data: produits, isLoading, error } = useGetTopProduitCommande();
@@ -23,7 +23,7 @@ export default function TopProduits() {
   // Recherche State
   const [searchTerm, setSearchTerm] = useState('');
   // Fontion pour Rechercher
-  const filterSearchProduits = produits?.filter((prod) => {
+  const filterSearchProduits = (produits || [])?.filter((prod) => {
     const search = searchTerm.toLowerCase();
 
     return (
