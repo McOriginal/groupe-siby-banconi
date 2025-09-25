@@ -20,6 +20,20 @@ import defaultImg from './../../assets/images/no_image.png';
 export default function TopProduits() {
   const { data: produits, isLoading, error } = useGetTopProduitCommande();
 
+  // Recherche State
+  // const [searchTerm, setSearchTerm] = useState('');
+  // // Fontion pour Rechercher
+  // const filterSearchProduits = produits?.filter((prod) => {
+  //   const search = searchTerm.toLowerCase();
+
+  //   return (
+  //     prod?.name?.toLowerCase().includes(search) ||
+  //     prod?.stock?.toString().includes(search) ||
+  //     prod?.totalQuantity?.toString().includes(search) ||
+  //     prod?.price?.toString().includes(search) ||
+  //     prod?.achatPrice?.toString().includes(search)
+  //   );
+  // });
   return (
     <React.Fragment>
       <div className='page-content'>

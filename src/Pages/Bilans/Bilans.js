@@ -14,12 +14,11 @@ export default function Bilans() {
   const { data: paiementsData, isLoading, error } = useAllPaiements();
   const tableRef = useRef(null);
   // State de Recherche
-  const [selectedBoutique, setSelectedBoutique] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
 
   // Fonction de Rechercher
-  const filterSearchPaiement = paiementsData?.filter((item) => {
+  const filterSearchPaiement = paiementsData?.paiements?.filter((item) => {
     // Filtrer par date
     if (startDate && endDate) {
       const paiementDate = new Date(item.commande?.commandeDate);
@@ -29,9 +28,6 @@ export default function Bilans() {
       if (paiementDate < start || paiementDate > end) {
         return false;
       }
-    }
-    if (selectedBoutique !== null) {
-      return Number(item.user?.boutique) === selectedBoutique;
     }
     return true;
   });
@@ -62,14 +58,8 @@ export default function Bilans() {
                         <h3>Bilans de Boutique</h3>
                         <div className='d-flex gap-1'>
                           <DownloadTableExcel
-                            filename={
-                              'bilans de semaine boutique ' +
-                                selectedBoutique ?? '1 et 2'
-                            }
-                            sheet={
-                              'bilans de semaine boutique ' +
-                                selectedBoutique ?? '1 et 2'
-                            }
+                            filename={`bilans de ${startDate} à ${endDate}`}
+                            sheet={`bilans de ${startDate} à ${endDate}`}
                             currentTableRef={tableRef.current}
                           >
                             <Button color='success'>
@@ -115,7 +105,6 @@ export default function Bilans() {
                             <Button
                               color='danger'
                               onClick={() => {
-                                setSelectedBoutique(null);
                                 setStartDate(null);
                                 setEndDate(null);
                               }}
@@ -123,35 +112,6 @@ export default function Bilans() {
                               Effacer le Filtre
                             </Button>
                           )}
-                          <div>
-                            <h6>Boutique </h6>
-                            <select
-                              value={selectedBoutique ?? ''}
-                              onChange={(e) => {
-                                const v = e.target.value;
-                                setSelectedBoutique(
-                                  v === '' ? null : Number(v)
-                                );
-                              }}
-                              className='form-select border border-dark rounded '
-                              style={{ cursor: 'pointer' }}
-                            >
-                              <option value=''>Toutes</option>
-                              <option value={connectedUserBoutique ?? 0}>
-                                {connectedUserBoutique ?? 0} - Ma Boutique
-                              </option>
-                              {connectedUserBoutique === 1 ? (
-                                <option value='2'>Boutique - 2</option>
-                              ) : connectedUserBoutique === 2 ? (
-                                <option value='1'>Boutique - 1</option>
-                              ) : (
-                                <optgroup label='autres'>
-                                  <option value='1'>Boutique - 1</option>
-                                  <option value='2'>Boutique - 2</option>
-                                </optgroup>
-                              )}
-                            </select>
-                          </div>
 
                           <div md='4'>
                             <h6>Date de début</h6>
