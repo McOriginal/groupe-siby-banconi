@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Button, Card, CardBody, Col, Container, Row } from 'reactstrap';
 import { DownloadTableExcel } from 'react-export-table-to-excel';
 import Breadcrumbs from '../../components/Common/Breadcrumb';
@@ -9,37 +9,80 @@ import {
   formatPrice,
 } from '../components/capitalizeFunction';
 import { useAllPaiements } from '../../Api/queriesPaiement';
+import { useAllDepenses } from '../../Api/queriesDepense';
 export default function Bilans() {
   const { data: paiementsData, isLoading, error } = useAllPaiements();
+  const { data: depenseData } = useAllDepenses();
   const tableRef = useRef(null);
   // State de Recherche
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
 
-  // Fonction de Rechercher
-  const filterSearchPaiement = paiementsData?.paiements?.filter((item) => {
-    // Filtrer par date
-    if (startDate && endDate) {
-      const paiementDate = new Date(item.commande?.commandeDate);
-      const start = new Date(startDate);
+  const isBetweenDates = useCallback(
+    (dateStr) => {
+      if (!startDate || !endDate) return true; // si pas encore choisi, on ne filtre pas
+      const date = new Date(dateStr).getTime();
+      const start = new Date(startDate).getTime();
       const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999); // Inclure toute la journée de fin
-      if (paiementDate < start || paiementDate > end) {
-        return false;
-      }
-    }
-    return true;
+      end.setHours(23, 59, 59, 999); // inclure toute la journée
+      return date >= start && date <= end.getTime();
+    },
+    [startDate, endDate]
+  );
+  // Fonction de Rechercher
+  const filterPaiement = paiementsData?.paiements?.filter((item) => {
+    // Filtrer par date
+    return isBetweenDates(item.commande?.commandeDate);
+  });
+  // Fonction de Rechercher
+  const filterDepense = depenseData?.filter((item) => {
+    // Filtrer par date
+    return isBetweenDates(item?.dateOfDepense);
   });
 
   // Total de commandes
-  const sumTotalAmount = filterSearchPaiement?.reduce((curr, item) => {
+  const sumTotalAmount = filterPaiement?.reduce((curr, item) => {
     return (curr += item?.totalAmount);
   }, 0);
 
   // Total Payés
-  const sumTotalPaye = filterSearchPaiement?.reduce((curr, item) => {
+  const sumTotalPaye = filterPaiement?.reduce((curr, item) => {
     return (curr += item?.totalPaye);
   }, 0);
+
+  // Total Depensés
+  const sumTotalDepense = filterDepense?.reduce((curr, item) => {
+    return (curr += item?.totalAmount);
+  }, 0);
+
+  const { totalAchat, benefice } = useMemo(() => {
+    if (!paiementsData?.paiements) {
+      return { totalAchat: 0, benefice: 0 };
+    }
+
+    // On filtre d'abord les paiements par date sélectionnée
+    const paiementsFiltres = paiementsData?.paiements?.filter((item) => {
+      return isBetweenDates(item?.paiementDate);
+    });
+
+    // let totalCA = 0; // chiffre d’affaires
+    let totalAchat = 0; // coût d’achat
+
+    paiementsFiltres.forEach((paiement) => {
+      paiement.commande?.items.forEach((item) => {
+        const produit = item?.produit;
+        if (!produit) return;
+
+        // totalCA += (item?.customerPrice || 0) * (item?.quantity || 0);
+        totalAchat += (produit?.achatPrice || 0) * (item?.quantity || 0);
+      });
+    });
+
+    const total = sumTotalPaye - totalAchat;
+    const benefice = total - sumTotalDepense;
+
+    return { totalAchat, benefice };
+  }, [paiementsData, isBetweenDates, sumTotalPaye, sumTotalDepense]);
 
   return (
     <React.Fragment>
@@ -76,25 +119,47 @@ export default function Bilans() {
                           <h6 className=''>
                             Commande Entregistrées:{' '}
                             <span className='text-info'>
-                              {formatPrice(filterSearchPaiement?.length)}
+                              {formatPrice(filterPaiement?.length)}
                             </span>
                           </h6>
                           <h6 className=''>
-                            Montant Total:{' '}
+                            Chiffre d'Affaire:{' '}
                             <span className='text-info'>
                               {formatPrice(sumTotalAmount)} F{' '}
                             </span>
                           </h6>
                           <h6 className=''>
-                            Total Payés:{' '}
+                            Revenu :{' '}
                             <span className='text-success'>
                               {formatPrice(sumTotalPaye)} F{' '}
                             </span>
                           </h6>
                           <h6 className=''>
-                            Total Non Payés:{' '}
+                            Total Achats :{' '}
+                            <span className='text-success'>
+                              {formatPrice(totalAchat)} F{' '}
+                            </span>
+                          </h6>
+                          <h6 className=''>
+                            Réliquat:{' '}
                             <span className='text-danger'>
                               {formatPrice(sumTotalAmount - sumTotalPaye)} F{' '}
+                            </span>
+                          </h6>
+                          <h6 className=''>
+                            Depenses:{' '}
+                            <span className='text-danger'>
+                              {formatPrice(sumTotalDepense)} F{' '}
+                            </span>
+                          </h6>
+                          <h6 className=''>
+                            Benefice:{' '}
+                            <span
+                              className={`${
+                                benefice > 0 ? 'text-primary' : 'text-danger'
+                              }`}
+                            >
+                              {formatPrice(benefice)} F{' '}
                             </span>
                           </h6>
                         </div>
@@ -148,7 +213,7 @@ export default function Bilans() {
                     {isLoading && <LoadingSpiner />}
 
                     <div className='table-responsive table-card mt-3 mb-1'>
-                      {filterSearchPaiement?.length === 0 && (
+                      {filterPaiement?.length === 0 && (
                         <div className='text-center text-mutate'>
                           Aucun paiement trouver !
                         </div>
@@ -188,8 +253,8 @@ export default function Bilans() {
                         </thead>
 
                         <tbody className='list form-check-all text-center'>
-                          {filterSearchPaiement?.length > 0 &&
-                            filterSearchPaiement?.map((paiement) => (
+                          {filterPaiement?.length > 0 &&
+                            filterPaiement?.map((paiement) => (
                               <tr key={paiement?._id}>
                                 <th scope='row'>
                                   {new Date(

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Card, Col, Row } from 'reactstrap';
 import { useAllPaiements } from '../../Api/queriesPaiement';
 import { useAllDepenses } from '../../Api/queriesDepense';
@@ -13,14 +13,17 @@ const RapportBySemaine = () => {
   const [endDate, setEndDate] = useState(null);
 
   // Helper pour filtrer entre deux dates
-  const isBetweenDates = (dateStr) => {
-    if (!startDate || !endDate) return true; // si pas encore choisi, on ne filtre pas
-    const date = new Date(dateStr).getTime();
-    const start = new Date(startDate).getTime();
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999); // inclure toute la journée
-    return date >= start && date <= end.getTime();
-  };
+  const isBetweenDates = useCallback(
+    (dateStr) => {
+      if (!startDate || !endDate) return true; // si pas encore choisi, on ne filtre pas
+      const date = new Date(dateStr).getTime();
+      const start = new Date(startDate).getTime();
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // inclure toute la journée
+      return date >= start && date <= end.getTime();
+    },
+    [startDate, endDate]
+  );
   // Calcul de Nombre de Commande pour le 7 dernier jour
   const recentCommande = useMemo(
     () =>
