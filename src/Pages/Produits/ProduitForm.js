@@ -33,7 +33,7 @@ const ProduitForm = ({ produitToEdit, tog_form_modal }) => {
     initialValues: {
       name: produitToEdit?.name || '',
       price: produitToEdit?.price || undefined,
-      achatPrice: produitToEdit?.price || undefined,
+      achatPrice: produitToEdit?.achatPrice || undefined,
       stock: produitToEdit?.stock || undefined,
       imageUrl: produitToEdit?.imageUrl || '',
     },
