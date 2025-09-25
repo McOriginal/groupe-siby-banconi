@@ -117,7 +117,7 @@ const BarChartCommandePaiement = () => {
       },
       title: {
         display: true,
-        text: 'Statistiques des Patients, Traitements et Ordonnances',
+        text: 'Statistiques de vente ',
         color: '#102E50',
       },
     },

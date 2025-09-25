@@ -111,8 +111,15 @@ const RapportBySemaine = () => {
             </h4>
           </Col>
           <div className='mb-4 d-flex justify-content-around align-items-center'>
-            <Col sm={3}>
-              Date de Début
+            <Col
+              sm={4}
+              style={{
+                background: 'rgb(72, 60, 60)',
+                padding: '15px ',
+                borderRadius: '15px',
+              }}
+            >
+              <p className='text-center text-light'>Date de Début</p>
               <input
                 type='date'
                 max={new Date().toISOString().split('T')[0]}
@@ -121,8 +128,15 @@ const RapportBySemaine = () => {
                 onChange={(e) => setStartDate(e.target.value)}
               />
             </Col>
-            <Col sm={3}>
-              Date de Fin
+            <Col
+              sm={4}
+              style={{
+                background: 'rgb(72, 60, 60)',
+                padding: '15px ',
+                borderRadius: '15px',
+              }}
+            >
+              <p className='text-center text-light'>Date de Fin</p>
               <input
                 type='date'
                 min={startDate}
