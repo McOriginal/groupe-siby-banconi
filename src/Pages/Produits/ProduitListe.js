@@ -24,7 +24,10 @@ import defaultImg from './../../assets/images/no_image.png';
 import { useNavigate } from 'react-router-dom';
 import ProduitForm from './ProduitForm';
 import { useAllProduit, useDeleteProduit } from '../../Api/queriesProduits';
-import { connectedUserRole } from '../Authentication/userInfos';
+import {
+  connectedUserEmail,
+  connectedUserRole,
+} from '../Authentication/userInfos';
 
 export default function ProduitListe() {
   const [form_modal, setForm_modal] = useState(false);
@@ -142,14 +145,18 @@ export default function ProduitListe() {
                           {filterSearchProduits?.length}{' '}
                         </span>
                       </p>
-                      <p className='text-center font-size-15 mt-2'>
-                        Montant de Boutique:{' '}
-                        <span className='text-success text-bold'>
-                          {' '}
-                          {formatPrice(sumTotalAchatPrice)}
-                          {' F '}
-                        </span>
-                      </p>
+                      {connectedUserEmail === 'tandiadiaby186@gmail.com' ||
+                        (connectedUserEmail ===
+                          'cissemohamedbusiness@gmail.com' && (
+                          <p className='text-center font-size-15 mt-2'>
+                            Valeur de Boutique:{' '}
+                            <span className='text-success text-bold'>
+                              {' '}
+                              {formatPrice(sumTotalAchatPrice)}
+                              {' F '}
+                            </span>
+                          </p>
+                        ))}
                     </Col>
                   </div>
                 </CardBody>

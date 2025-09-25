@@ -72,9 +72,6 @@ const SelectedMounthTotalResult = () => {
   }, [depenseData, selectedMonth]);
 
   // Calculer Le revenu (Bénéfice) pour le mois sélectionné
-  const profit = useMemo(() => {
-    return totalPaiementsToPaye - totalDepenses;
-  }, [totalPaiementsToPaye, totalDepenses]);
 
   // Calcule de CA , REVENUE, BENEFICE
   // const { totalCA, totalAchat, benefice } = useMemo(() => {
@@ -102,11 +99,11 @@ const SelectedMounthTotalResult = () => {
         totalAchat += (produit?.achatPrice || 0) * (item?.quantity || 0);
       });
     });
-
-    const benefice = totalPaiementsAmountPaye - totalAchat;
+    const total = totalPaiementsAmountPaye - totalAchat;
+    const benefice = total - totalDepenses;
 
     return { totalAchat, benefice };
-  }, [paiementsData, selectedMonth, totalPaiementsAmountPaye]);
+  }, [paiementsData, selectedMonth, totalPaiementsAmountPaye, totalDepenses]);
 
   return (
     <React.Fragment>
@@ -160,7 +157,7 @@ const SelectedMounthTotalResult = () => {
             >
               {' '}
               <h5 className='mb-1 text-white'>Bénéfice</h5>
-              {profit <= 0 ? (
+              {benefice <= 0 ? (
                 <h4 className='text-danger'>{formatPrice(benefice)} F</h4>
               ) : (
                 <h4 className='text-success'>{formatPrice(benefice)} F</h4>

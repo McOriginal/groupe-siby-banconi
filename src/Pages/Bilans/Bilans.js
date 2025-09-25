@@ -8,7 +8,6 @@ import {
   formatPhoneNumber,
   formatPrice,
 } from '../components/capitalizeFunction';
-import { connectedUserBoutique } from '../Authentication/userInfos';
 import { useAllPaiements } from '../../Api/queriesPaiement';
 export default function Bilans() {
   const { data: paiementsData, isLoading, error } = useAllPaiements();

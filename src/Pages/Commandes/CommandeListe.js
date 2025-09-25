@@ -198,53 +198,60 @@ export default function CommandeListe() {
                       />
                     </div>
                   </div>
-                  <div className='d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4'>
-                    <div className='d-flex flex-column justify-content-center align-items-center gap-2 text-warning'>
-                      <label className='form-check-label' htmlFor='filterToday'>
-                        Commande d'Aujourd'hui
-                      </label>{' '}
-                      <input
-                        type='checkbox'
-                        className='form-check-input'
-                        id='filterToday'
-                        onChange={() => setTodayCommande(!todayCommande)}
-                      />
-                    </div>
-                    <div className='d-flex flex-column justify-content-center align-items-center gap-2 text-warning'>
-                      <label
-                        className='form-check-label'
-                        htmlFor='filterDelivredCommande'
-                      >
-                        Commandes En Cours
-                      </label>{' '}
-                      <input
-                        type='checkbox'
-                        className='form-check-input'
-                        id='filterDelivredCommande'
-                        onChange={() => setDelivredCommande(!delivredCommande)}
-                      />
-                    </div>
-                    <div className='d-flex flex-column justify-content-center align-items-center gap-2 text-warning'>
-                      <label
-                        className='form-check-label'
-                        htmlFor='filterNotDelivredCommande'
-                      >
-                        Commande En Attente
-                      </label>
-                      <input
-                        type='checkbox'
-                        className='form-check-input'
-                        id='filterNotDelivredCommande'
-                        onChange={() =>
-                          setNotdelivredCommande(!notDelivredCommande)
-                        }
-                      />
+                  <div className='d-flex  justify-content-around align-items-center flex-wrap'>
+                    <div className='d-flex flex-column justify-content-center align-items-center gap-2 '>
+                      <div className='d-flex flex-wrap justify-content-center align-items-center gap-2 text-warning'>
+                        <label
+                          className='form-check-label'
+                          htmlFor='filterToday'
+                        >
+                          Aujourd'hui
+                        </label>{' '}
+                        <input
+                          type='checkbox'
+                          className='form-check-input'
+                          id='filterToday'
+                          onChange={() => setTodayCommande(!todayCommande)}
+                        />
+                      </div>
+                      <div className='d-flex flex-wrap justify-content-center align-items-center gap-2 text-warning'>
+                        <label
+                          className='form-check-label'
+                          htmlFor='filterDelivredCommande'
+                        >
+                          En Cours
+                        </label>{' '}
+                        <input
+                          type='checkbox'
+                          className='form-check-input'
+                          id='filterDelivredCommande'
+                          onChange={() =>
+                            setDelivredCommande(!delivredCommande)
+                          }
+                        />
+                      </div>
+                      <div className='d-flex flex-wrap justify-content-center align-items-center gap-2 text-warning'>
+                        <label
+                          className='form-check-label'
+                          htmlFor='filterNotDelivredCommande'
+                        >
+                          En Attente
+                        </label>
+                        <input
+                          type='checkbox'
+                          className='form-check-input'
+                          id='filterNotDelivredCommande'
+                          onChange={() =>
+                            setNotdelivredCommande(!notDelivredCommande)
+                          }
+                        />
+                      </div>
                     </div>
 
-                    <Row className='mt-4'>
+                    <Row className='mt-4 d-flex flex-column justify-content-center align-items-center'>
                       <Col>
                         <h6 className='text-center font-size-15 mt-2'>
-                          Commande Enregistrée:{' '}
+                          Total:{' '}
                           <span className='text-info font-size-18'>
                             {' '}
                             {formatPrice(totalCommandesLivres)}
@@ -254,7 +261,7 @@ export default function CommandeListe() {
 
                       <Col>
                         <h6 className='text-center font-size-15 mt-2'>
-                          Commande En Cours:{' '}
+                          En Cours:{' '}
                           <span className='text-info font-size-18'>
                             {' '}
                             {formatPrice(commandesEnCours?.length)}
@@ -263,7 +270,7 @@ export default function CommandeListe() {
                       </Col>
                       <Col>
                         <h6 className='text-center font-size-15 mt-2'>
-                          Commande En Attente:{' '}
+                          En Attente:{' '}
                           <span className='text-danger font-size-18'>
                             {' '}
                             {formatPrice(commandesEnAttente?.length)}
@@ -271,153 +278,151 @@ export default function CommandeListe() {
                         </h6>
                       </Col>
                     </Row>
+                  </div>
+                  {error && (
+                    <div className='text-danger text-center'>
+                      Erreur de chargement des données
+                    </div>
+                  )}
+                  {isLoading && <LoadingSpiner />}
 
-                    {error && (
-                      <div className='text-danger text-center'>
-                        Erreur de chargement des données
+                  <div className='table-responsive table-card mt-3 mb-1'>
+                    {filterCommandes?.length === 0 && (
+                      <div className='text-center text-mutate'>
+                        Aucune commande pour le moment !
                       </div>
                     )}
-                    {isLoading && <LoadingSpiner />}
+                    {!error && !isLoading && filterCommandes?.length > 0 && (
+                      <table
+                        className='table align-middle table-nowrap table-hover'
+                        id='commandeTable'
+                      >
+                        <thead className='table-light'>
+                          <tr>
+                            <th scope='col' style={{ width: '50px' }}>
+                              <i className='fas fa-dollar-sign text-warning'></i>
+                            </th>
+                            <th scope='col' style={{ width: '50px' }}>
+                              Date de Commande
+                            </th>
+                            <th className='sort' data-sort='fullName'>
+                              Client
+                            </th>
+                            <th className='sort' data-sort='phoneNumber'>
+                              Téléphone
+                            </th>
+                            <th className='sort' data-sort='adresse'>
+                              Adresse de Livraison
+                            </th>
+                            <th className='sort' data-sort='items'>
+                              Article
+                            </th>
+                            <th className='sort' data-sort='statut'>
+                              Statut
+                            </th>
 
-                    <div className='table-responsive table-card mt-3 mb-1'>
-                      {filterCommandes?.length === 0 && (
-                        <div className='text-center text-mutate'>
-                          Aucune commande pour le moment !
-                        </div>
-                      )}
-                      {!error && !isLoading && filterCommandes?.length > 0 && (
-                        <table
-                          className='table align-middle table-nowrap table-hover'
-                          id='commandeTable'
-                        >
-                          <thead className='table-light'>
-                            <tr>
-                              <th scope='col' style={{ width: '50px' }}>
-                                <i className='fas fa-dollar-sign text-warning'></i>
-                              </th>
-                              <th scope='col' style={{ width: '50px' }}>
-                                Date de Commande
-                              </th>
-                              <th className='sort' data-sort='fullName'>
-                                Client
-                              </th>
-                              <th className='sort' data-sort='phoneNumber'>
-                                Téléphone
-                              </th>
-                              <th className='sort' data-sort='adresse'>
-                                Adresse de Livraison
-                              </th>
-                              <th className='sort' data-sort='items'>
-                                Article
-                              </th>
-                              <th className='sort' data-sort='statut'>
-                                Statut
-                              </th>
+                            <th className='sort' data-sort='action'>
+                              Action
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className='list form-check-all text-center'>
+                          {filterCommandes?.length > 0 &&
+                            filterCommandes?.map((comm) => (
+                              <tr key={comm?._id}>
+                                <th scope='row'>
+                                  {commandes?.factures?.some(
+                                    (fact) => fact?.commande?._id === comm?._id
+                                  ) ? (
+                                    <i className='fas fa-check-circle text-success'></i>
+                                  ) : (
+                                    <i className='fas fa-times-circle text-danger'></i>
+                                  )}{' '}
+                                </th>
+                                <th scope='row'>
+                                  {new Date(
+                                    comm?.commandeDate ?? comm?.createdAt
+                                  ).toLocaleDateString('fr-Fr', {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                  })}
+                                </th>
+                                <td>{capitalizeWords(comm?.fullName)}</td>
+                                <td>
+                                  {formatPhoneNumber(comm?.phoneNumber) ||
+                                    '------'}
+                                </td>
+                                <td>{capitalizeWords(comm?.adresse)}</td>
 
-                              <th className='sort' data-sort='action'>
-                                Action
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className='list form-check-all text-center'>
-                            {filterCommandes?.length > 0 &&
-                              filterCommandes?.map((comm) => (
-                                <tr key={comm?._id}>
-                                  <th scope='row'>
-                                    {commandes?.factures?.some(
-                                      (fact) =>
-                                        fact?.commande?._id === comm?._id
-                                    ) ? (
-                                      <i className='fas fa-check-circle text-success'></i>
-                                    ) : (
-                                      <i className='fas fa-times-circle text-danger'></i>
-                                    )}{' '}
-                                  </th>
-                                  <th scope='row'>
-                                    {new Date(
-                                      comm?.commandeDate ?? comm?.createdAt
-                                    ).toLocaleDateString('fr-Fr', {
-                                      weekday: 'short',
-                                      year: 'numeric',
-                                      month: '2-digit',
-                                      day: '2-digit',
-                                    })}
-                                  </th>
-                                  <td>{capitalizeWords(comm?.fullName)}</td>
-                                  <td>
-                                    {formatPhoneNumber(comm?.phoneNumber) ||
-                                      '------'}
-                                  </td>
-                                  <td>{capitalizeWords(comm?.adresse)}</td>
-
-                                  <td>
-                                    {comm?.items?.length} acticles
-                                    {'  '}
-                                  </td>
-                                  <td>
-                                    <span
-                                      className={`badge badge-soft-${
-                                        comm?.statut === 'livré'
-                                          ? 'success'
-                                          : 'warning'
-                                      }
+                                <td>
+                                  {comm?.items?.length} acticles
+                                  {'  '}
+                                </td>
+                                <td>
+                                  <span
+                                    className={`badge badge-soft-${
+                                      comm?.statut === 'livré'
+                                        ? 'success'
+                                        : 'warning'
+                                    }
                                          text-uppercase`}
-                                    >
-                                      {comm?.statut}
-                                    </span>
-                                  </td>
+                                  >
+                                    {comm?.statut}
+                                  </span>
+                                </td>
 
-                                  <td>
-                                    {isDeleting && <LoadingSpiner />}
-                                    {!isDeleting && (
+                                <td>
+                                  {isDeleting && <LoadingSpiner />}
+                                  {!isDeleting && (
+                                    <div className='d-flex gap-2'>
+                                      <div className='show-details'>
+                                        <button
+                                          className='btn btn-sm btn-info show-item-btn'
+                                          data-bs-toggle='modal'
+                                          data-bs-target='#showdetails'
+                                          onClick={() => {
+                                            handleCommandeClick(comm?._id);
+                                          }}
+                                        >
+                                          <i className=' bx bx-show-alt text-white'></i>
+                                        </button>
+                                      </div>
                                       <div className='d-flex gap-2'>
-                                        <div className='show-details'>
+                                        <div className='edit'>
                                           <button
-                                            className='btn btn-sm btn-info show-item-btn'
-                                            data-bs-toggle='modal'
-                                            data-bs-target='#showdetails'
+                                            className='btn btn-sm btn-success edit-item-btn'
                                             onClick={() => {
-                                              handleCommandeClick(comm?._id);
+                                              navigate(
+                                                `/updateCommande/${comm?._id}`
+                                              );
                                             }}
                                           >
-                                            <i className=' bx bx-show-alt text-white'></i>
+                                            <i className='ri-pencil-fill text-white'></i>
                                           </button>
                                         </div>
-                                        <div className='d-flex gap-2'>
-                                          <div className='edit'>
-                                            <button
-                                              className='btn btn-sm btn-success edit-item-btn'
-                                              onClick={() => {
-                                                navigate(
-                                                  `/updateCommande/${comm?._id}`
-                                                );
-                                              }}
-                                            >
-                                              <i className='ri-pencil-fill text-white'></i>
-                                            </button>
-                                          </div>
-                                          <div className='remove'>
-                                            <button
-                                              className='btn btn-sm btn-danger remove-item-btn'
-                                              data-bs-toggle='modal'
-                                              data-bs-target='#deleteRecordModal'
-                                              onClick={() => {
-                                                deleteCommande(comm);
-                                              }}
-                                            >
-                                              <i className='ri-delete-bin-fill text-white'></i>
-                                            </button>
-                                          </div>
+                                        <div className='remove'>
+                                          <button
+                                            className='btn btn-sm btn-danger remove-item-btn'
+                                            data-bs-toggle='modal'
+                                            data-bs-target='#deleteRecordModal'
+                                            onClick={() => {
+                                              deleteCommande(comm);
+                                            }}
+                                          >
+                                            <i className='ri-delete-bin-fill text-white'></i>
+                                          </button>
                                         </div>
                                       </div>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </CardBody>
               </Card>
