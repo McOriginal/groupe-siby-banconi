@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, Col, Row } from 'reactstrap';
 import { useAllPaiements } from '../../Api/queriesPaiement';
 import { useAllDepenses } from '../../Api/queriesDepense';
@@ -9,18 +9,25 @@ const RapportBySemaine = () => {
   const { data: commandes = [] } = useAllCommandes();
   const { data: paiementsData = [] } = useAllPaiements();
   const { data: depenseData = [] } = useAllDepenses();
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
-  // Calcule de la date pour le 7 dernier jours
-  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-
+  // Helper pour filtrer entre deux dates
+  const isBetweenDates = (dateStr) => {
+    if (!startDate || !endDate) return true; // si pas encore choisi, on ne filtre pas
+    const date = new Date(dateStr).getTime();
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999); // inclure toute la journée
+    return date >= start && date <= end.getTime();
+  };
   // Calcul de Nombre de Commande pour le 7 dernier jour
   const recentCommande = useMemo(
     () =>
       commandes?.commandesListe?.filter((item) => {
-        const t = new Date(item.commandeDate).getTime();
-        return t >= sevenDaysAgo;
+        return isBetweenDates(item.commandeDate);
       }),
-    [commandes, sevenDaysAgo]
+    [commandes, isBetweenDates]
   );
   // Calcul de la somme total de Commande pour le 7 dernier jour
   const totalCommandeNumber = recentCommande?.length;
@@ -29,10 +36,9 @@ const RapportBySemaine = () => {
   const recentPaiement = useMemo(
     () =>
       paiementsData?.paiements?.filter((item) => {
-        const paie = new Date(item.paiementDate).getTime();
-        return paie >= sevenDaysAgo;
+        return isBetweenDates(item.paiementDate);
       }),
-    [paiementsData, sevenDaysAgo]
+    [paiementsData, isBetweenDates]
   );
 
   // Calculer le total de Somme à Payé pour le 7 dernier jour
@@ -52,10 +58,9 @@ const RapportBySemaine = () => {
   const recentDepense = useMemo(
     () =>
       depenseData?.filter((item) => {
-        const depen = new Date(item.dateOfDepense).getTime();
-        return depen >= sevenDaysAgo;
+        return isBetweenDates(item.dateOfDepense);
       }),
-    [depenseData, sevenDaysAgo]
+    [depenseData, isBetweenDates]
   );
 
   // Calculer la somme Dépensés pour le 7 dernier jour
@@ -73,8 +78,7 @@ const RapportBySemaine = () => {
 
     // On filtre d'abord les paiements par date sélectionnée
     const paiementsFiltres = paiementsData.paiements.filter((item) => {
-      const date = new Date(item?.paiementDate).getTime();
-      return date >= sevenDaysAgo;
+      return isBetweenDates(item?.paiementDate);
     });
 
     // let totalCA = 0; // chiffre d’affaires
@@ -94,18 +98,41 @@ const RapportBySemaine = () => {
     const benefice = total - totalDepenses;
 
     return { totalAchat, benefice };
-  }, [paiementsData, sevenDaysAgo, totalPaiementsPaye, totalDepenses]);
+  }, [paiementsData, isBetweenDates, totalPaiementsPaye, totalDepenses]);
 
   return (
     <React.Fragment>
       <Card style={{ boxShadow: '0px 0px 10px rgba(123, 123, 123, 0.28)' }}>
         {/* Filtrage Bouton */}
-        <Row>
+        <Row className='mb-4'>
           <Col md={12}>
             <h4 className='text-center my-4' style={{ color: '#27548A' }}>
-              Rapports de 7 Dernier Jours
+              Veuillez Sélectionnez
             </h4>
           </Col>
+          <div className='mb-4 d-flex justify-content-around align-items-center'>
+            <Col sm={3}>
+              Date de Début
+              <input
+                type='date'
+                max={new Date().toISOString().split('T')[0]}
+                className='form-control border-1 border-dark'
+                value={startDate || ''}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </Col>
+            <Col sm={3}>
+              Date de Fin
+              <input
+                type='date'
+                min={startDate}
+                max={new Date().toISOString().split('T')[0]}
+                className='form-control border-1 border-dark'
+                value={endDate || ''}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </Col>
+          </div>
         </Row>
 
         {/* Résultats */}
