@@ -19,7 +19,7 @@ const RapportBySemaine = () => {
       const date = new Date(dateStr).getTime();
       const start = new Date(startDate).getTime();
       const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999); // inclure toute la journée
+      end.setHours(23, 59, 59, 999);
       return date >= start && date <= end.getTime();
     },
     [startDate, endDate]
