@@ -27,14 +27,12 @@ export default function UpdateUserProfile({ selectedUser, tog_form_modal }) {
     initialValues: {
       email: selectedUser?.email || '',
       name: selectedUser?.name || '',
-      boutique: selectedUser.boutique || undefined,
       role: selectedUser?.role || '',
     },
     validationSchema: Yup.object({
       name: Yup.string().required('Veuillez Entrer Votre Nom'),
       role: Yup.string().required('Veuillez Sélectionner un Rôle'),
       email: Yup.string().required('Veuillez Enterz une Adresse Email'),
-      boutique: Yup.number(),
     }),
     onSubmit: (values) => {
       setIsLoading(true);
@@ -143,32 +141,6 @@ export default function UpdateUserProfile({ selectedUser, tog_form_modal }) {
             {validation.touched.email && validation.errors.email ? (
               <FormFeedback type='invalid'>
                 <div>{validation.errors.email}</div>
-              </FormFeedback>
-            ) : null}
-          </div>
-
-          <div className='mb-4'>
-            <Label className='form-label'>Boutique</Label>
-            <Input
-              className='form-control border border-1 border-dark'
-              name='boutique'
-              type='select'
-              onChange={validation.handleChange}
-              onBlur={validation.handleBlur}
-              value={validation.values.boutique || ''}
-              invalid={
-                validation.touched.boutique && validation.errors.boutique
-                  ? true
-                  : false
-              }
-            >
-              <option value=''>Sélectionner une Boutique </option>
-              <option value='1'>Sanitaire & Carreaux (N°1)</option>
-              <option value='2'>Quincaillerie & autres (N°2)</option>
-            </Input>
-            {validation.touched.boutique && validation.errors.boutique ? (
-              <FormFeedback type='invalid'>
-                <div>{validation.errors.boutique}</div>
               </FormFeedback>
             ) : null}
           </div>

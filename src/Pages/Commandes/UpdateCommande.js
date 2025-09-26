@@ -50,9 +50,10 @@ export default function UpdateCommande() {
     const search = searchTerm.toLowerCase();
 
     return (
-      prod?.name?.toLowerCase().includes(search) ||
-      prod?.stock?.toString().includes(search) ||
-      prod?.price?.toString().includes(search)
+      prod?.stock > 0 &&
+      (prod?.name?.toLowerCase().includes(search) ||
+        prod?.stock?.toString().includes(search) ||
+        prod?.price?.toString().includes(search))
     );
   });
 
@@ -161,9 +162,7 @@ export default function UpdateCommande() {
       phoneNumber: selectedCommande?.commandeData?.phoneNumber || 0,
       adresse: selectedCommande?.commandeData?.adresse || 'non défini',
       statut: selectedCommande?.commandeData?.statut || 'livré',
-      comDate:
-        selectedCommande?.commandeData?.commandeDate?.substring(0, 10) ||
-        new Date().toISOString().substring(0, 10),
+      comDate: selectedCommande?.commandeData?.commandeDate?.substring(0, 10),
     },
     validationSchema: Yup.object({
       fullName: Yup.string()
@@ -196,8 +195,7 @@ export default function UpdateCommande() {
           customerPrice: item.customerPrice,
         })),
         totalAmount,
-        commandeDate:
-          values.comDate || new Date().toISOString().substring(0, 10),
+        commandeDate: values.comDate,
       };
 
       // On passe au Modification de COMMANDE dans la table

@@ -119,7 +119,7 @@ export default function CommandeListe() {
         comm?.adresse.toLowerCase().includes(search) ||
         comm?.items?.length.toString().includes(search) ||
         comm?.statut.toLowerCase().includes(search) ||
-        new Date(comm?.commandeDate || comm?.createdAt)
+        new Date(comm?.commandeDate)
           .toLocaleDateString('fr-FR')
           .includes(search)
       );
@@ -198,87 +198,89 @@ export default function CommandeListe() {
                       />
                     </div>
                   </div>
-                  <div className='d-flex  justify-content-around align-items-center flex-wrap'>
-                    <div className='d-flex flex-column justify-content-center align-items-center gap-2 '>
-                      <div className='d-flex flex-wrap justify-content-center align-items-center gap-2 text-warning'>
-                        <label
-                          className='form-check-label'
-                          htmlFor='filterToday'
-                        >
-                          Aujourd'hui
-                        </label>{' '}
-                        <input
-                          type='checkbox'
-                          className='form-check-input'
-                          id='filterToday'
-                          onChange={() => setTodayCommande(!todayCommande)}
-                        />
+                  {!isLoading && !error && (
+                    <div className='d-flex  justify-content-around align-items-center flex-wrap'>
+                      <div className='d-flex flex-column justify-content-center align-items-center gap-2 '>
+                        <div className='d-flex flex-wrap justify-content-center align-items-center gap-2 text-warning'>
+                          <label
+                            className='form-check-label'
+                            htmlFor='filterToday'
+                          >
+                            Aujourd'hui
+                          </label>{' '}
+                          <input
+                            type='checkbox'
+                            className='form-check-input'
+                            id='filterToday'
+                            onChange={() => setTodayCommande(!todayCommande)}
+                          />
+                        </div>
+                        <div className='d-flex flex-wrap justify-content-center align-items-center gap-2 text-warning'>
+                          <label
+                            className='form-check-label'
+                            htmlFor='filterDelivredCommande'
+                          >
+                            En Cours
+                          </label>{' '}
+                          <input
+                            type='checkbox'
+                            className='form-check-input'
+                            id='filterDelivredCommande'
+                            onChange={() =>
+                              setDelivredCommande(!delivredCommande)
+                            }
+                          />
+                        </div>
+                        <div className='d-flex flex-wrap justify-content-center align-items-center gap-2 text-warning'>
+                          <label
+                            className='form-check-label'
+                            htmlFor='filterNotDelivredCommande'
+                          >
+                            En Attente
+                          </label>
+                          <input
+                            type='checkbox'
+                            className='form-check-input'
+                            id='filterNotDelivredCommande'
+                            onChange={() =>
+                              setNotdelivredCommande(!notDelivredCommande)
+                            }
+                          />
+                        </div>
                       </div>
-                      <div className='d-flex flex-wrap justify-content-center align-items-center gap-2 text-warning'>
-                        <label
-                          className='form-check-label'
-                          htmlFor='filterDelivredCommande'
-                        >
-                          En Cours
-                        </label>{' '}
-                        <input
-                          type='checkbox'
-                          className='form-check-input'
-                          id='filterDelivredCommande'
-                          onChange={() =>
-                            setDelivredCommande(!delivredCommande)
-                          }
-                        />
-                      </div>
-                      <div className='d-flex flex-wrap justify-content-center align-items-center gap-2 text-warning'>
-                        <label
-                          className='form-check-label'
-                          htmlFor='filterNotDelivredCommande'
-                        >
-                          En Attente
-                        </label>
-                        <input
-                          type='checkbox'
-                          className='form-check-input'
-                          id='filterNotDelivredCommande'
-                          onChange={() =>
-                            setNotdelivredCommande(!notDelivredCommande)
-                          }
-                        />
-                      </div>
+
+                      <Row className='mt-4 d-flex flex-column justify-content-center align-items-center'>
+                        <Col>
+                          <h6 className='text-center font-size-15 mt-2'>
+                            Total:{' '}
+                            <span className='text-info font-size-18'>
+                              {' '}
+                              {formatPrice(totalCommandesLivres)}
+                            </span>
+                          </h6>
+                        </Col>
+
+                        <Col>
+                          <h6 className='text-center font-size-15 mt-2'>
+                            En Cours:{' '}
+                            <span className='text-info font-size-18'>
+                              {' '}
+                              {formatPrice(commandesEnCours?.length)}
+                            </span>
+                          </h6>
+                        </Col>
+                        <Col>
+                          <h6 className='text-center font-size-15 mt-2'>
+                            En Attente:{' '}
+                            <span className='text-danger font-size-18'>
+                              {' '}
+                              {formatPrice(commandesEnAttente?.length)}
+                            </span>
+                          </h6>
+                        </Col>
+                      </Row>
                     </div>
-
-                    <Row className='mt-4 d-flex flex-column justify-content-center align-items-center'>
-                      <Col>
-                        <h6 className='text-center font-size-15 mt-2'>
-                          Total:{' '}
-                          <span className='text-info font-size-18'>
-                            {' '}
-                            {formatPrice(totalCommandesLivres)}
-                          </span>
-                        </h6>
-                      </Col>
-
-                      <Col>
-                        <h6 className='text-center font-size-15 mt-2'>
-                          En Cours:{' '}
-                          <span className='text-info font-size-18'>
-                            {' '}
-                            {formatPrice(commandesEnCours?.length)}
-                          </span>
-                        </h6>
-                      </Col>
-                      <Col>
-                        <h6 className='text-center font-size-15 mt-2'>
-                          En Attente:{' '}
-                          <span className='text-danger font-size-18'>
-                            {' '}
-                            {formatPrice(commandesEnAttente?.length)}
-                          </span>
-                        </h6>
-                      </Col>
-                    </Row>
-                  </div>
+                  )}
                   {error && (
                     <div className='text-danger text-center'>
                       Erreur de chargement des données
@@ -341,7 +343,7 @@ export default function CommandeListe() {
                                 </th>
                                 <th scope='row'>
                                   {new Date(
-                                    comm?.commandeDate ?? comm?.createdAt
+                                    comm?.commandeDate
                                   ).toLocaleDateString('fr-Fr', {
                                     weekday: 'short',
                                     year: 'numeric',

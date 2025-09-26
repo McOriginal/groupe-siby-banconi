@@ -145,9 +145,8 @@ export default function ProduitListe() {
                           {filterSearchProduits?.length}{' '}
                         </span>
                       </p>
-                      {connectedUserEmail === 'tandiadiaby186@gmail.com' ||
-                        (connectedUserEmail ===
-                          'cissemohamedbusiness@gmail.com' && (
+                      {connectedUserEmail ===
+                        'tandiadiaby186@gmail.com'(
                           <p className='text-center font-size-15 mt-2'>
                             Valeur de Boutique:{' '}
                             <span className='text-success text-bold'>
@@ -156,7 +155,7 @@ export default function ProduitListe() {
                               {' F '}
                             </span>
                           </p>
-                        ))}
+                        )}
                     </Col>
                   </div>
                 </CardBody>

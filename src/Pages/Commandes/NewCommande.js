@@ -45,9 +45,10 @@ export default function NewCommande() {
     const search = searchTerm.toLowerCase();
 
     return (
-      prod.name?.toLowerCase().includes(search) ||
-      prod.stock?.toString().includes(search) ||
-      prod.price?.toString().includes(search)
+      prod?.stock > 0 &&
+      (prod.name?.toLowerCase().includes(search) ||
+        prod.stock?.toString().includes(search) ||
+        prod.price?.toString().includes(search))
     );
   });
 

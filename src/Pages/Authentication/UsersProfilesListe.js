@@ -68,9 +68,9 @@ export default function UsersProfilesListe() {
                   </thead>
                   <tbody>
                     {userProfileData?.length > 0 &&
-                      userProfileData.map((user) => (
-                        <tr key={user._id}>
-                          <td>{user.boutique > 0 ? user.boutique : '-----'}</td>
+                      userProfileData.map((user, index) => (
+                        <tr key={index}>
+                          <td>{index + 1}</td>
                           <td className='text-uppercase'>{user.name}</td>
                           <td>{user.email}</td>
                           <td>
@@ -87,7 +87,8 @@ export default function UsersProfilesListe() {
                             >
                               Détails
                             </button>
-                            {user.email !== 'amedicisse1@gmail.com' && (
+                            {user.email !==
+                              'cissemohamedbusiness@gmail.com' && (
                               <button
                                 onClick={() => {
                                   setUser(user);
