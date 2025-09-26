@@ -35,6 +35,7 @@ import UsersProfilesListe from '../Pages/Authentication/UsersProfilesListe.js';
 import ProfileDetail from '../Pages/Authentication/ProfileDetail.js';
 import Bilans from '../Pages/Bilans/Bilans.js';
 import TopProduits from '../Pages/Produits/TopProduits.js';
+import DevisDetails from '../Pages/Devis/DevisDetails.js';
 
 const sharedRoutes = [
   // Produit de la Boutique
@@ -42,6 +43,14 @@ const sharedRoutes = [
 
   // Modifier une   COMMANDE
   { path: '/updateCommande/:id', component: <UpdateCommande /> },
+
+  // Nouveau Devis
+  { path: '/newDevis', component: <NewDevis /> },
+  { path: '/updateDevis/:id', component: <UpdateDevis /> },
+  // Devis Liste
+  { path: '/devisListe', component: <DevisListe /> },
+
+  { path: '/devis/getOneDevis/:id', component: <DevisDetails /> },
 
   // Nouvelle Commande
   { path: '/newCommande', component: <NewCommande /> },
@@ -65,12 +74,6 @@ const authProtectedRoutes = [
   },
   // Commandes
   { path: '/commandes', component: <CommandeListe /> },
-
-  // Nouveau Devis
-  { path: '/newDevis', component: <NewDevis /> },
-  { path: '/updateDevis/:id', component: <UpdateDevis /> },
-  // Devis Liste
-  { path: '/devisListe', component: <DevisListe /> },
 
   // Fournisseurs
   { path: '/fournisseurs', component: <FournisseurListe /> },
