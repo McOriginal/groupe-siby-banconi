@@ -34,6 +34,7 @@ export default function Bilans() {
     // Filtrer par date
     return isBetweenDates(item.commande?.commandeDate);
   });
+
   // Fonction de Rechercher
   const filterDepense = depenseData?.filter((item) => {
     // Filtrer par date
