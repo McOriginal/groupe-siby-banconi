@@ -36,6 +36,8 @@ import ProfileDetail from '../Pages/Authentication/ProfileDetail.js';
 import Bilans from '../Pages/Bilans/Bilans.js';
 import TopProduits from '../Pages/Produits/TopProduits.js';
 import DevisDetails from '../Pages/Devis/DevisDetails.js';
+import BoutiqueProduitListe from '../Pages/Inventaires/BoutiqueProduitListe.js';
+import InventaireHistoriqueListe from '../Pages/Inventaires/InventaireListe.js';
 
 const sharedRoutes = [
   // Produit de la Boutique
@@ -120,6 +122,12 @@ const authProtectedRoutes = [
   // Raports & Bilans
   { path: '/bilans', component: <Bilans /> },
   { path: '/rapports', component: <Rapports /> },
+
+  { path: '/inventaires_produits_liste', component: <BoutiqueProduitListe /> },
+  {
+    path: '/inventaires_historique_liste',
+    component: <InventaireHistoriqueListe />,
+  },
 
   { path: '/register', component: <Register /> },
   // --------------------------------------------------------

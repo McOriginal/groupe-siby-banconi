@@ -90,6 +90,12 @@ const UserProfile = () => {
                       >
                         Changer mon mot de passe
                       </Button>
+                      <Button
+                        color='info'
+                        onClick={() => navigate('/inventaires_produits_liste')}
+                      >
+                        Vérification / Inventaire
+                      </Button>
 
                       <Button color='danger' onClick={() => logout()}>
                         Se Déconnecter

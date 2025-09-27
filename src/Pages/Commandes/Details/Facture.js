@@ -164,7 +164,7 @@ export default function Facture() {
                       <CardText>
                         <strong> Date:</strong>{' '}
                         {new Date(
-                          selectedCommande?.commandeData?.createdAt
+                          selectedCommande?.commandeData?.commandeDate
                         ).toLocaleDateString()}
                       </CardText>
                     </div>
