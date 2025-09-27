@@ -38,6 +38,7 @@ import TopProduits from '../Pages/Produits/TopProduits.js';
 import DevisDetails from '../Pages/Devis/DevisDetails.js';
 import BoutiqueProduitListe from '../Pages/Inventaires/BoutiqueProduitListe.js';
 import InventaireHistoriqueListe from '../Pages/Inventaires/InventaireListe.js';
+import ProductsToPrint from '../Pages/Inventaires/ProductsToPrint.js';
 
 const sharedRoutes = [
   // Produit de la Boutique
@@ -124,6 +125,7 @@ const authProtectedRoutes = [
   { path: '/rapports', component: <Rapports /> },
 
   { path: '/inventaires_produits_liste', component: <BoutiqueProduitListe /> },
+  { path: '/produits_liste_to_print', component: <ProductsToPrint /> },
   {
     path: '/inventaires_historique_liste',
     component: <InventaireHistoriqueListe />,

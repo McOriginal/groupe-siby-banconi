@@ -3,11 +3,7 @@ import { Button, Card, CardBody, Col, Container, Row } from 'reactstrap';
 import Breadcrumbs from '../../components/Common/Breadcrumb';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpiner from '../components/LoadingSpiner';
-import {
-  capitalizeWords,
-  formatPhoneNumber,
-  formatPrice,
-} from '../components/capitalizeFunction';
+import { capitalizeWords, formatPrice } from '../components/capitalizeFunction';
 import { deleteButton } from '../components/AlerteModal';
 import Swal from 'sweetalert2';
 import {
@@ -136,12 +132,22 @@ export default function InventaireHistoriqueListe() {
                 <CardBody>
                   <Row className='g-4 mb-3'>
                     <Col className='col-sm'>
-                      <Button
-                        color='info'
-                        onClick={() => navigate('/inventaires_produits_liste')}
-                      >
-                        Fare une vérification
-                      </Button>
+                      <div className='d-flex justify-content-center align-items-center gap-4 flex-wrap'>
+                        <Button
+                          color='info'
+                          onClick={() =>
+                            navigate('/inventaires_produits_liste')
+                          }
+                        >
+                          Fare une vérification
+                        </Button>
+                        <Button
+                          color='warning'
+                          onClick={() => navigate('/produits_liste_to_print')}
+                        >
+                          Liste de Produits
+                        </Button>
+                      </div>
                       <div className='d-flex gap-3 justify-content-sm-end'>
                         {searchTerm !== '' && (
                           <Button

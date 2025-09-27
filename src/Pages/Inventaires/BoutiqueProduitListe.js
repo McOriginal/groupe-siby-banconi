@@ -7,11 +7,7 @@ import {
   CardTitle,
   Col,
   Container,
-  DropdownItem,
-  DropdownMenu,
-  DropdownToggle,
   Row,
-  UncontrolledDropdown,
 } from 'reactstrap';
 import Breadcrumbs from '../../components/Common/Breadcrumb';
 import FormModal from '../components/FormModal';
@@ -25,6 +21,7 @@ import { useAllProduit } from '../../Api/queriesProduits';
 import { connectedUserEmail } from '../Authentication/userInfos';
 import ProduitVerificationForm from './ProduitVerificationForm';
 import { useNavigate } from 'react-router-dom';
+import BackButton from '../components/BackButton';
 
 export default function BoutiqueProduitListe() {
   const [form_modal, setForm_modal] = useState(false);
@@ -83,6 +80,8 @@ export default function BoutiqueProduitListe() {
                 <CardBody>
                   <div id='produitsList'>
                     <div className='d-flex justify-content-between align-items-center flex-wrap gab-2 mb-3'>
+                      <BackButton />
+
                       <Button
                         color='info'
                         onClick={() =>
