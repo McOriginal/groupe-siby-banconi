@@ -90,9 +90,9 @@ exports.cancelInventaire = async (req, res) => {
   try {
     const invent = await Inventaire.findByIdAndDelete(req.params.id);
 
-    if (!results) {
-      return res.status(404).json({ message: 'Inventaire non trouvée' });
-    }
+    // if (!invent) {
+    //   return res.status(404).json({ message: 'Inventaire non trouvée' });
+    // }
 
     // On décrémente le stock du PRODUIT associé
     await Produit.findByIdAndUpdate(
