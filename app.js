@@ -10,6 +10,7 @@ const approvisonementsRoute = require('./routes/ApprovisonementRoute');
 const depenseRoute = require('./routes/DepenseRoute');
 const livraisonHistoriqueRoute = require('./routes/LivraisonHistoriqueRoute');
 const deivisRoute = require('./routes/DevisRoute');
+const inventaireRoute = require('./routes/InventaireRoute');
 
 const nodemailer = require('nodemailer');
 const cors = require('cors');
@@ -67,6 +68,9 @@ app.use('/api/livraison_historique', livraisonHistoriqueRoute);
 
 // Utilisation des routes Depense
 app.use('/api/depenses', depenseRoute);
+
+// Utilisation des routes pour la vérification inventaire
+app.use('/api/inventaires', inventaireRoute);
 
 //  Exporter le fichier APP
 module.exports = app;
