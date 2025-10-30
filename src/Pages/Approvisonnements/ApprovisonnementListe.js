@@ -91,7 +91,7 @@ export default function ApprovisonnementListe() {
                 setIsDeleting(false);
                 swalWithBootstrapButtons.fire({
                   title: 'Succès!',
-                  text: `Approvisonnement Annulé avec succès STOCK rétabli.`,
+                  text: `Approvisionnement Annulé avec succès STOCK rétabli.`,
                   icon: 'success',
                 });
                 navigate('/produits');
@@ -133,7 +133,7 @@ export default function ApprovisonnementListe() {
     <React.Fragment>
       <div className='page-content'>
         <Container fluid>
-          <Breadcrumbs title='Produits' breadcrumbItem='Approvisonnement' />
+          <Breadcrumbs title='Produits' breadcrumbItem='Approvisionnement' />
           {/* -------------------------- */}
 
           <Row>
@@ -143,7 +143,7 @@ export default function ApprovisonnementListe() {
                   <Row className='g-4 mb-3'>
                     <Col>
                       <p className='text-center font-size-15 mt-2'>
-                        Approvisonnement Total:{' '}
+                        Approvisionnement Total:{' '}
                         <span className='text-warning'>
                           {' '}
                           {approvisonnementData?.length}{' '}
@@ -185,7 +185,7 @@ export default function ApprovisonnementListe() {
                         !isLoading &&
                         !error && (
                           <div className='text-center text-mutate'>
-                            Aucune approvisonnement pour le moment !
+                            Aucune approvisionnement pour le moment !
                           </div>
                         )}
                       {!error &&

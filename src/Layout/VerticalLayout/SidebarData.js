@@ -32,7 +32,7 @@ const SidebarData = [
     url: '/topProduits',
   },
   {
-    label: 'Approvisonnement',
+    label: 'Approvisionnement',
     // icon: 'bx bx-rotate-right',
     icon: 'fas fa-redo-alt',
     isHasArrow: true,

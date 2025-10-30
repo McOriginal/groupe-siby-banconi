@@ -152,7 +152,7 @@ export default function ProduitSansStock() {
                           }}
                         >
                           <i className='bx bx-analyse align-bottom me-2 text-muted'></i>
-                          Approvisonner
+                          Approvisionner
                         </DropdownItem>
                       </DropdownMenu>
                     </UncontrolledDropdown>
