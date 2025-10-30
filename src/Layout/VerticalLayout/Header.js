@@ -14,8 +14,10 @@ import {
 import ProfileMenu from '../../components/Common/TopbarDropdown/ProfileMenu';
 import {
   companyLittleName,
-  companyLogo,
   companyOwnerName,
+  companyServices1,
+  companyServices2,
+  companySmallLogo,
 } from '../../Pages/CompanyInfo/CompanyInfo';
 
 const Header = (props) => {
@@ -62,27 +64,17 @@ const Header = (props) => {
         <div className='navbar-header'>
           <div className='d-flex'>
             <div
-              className='navbar-brand-box text-center pt-5 mb-4'
+              className='navbar-brand-box text-center'
               style={{ backgroundColor: ' #F7F4EA' }}
             >
               <span>
-                <img
-                  src={companyLogo}
-                  style={{
-                    width: '60px',
-                    // marginBottom: '10px',
-                  }}
-                  alt='logo'
-                />
-                {window.screen.width >= 998 && (
-                  <h5 className='text-info'>{companyLittleName}</h5>
-                )}
+                <img src={companySmallLogo} alt='logo' />
               </span>
             </div>
 
             <button
               type='button'
-              className='btn btn-sm px-3 font-size-24 header-item waves-effect  d-flex justify-content-center bg-info text-white align-self-center mx-3 pt-3'
+              className='btn btn-sm px-3 font-size-24 header-item waves-effect  d-flex justify-content-center  text-info align-self-center '
               id='vertical-menu-btn'
               onClick={() => {
                 tToggle();
@@ -90,9 +82,11 @@ const Header = (props) => {
             >
               <i className='ri-menu-2-line align-middle'></i>
             </button>
+          </div>
 
+          <div className='d-none d-md-flex flex-column justify-content-center align-items-center'>
             <p
-              className='d-flex justify-content-center align-items-center fw-bold font-size-16'
+              className='font-size-16 d-flex justify-content-center align-items-center fw-bold mb-0'
               style={{
                 color: ' #27548A',
               }}
@@ -100,8 +94,15 @@ const Header = (props) => {
               {companyLittleName} |
               <span className=' ms-2 text-warning'> {companyOwnerName}</span>
             </p>
+            <div className='text-center'>
+              <p className='font-size-11 text-warning m-0'>
+                {companyServices1}
+              </p>
+              <p className='font-size-11 text-warning m-0'>
+                {companyServices2}
+              </p>
+            </div>
           </div>
-
           <div className='d-flex'>
             <div className='dropdown d-none d-lg-inline-block ms-1'>
               <button

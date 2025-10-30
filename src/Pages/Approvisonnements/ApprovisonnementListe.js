@@ -8,17 +8,12 @@ import {
   formatPhoneNumber,
   formatPrice,
 } from '../components/capitalizeFunction';
-import { deleteButton } from '../components/AlerteModal';
 import {
   useAllApprovisonnement,
   useCancelApprovisonnement,
   useDeleteApprovisonnement,
 } from '../../Api/queriesApprovisonnement';
 import Swal from 'sweetalert2';
-import {
-  connectedUserBoutique,
-  connectedUserRole,
-} from '../Authentication/userInfos';
 
 export default function ApprovisonnementListe() {
   // Recuperer la Liste des APPROVISONNEMENT
@@ -268,32 +263,12 @@ export default function ApprovisonnementListe() {
                                       {!isDeleting && (
                                         <div className='remove'>
                                           <button
-                                            className='btn btn-sm btn-warning remove-item-btn'
-                                            data-bs-toggle='modal'
-                                            data-bs-target='#deleteRecordModal'
+                                            className='btn btn-sm btn-danger remove-item-btn'
                                             onClick={(e) => {
                                               handleCancelApprovisonnement(
                                                 appro
                                               );
                                               e.stopPropagation();
-                                            }}
-                                          >
-                                            Annuler
-                                          </button>
-                                        </div>
-                                      )}
-                                      {!isDeleting && (
-                                        <div className='remove'>
-                                          <button
-                                            className='btn btn-sm btn-danger remove-item-btn'
-                                            data-bs-toggle='modal'
-                                            data-bs-target='#deleteRecordModal'
-                                            onClick={() => {
-                                              deleteButton(
-                                                appro?._id,
-                                                appro?.produit?.name,
-                                                deleteApprovisonnement
-                                              );
                                             }}
                                           >
                                             <i className='ri-delete-bin-fill text-white'></i>
