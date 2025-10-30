@@ -225,7 +225,7 @@ export default function ProduitListe() {
                               }}
                             >
                               <i className='bx bx-analyse align-bottom me-2 '></i>
-                              Approvisonner
+                              Approvisionner
                             </DropdownItem>
 
                             <DropdownItem
