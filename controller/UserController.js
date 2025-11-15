@@ -9,9 +9,9 @@ exports.register = async (req, res) => {
   try {
     const lowerName = name.toLowerCase();
 
-    // Limiter le nombre d'utilisateurs à 5
+    // Limiter le nombre d'utilisateurs à 10
     const userCount = await User.countDocuments();
-    if (userCount >= 5) {
+    if (userCount >= 10) {
       return res
         .status(400)
         .json({ message: 'Vous ne pouvez pas créer plus de (5 Comptes).' });
