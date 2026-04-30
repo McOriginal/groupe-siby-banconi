@@ -341,6 +341,22 @@ exports.deleteCommande = async (req, res) => {
 // Produits les plus Commandés
 exports.getTopProduits = async (req, res) => {
   try {
+    /**
+     * TOP PRODUITS - optimisation "pro"
+     *
+     * Contrainte:
+     * - On ne change PAS l'URL existante: `/commandes/topProduitsCommande`
+     *
+     * Amélioration:
+     * - On permet de limiter le nombre de résultats via `?limit=20`
+     * - Ça évite de renvoyer une liste trop grande (RAM / réseau)
+     */
+    const rawLimit = Number.parseInt(req.query?.limit, 10);
+    const limit =
+      Number.isFinite(rawLimit) && rawLimit > 0 && rawLimit <= 200
+        ? rawLimit
+        : 20;
+
     const results = await Commande.aggregate([
       { $unwind: '$items' }, // décompose le tableau items
       {
@@ -359,7 +375,7 @@ exports.getTopProduits = async (req, res) => {
       },
       { $unwind: '$produit' },
       { $sort: { totalQuantity: -1 } }, // tri du plus acheté au moins acheté
-      // { $limit: limit }, // limiter le nombre de résultats
+      { $limit: limit }, // limiter le nombre de résultats (évite payload énorme)
       {
         $project: {
           _id: 0,
