@@ -20,15 +20,51 @@ const app = express();
 
 // Middlewares globaux
 
-app.use(cors());
-// app.use(
-//   cors({
-//     origin: 'https://quincaillerie-groupe-siby.onrender.com',
-//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//     allowedHeaders: ['Content-Type', 'Authorization'],
-//   })
-// );
-// app.options('*', cors());
+/**
+ * CORS — Protection uniquement sur un chemin (préfixe /api)
+ *
+ * Objectif:
+ * - Ne pas exposer "tout le serveur" au CORS (évite d’ouvrir aussi des routes non-API)
+ * - Autoriser uniquement les origines front nécessaires (prod + dev)
+ *
+ * Configuration:
+ * - CORS_ORIGINS : liste séparée par virgule
+ *   ex: "https://gestiongroupesiby.online,http://localhost:3000"
+ */
+const corsOriginsRaw = (process.env.CORS_ORIGINS || '').toString().trim();
+const allowedOrigins = corsOriginsRaw
+  ? corsOriginsRaw.split(',').map((s) => s.trim()).filter(Boolean)
+  : [
+      // Prod (avec / sans www)
+      'https://gestiongroupesiby.online',
+      'https://www.gestiongroupesiby.online',
+      // Dev
+      'http://localhost:3000',
+    ];
+
+// Petit helper pour tolérer www si l’admin l’utilise en prod.
+const prodOriginRegex = /^https:\/\/(www\.)?gestiongroupesiby\.online$/i;
+
+const corsOptions = {
+  origin(origin, cb) {
+    // origin absent => curl/Postman/serveur-à-serveur (pas un navigateur)
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin) || prodOriginRegex.test(origin)) {
+      return cb(null, true);
+    }
+    // On renvoie une erreur explicite (ceci remonte souvent en 500 si non géré ailleurs)
+    return cb(new Error(`CORS refusé pour l'origine: ${origin}`));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400, // cache preflight 24h
+};
+
+// CORS UNIQUEMENT pour l’API
+app.use('/api', cors(corsOptions));
+// Preflight pour toutes les routes /api/... (regex => pas de parsing path-to-regexp)
+app.options(/^\/api\/.*$/, cors(corsOptions));
 app.use(express.json()); // Parser les requêtes avec JSON
 
 // Lire les données de formulaire avec body parser
