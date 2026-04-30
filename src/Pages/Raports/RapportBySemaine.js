@@ -6,11 +6,31 @@ import { formatPrice } from '../components/capitalizeFunction'; // Pour afficher
 import { useAllCommandes } from '../../Api/queriesCommande';
 
 const RapportBySemaine = () => {
-  const { data: commandes = [] } = useAllCommandes();
-  const { data: paiementsData = [] } = useAllPaiements();
-  const { data: depenseData = [] } = useAllDepenses();
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+
+  /**
+   * OPTIMISATION PRO (Rapport par période)
+   *
+   * On ne charge plus toutes les données.
+   * Quand une période est sélectionnée, on récupère uniquement la plage via `from/to` + `export=1`.
+   */
+  const commandesParams =
+    startDate && endDate
+      ? { paged: 1, export: 1, from: startDate, to: endDate }
+      : { paged: 1, page: 1, limit: 25 };
+  const paiementsParams =
+    startDate && endDate
+      ? { paged: 1, export: 1, deep: 1, from: startDate, to: endDate }
+      : { paged: 1, page: 1, limit: 25 };
+  const depensesParams =
+    startDate && endDate
+      ? { paged: 1, export: 1, from: startDate, to: endDate }
+      : { paged: 1, page: 1, limit: 25 };
+
+  const { data: commandes } = useAllCommandes(commandesParams);
+  const { data: paiementsData } = useAllPaiements(paiementsParams);
+  const { data: depenseData } = useAllDepenses(depensesParams);
 
   // Helper pour filtrer entre deux dates
   const isBetweenDates = useCallback(
@@ -60,7 +80,7 @@ const RapportBySemaine = () => {
   // Recent Depense
   const recentDepense = useMemo(
     () =>
-      depenseData?.filter((item) => {
+      (depenseData?.items || [])?.filter((item) => {
         return isBetweenDates(item.dateOfDepense);
       }),
     [depenseData, isBetweenDates]

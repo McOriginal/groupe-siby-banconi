@@ -8,54 +8,35 @@ import { useAllPaiements } from '../../Api/queriesPaiement';
 Chart.register(CategoryScale);
 
 const BarChartCommandePaiement = () => {
-  const { data: commandes = [] } = useAllCommandes();
-  const { data: paiements = [] } = useAllPaiements();
+  /**
+   * OPTIMISATION PRO (Charts)
+   *
+   * Avant:
+   * - Chargement de toutes les commandes + paiements
+   * - Agrégation par mois côté navigateur
+   *
+   * Maintenant:
+   * - On demande directement des stats mensuelles au backend:
+   *   - `/commandes/getAllCommandes?stats=month`
+   *   - `/paiements/getAllPaiements?stats=month`
+   */
+  const { data: commandesStats } = useAllCommandes({
+    stats: 'month',
+    year: new Date().getFullYear(),
+  });
+  const { data: paiementsStats } = useAllPaiements({
+    stats: 'month',
+    year: new Date().getFullYear(),
+  });
 
-  const countCommandeByMonth = (item) => {
-    const monthlyCounts = new Array(12).fill(0);
-    item?.forEach((comm) => {
-      const date = new Date(comm.commandeDate);
-      if (!isNaN(date)) {
-        const month = date.getMonth();
-        monthlyCounts[month]++;
-      }
-    });
-    return monthlyCounts;
-  };
-
-  const sumTotalAmountToPayeByMonth = (items) => {
-    const monthlySums = new Array(12).fill(0);
-    items?.forEach((item) => {
-      const date = new Date(item.paiementDate);
-      if (!isNaN(date)) {
-        const month = date.getMonth();
-        monthlySums[month] += Number(item.totalAmount || 0);
-      }
-    });
-    return monthlySums;
-  };
-  const sumTotalAmountPayeByMonth = (items) => {
-    const monthlySums = new Array(12).fill(0);
-    items?.forEach((item) => {
-      const date = new Date(item.paiementDate);
-      if (!isNaN(date)) {
-        const month = date.getMonth();
-        monthlySums[month] += Number(item.totalPaye || 0);
-      }
-    });
-    return monthlySums;
-  };
-  const sumTotalAmountNotPayeByMonth = (items) => {
-    const monthlySums = new Array(12).fill(0);
-    items?.forEach((item) => {
-      const date = new Date(item.paiementDate);
-      if (!isNaN(date)) {
-        const month = date.getMonth();
-        monthlySums[month] += Number(item.totalAmount - item.totalPaye || 0);
-      }
-    });
-    return monthlySums;
-  };
+  // Données normalisées (12 mois)
+  const commandesByMonth = commandesStats?.countCommandes || new Array(12).fill(0);
+  const sumTotalAmountToPayeByMonth =
+    paiementsStats?.sumTotalAmount || new Array(12).fill(0);
+  const sumTotalAmountPayeByMonth =
+    paiementsStats?.sumTotalPaye || new Array(12).fill(0);
+  const sumTotalAmountNotPayeByMonth =
+    paiementsStats?.sumTotalImpayes || new Array(12).fill(0);
 
   const labels = [
     'Jan',
@@ -77,26 +58,26 @@ const BarChartCommandePaiement = () => {
     datasets: [
       {
         label: 'Nombre de Commandes',
-        data: countCommandeByMonth(commandes?.commandesListe),
+        data: commandesByMonth,
         backgroundColor: ' #5F8B4C',
         barThickness: 10,
       },
       {
         label: `Somme à Payé  `,
-        data: sumTotalAmountToPayeByMonth(paiements?.paiements),
+        data: sumTotalAmountToPayeByMonth,
         backgroundColor: ' #FFD63A',
         barThickness: 10,
       },
 
       {
         label: `Somme Payé`,
-        data: sumTotalAmountPayeByMonth(paiements?.paiements),
+        data: sumTotalAmountPayeByMonth,
         backgroundColor: ' #4cd13a',
         barThickness: 10,
       },
       {
         label: `Somme Impayé`,
-        data: sumTotalAmountNotPayeByMonth(paiements?.paiements),
+        data: sumTotalAmountNotPayeByMonth,
         backgroundColor: ' #d13a3a',
         barThickness: 10,
       },

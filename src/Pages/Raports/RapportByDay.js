@@ -6,13 +6,39 @@ import { formatPrice } from '../components/capitalizeFunction';
 import { useAllCommandes } from '../../Api/queriesCommande';
 
 const RapportByDay = () => {
-  const { data: commandes = [] } = useAllCommandes();
-  const { data: paiementsData = [] } = useAllPaiements();
-  const { data: depenseData = [] } = useAllDepenses();
-
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0]
   );
+
+  /**
+   * OPTIMISATION PRO (Rapport journalier)
+   *
+   * Avant:
+   * - Chargement de toutes les commandes/paiements/dépenses
+   *
+   * Maintenant:
+   * - On ne récupère que la journée sélectionnée via `from/to` + `export=1`
+   * - Pour paiements, on active `deep=1` (besoin de items.produit.achatPrice)
+   */
+  const { data: commandes } = useAllCommandes({
+    paged: 1,
+    export: 1,
+    from: selectedDate,
+    to: selectedDate,
+  });
+  const { data: paiementsData } = useAllPaiements({
+    paged: 1,
+    export: 1,
+    deep: 1,
+    from: selectedDate,
+    to: selectedDate,
+  });
+  const { data: depenseData } = useAllDepenses({
+    paged: 1,
+    export: 1,
+    from: selectedDate,
+    to: selectedDate,
+  });
 
   // Calcul de Nombre total de COMMANDE pour le mois sélectionné
   const totalCommandesNumber = useMemo(() => {
@@ -48,7 +74,7 @@ const RapportByDay = () => {
 
   // Calcul le total pour Dépenses pour le mois sélectionné
   const totalDepenses = useMemo(() => {
-    return depenseData?.reduce((acc, item) => {
+    return (depenseData?.items || [])?.reduce((acc, item) => {
       const date = new Date(item.dateOfDepense).toISOString().slice(0, 10);
       if (date === selectedDate) {
         acc += Number(item.totalAmount || 0);

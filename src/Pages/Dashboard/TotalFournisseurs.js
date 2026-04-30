@@ -1,5 +1,5 @@
 import { Card, CardBody, CardImg, CardTitle } from 'reactstrap';
-import { useAllFournisseur } from '../../Api/queriesFournisseur';
+import { useFournisseursSummary } from '../../Api/queriesFournisseur';
 import fourImg from './../../assets/images/delivery.png';
 import LoadingSpiner from '../components/LoadingSpiner';
 import { useNavigate } from 'react-router-dom';
@@ -8,10 +8,10 @@ import { connectedUserRole } from '../Authentication/userInfos';
 export default function TotalFounisseurs() {
   // Fournisseur Data
   const {
-    data: fournisseurData,
+    data: summary,
     isLoading: fournisseurLoading,
     error: fournisseurError,
-  } = useAllFournisseur();
+  } = useFournisseursSummary();
   const navigate = useNavigate();
 
   const handleNavigate = () => {
@@ -37,7 +37,9 @@ export default function TotalFounisseurs() {
           />
           <CardBody>
             <CardTitle className='text-center'>
-              <span className='text-info fs-5'>{fournisseurData.length}</span>
+              <span className='text-info fs-5'>
+                {summary?.counts?.totalFournisseurs}
+              </span>
               <p>Fournisseurs</p>
             </CardTitle>
           </CardBody>

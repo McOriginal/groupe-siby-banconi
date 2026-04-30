@@ -37,6 +37,27 @@ export const useAllFournisseur = (params) =>
     placeholderData: (prev) => prev,
   });
 
+/**
+ * DASHBOARD - Compteur Fournisseurs
+ *
+ * Objectif:
+ * - Eviter de télécharger tous les fournisseurs juste pour afficher un total sur le dashboard.
+ *
+ * Contrainte:
+ * - On ne change pas l'URL: `/fournisseurs/getAllFournisseurs`
+ * - On utilise seulement `summary=1`
+ */
+export const useFournisseursSummary = () =>
+  useQuery({
+    queryKey: ['fournisseurs', 'summary'],
+    queryFn: () =>
+      api
+        .get('/fournisseurs/getAllFournisseurs', { params: { summary: 1 } })
+        .then((res) => res.data),
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+  });
+
 // Obtenir une Fournisseur
 export const useOneFournisseur = (id) =>
   useQuery({

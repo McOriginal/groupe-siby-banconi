@@ -8,32 +8,30 @@ import { useAllDepenses } from '../../Api/queriesDepense';
 Chart.register(CategoryScale);
 
 const BarChartEntreSortie = () => {
-  const { data: paiementsData = [] } = useAllPaiements();
-  const { data: depenseData = [] } = useAllDepenses();
+  /**
+   * OPTIMISATION PRO (Charts entrées/sorties)
+   *
+   * Avant:
+   * - Chargement complet paiements + dépenses
+   *
+   * Maintenant:
+   * - Stats mensuelles côté serveur:
+   *   - `/paiements/getAllPaiements?stats=month`
+   *   - `/depenses/getAllDepense?stats=month`
+   */
+  const { data: paiementsStats } = useAllPaiements({
+    stats: 'month',
+    year: new Date().getFullYear(),
+  });
+  const { data: depensesStats } = useAllDepenses({
+    stats: 'month',
+    year: new Date().getFullYear(),
+  });
 
-  const sumPaiementTotalAmoutByMonth = (paiement) => {
-    const monthlySums = new Array(12).fill(0);
-    paiement?.forEach((paie) => {
-      const date = new Date(paie.paiementDate);
-      if (!isNaN(date)) {
-        const month = date.getMonth();
-        monthlySums[month] += Number(paie.totalPaye || 0);
-      }
-    });
-    return monthlySums;
-  };
-
-  const sumTotalAmountByMonth = (items) => {
-    const monthlySums = new Array(12).fill(0);
-    items.forEach((item) => {
-      const date = new Date(item.dateOfDepense);
-      if (!isNaN(date)) {
-        const month = date.getMonth();
-        monthlySums[month] += Number(item.totalAmount || 0);
-      }
-    });
-    return monthlySums;
-  };
+  const sumPaiementTotalAmoutByMonth =
+    paiementsStats?.sumTotalPaye || new Array(12).fill(0);
+  const sumTotalAmountByMonth =
+    depensesStats?.sumTotalDepenses || new Array(12).fill(0);
 
   const labels = [
     'Jan',
@@ -55,14 +53,14 @@ const BarChartEntreSortie = () => {
     datasets: [
       {
         label: 'Entrée (Paiements)',
-        data: sumPaiementTotalAmoutByMonth(paiementsData?.paiements),
+        data: sumPaiementTotalAmoutByMonth,
         backgroundColor: ' #328E6E',
         barThickness: 10,
       },
 
       {
         label: 'Sortie (Dépenses)',
-        data: sumTotalAmountByMonth(depenseData),
+        data: sumTotalAmountByMonth,
         backgroundColor: ' #CF0F47',
         barThickness: 10,
       },

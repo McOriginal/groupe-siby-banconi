@@ -11,12 +11,38 @@ import {
 import { useAllPaiements } from '../../Api/queriesPaiement';
 import { useAllDepenses } from '../../Api/queriesDepense';
 export default function Bilans() {
-  const { data: paiementsData, isLoading, error } = useAllPaiements();
-  const { data: depenseData } = useAllDepenses();
-  const tableRef = useRef(null);
-  // State de Recherche
+  /**
+   * OPTIMISATION PRO (Bilans)
+   *
+   * Avant:
+   * - `useAllPaiements()` et `useAllDepenses()` sans params => chargeait tout l'historique
+   * - Filtrage par date côté navigateur => lourd RAM/CPU
+   *
+   * Maintenant:
+   * - On utilise `export=1` + `from/to` pour ne récupérer QUE la période demandée
+   * - `deep=1` pour paiements: nécessaire au calcul des achats (items.produit.achatPrice)
+   *
+   * IMPORTANT:
+   * - On ne change pas l'URL API, uniquement des query params optionnels.
+   */
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+
+  const paiementsParams =
+    startDate && endDate
+      ? { paged: 1, export: 1, deep: 1, from: startDate, to: endDate }
+      : { paged: 1, page: 1, limit: 25 };
+  const depensesParams =
+    startDate && endDate
+      ? { paged: 1, export: 1, from: startDate, to: endDate }
+      : { paged: 1, page: 1, limit: 25 };
+
+  const { data: paiementsData, isLoading, error } = useAllPaiements(
+    paiementsParams
+  );
+  const { data: depenseData } = useAllDepenses(depensesParams);
+  const tableRef = useRef(null);
+  // State de Recherche
 
   const isBetweenDates = useCallback(
     (dateStr) => {
@@ -29,14 +55,14 @@ export default function Bilans() {
     },
     [startDate, endDate]
   );
-  // Fonction de Rechercher
+  // Paiements filtrés (la majorité du filtre est déjà faite côté serveur quand start/end sont fournis)
   const filterPaiement = paiementsData?.paiements?.filter((item) => {
-    // Filtrer par date
     return isBetweenDates(item.commande?.commandeDate);
   });
 
   // Fonction de Rechercher
-  const filterDepense = depenseData?.filter((item) => {
+  const filterDepense = (depenseData?.items || depenseData || [])?.filter(
+    (item) => {
     // Filtrer par date
     return isBetweenDates(item?.dateOfDepense);
   });
