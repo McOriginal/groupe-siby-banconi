@@ -102,6 +102,60 @@ exports.updatePaiement = async (req, res) => {
 exports.getAllPaiements = async (req, res) => {
   try {
     /**
+     * MODE "STATS" (Rapports - charts mensuels)
+     *
+     * Objectif:
+     * - Les graphiques mensuels n'ont pas besoin de toutes les lignes.
+     * - On renvoie uniquement des agrégats par mois (12 valeurs).
+     *
+     * Appel:
+     * - `/paiements/getAllPaiements?stats=month&year=2026`
+     *
+     * Réponse:
+     * - `{ months: [0..11], sumTotalAmount, sumTotalPaye, sumTotalImpayes }`
+     */
+    if (req.query?.stats === 'month') {
+      const yearRaw = Number.parseInt(req.query?.year, 10);
+      const year = Number.isFinite(yearRaw) ? yearRaw : new Date().getFullYear();
+      const start = new Date(year, 0, 1, 0, 0, 0, 0);
+      const end = new Date(year, 11, 31, 23, 59, 59, 999);
+
+      const agg = await Paiement.aggregate([
+        { $match: { paiementDate: { $gte: start, $lte: end } } },
+        {
+          $group: {
+            _id: { $month: '$paiementDate' }, // 1..12
+            sumTotalAmount: { $sum: '$totalAmount' },
+            sumTotalPaye: { $sum: '$totalPaye' },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            month: { $subtract: ['$_id', 1] }, // 0..11
+            sumTotalAmount: 1,
+            sumTotalPaye: 1,
+            sumTotalImpayes: { $subtract: ['$sumTotalAmount', '$sumTotalPaye'] },
+          },
+        },
+      ]);
+
+      // Normaliser sur 12 mois
+      const months = Array.from({ length: 12 }, (_, i) => i);
+      const sumTotalAmount = new Array(12).fill(0);
+      const sumTotalPaye = new Array(12).fill(0);
+      const sumTotalImpayes = new Array(12).fill(0);
+
+      agg.forEach((row) => {
+        sumTotalAmount[row.month] = row.sumTotalAmount || 0;
+        sumTotalPaye[row.month] = row.sumTotalPaye || 0;
+        sumTotalImpayes[row.month] = row.sumTotalImpayes || 0;
+      });
+
+      return res.status(200).json({ months, sumTotalAmount, sumTotalPaye, sumTotalImpayes });
+    }
+
+    /**
      * MODE PAGINÉ + RECHERCHE (Historique de facture / PaiementsListe)
      *
      * Appel:
@@ -122,6 +176,22 @@ exports.getAllPaiements = async (req, res) => {
       const reliquaOnly =
         req.query?.reliquaOnly === '1' || req.query?.reliquaOnly === 'true';
       const today = req.query?.today === '1' || req.query?.today === 'true';
+      const exportAll =
+        req.query?.export === '1' || req.query?.export === 'true';
+      const deep =
+        req.query?.deep === '1' || req.query?.deep === 'true';
+
+      // Filtre date (Bilans / Rapports): from/to (YYYY-MM-DD)
+      const from = (req.query?.from ?? '').toString().trim();
+      const to = (req.query?.to ?? '').toString().trim();
+      if (from && to) {
+        const start = new Date(from);
+        const end = new Date(to);
+        if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+          end.setHours(23, 59, 59, 999);
+          paiementMatch.paiementDate = { $gte: start, $lte: end };
+        }
+      }
 
       // 1) Filtrer les paiements (reliquat / today)
       const paiementMatch = {};
@@ -168,14 +238,19 @@ exports.getAllPaiements = async (req, res) => {
       const totalPages = total === 0 ? 1 : Math.ceil(total / limit);
 
       // 3) Page de paiements (projection + populate léger)
-      const paiements = await Paiement.find(paiementMatch)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .populate({
-          path: 'commande',
-          select: 'fullName phoneNumber adresse commandeDate items',
-        })
+      const query = Paiement.find(paiementMatch).sort({ createdAt: -1 });
+      // export=1 => on renvoie tout le dataset filtré (utile pour Bilans/Rapports, filtre date obligatoire côté front)
+      if (!exportAll) {
+        query.skip((page - 1) * limit).limit(limit);
+      }
+
+      // deep=1 => on populate items.produit pour calculer les achats côté front (Bilans/Rapports)
+      const commandePopulate = deep
+        ? { path: 'commande', populate: { path: 'items.produit' } }
+        : { path: 'commande', select: 'fullName phoneNumber adresse commandeDate items' };
+
+      const paiements = await query
+        .populate(commandePopulate)
         .select('totalAmount totalPaye reduction paiementDate methode commande user createdAt')
         .lean();
 

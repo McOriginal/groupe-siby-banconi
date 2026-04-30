@@ -187,6 +187,47 @@ exports.updateCommande = async (req, res) => {
 exports.getAllCommandes = async (req, res) => {
   try {
     /**
+     * MODE "STATS" (Rapports - chart mensuel commandes)
+     *
+     * Appel:
+     * - `/commandes/getAllCommandes?stats=month&year=2026`
+     *
+     * Réponse:
+     * - `{ months: [0..11], countCommandes }`
+     */
+    if (req.query?.stats === 'month') {
+      const yearRaw = Number.parseInt(req.query?.year, 10);
+      const year = Number.isFinite(yearRaw) ? yearRaw : new Date().getFullYear();
+      const start = new Date(year, 0, 1, 0, 0, 0, 0);
+      const end = new Date(year, 11, 31, 23, 59, 59, 999);
+
+      const agg = await Commande.aggregate([
+        { $match: { commandeDate: { $gte: start, $lte: end } } },
+        {
+          $group: {
+            _id: { $month: '$commandeDate' }, // 1..12
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            month: { $subtract: ['$_id', 1] }, // 0..11
+            count: 1,
+          },
+        },
+      ]);
+
+      const months = Array.from({ length: 12 }, (_, i) => i);
+      const countCommandes = new Array(12).fill(0);
+      agg.forEach((row) => {
+        countCommandes[row.month] = row.count || 0;
+      });
+
+      return res.status(200).json({ months, countCommandes });
+    }
+
+    /**
      * MODE "SUMMARY" (Dashboard)
      *
      * Objectif:
@@ -251,6 +292,11 @@ exports.getAllCommandes = async (req, res) => {
       const qRaw = (req.query?.q ?? '').toString().trim();
       const today = req.query?.today === '1' || req.query?.today === 'true';
       const statut = (req.query?.statut ?? '').toString().trim(); // 'en cours' | 'en attente' | 'livré'
+      const exportAll = req.query?.export === '1' || req.query?.export === 'true';
+
+      // Filtre date (Rapports): from/to sur commandeDate (YYYY-MM-DD)
+      const from = (req.query?.from ?? '').toString().trim();
+      const to = (req.query?.to ?? '').toString().trim();
 
       const match = {};
 
@@ -264,6 +310,15 @@ exports.getAllCommandes = async (req, res) => {
         const end = new Date();
         end.setHours(23, 59, 59, 999);
         match.createdAt = { $gte: start, $lte: end };
+      }
+
+      if (from && to) {
+        const start = new Date(from);
+        const end = new Date(to);
+        if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+          end.setHours(23, 59, 59, 999);
+          match.commandeDate = { $gte: start, $lte: end };
+        }
       }
 
       if (qRaw) {
@@ -286,12 +341,14 @@ exports.getAllCommandes = async (req, res) => {
       const totalPages = total === 0 ? 1 : Math.ceil(total / limit);
 
       // Liste commandes (sans populate items.produit) => léger, on a seulement besoin de items.length.
-      const commandesListe = await Commande.find(match)
+      const query = Commande.find(match)
         .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
         .select('fullName phoneNumber adresse items statut commandeDate createdAt')
         .lean();
+      if (!exportAll) {
+        query.skip((page - 1) * limit).limit(limit);
+      }
+      const commandesListe = await query;
 
       // Factures "légères" (uniquement pour marquer les commandes facturées)
       const commandeIds = commandesListe.map((c) => c._id);

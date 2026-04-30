@@ -189,6 +189,26 @@ exports.updateFournisseur = async (req, res) => {
 exports.getAllFournisseurs = async (req, res) => {
   try {
     /**
+     * MODE "SUMMARY" (Dashboard)
+     *
+     * Objectif:
+     * - Pour afficher un compteur (total fournisseurs) on n'a pas besoin de charger toute la liste.
+     *
+     * Appel:
+     * - `/fournisseurs/getAllFournisseurs?summary=1`
+     *
+     * Réponse:
+     * - `{ counts: { totalFournisseurs } }`
+     */
+    const summaryParam = req.query?.summary;
+    const isSummary =
+      summaryParam === '1' || summaryParam === 'true' || summaryParam === true;
+    if (isSummary) {
+      const totalFournisseurs = await Fournisseur.countDocuments({});
+      return res.status(200).json({ counts: { totalFournisseurs } });
+    }
+
+    /**
      * MODE PAGINÉ + RECHERCHE (Fournisseurs)
      *
      * Appel:
