@@ -33,6 +33,27 @@ export const useAllCommandes = () =>
       api.get('/commandes/getAllCommandes').then((res) => res.data),
   });
 
+/**
+ * DASHBOARD - Mode "résumé" (uniquement des compteurs)
+ *
+ * IMPORTANT:
+ * - On NE change PAS l'URL de l'API (toujours `/commandes/getAllCommandes`)
+ * - On ajoute seulement un paramètre de query `summary=1`
+ * - Le backend est modifié pour répondre avec une version légère quand `summary=1`
+ *
+ * Pourquoi:
+ * - Le dashboard n'a pas besoin de la liste complète des commandes + factures
+ * - Réduire fortement la RAM côté navigateur + la taille des réponses + le CPU backend
+ */
+export const useCommandesSummary = () =>
+  useQuery({
+    queryKey: ['commandes', 'summary'],
+    queryFn: () =>
+      api
+        .get('/commandes/getAllCommandes', { params: { summary: 1 } })
+        .then((res) => res.data),
+  });
+
 // Obtenir une Commande
 export const useOneCommande = (id) =>
   useQuery({

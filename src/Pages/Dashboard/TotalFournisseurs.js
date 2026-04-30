@@ -1,23 +1,17 @@
 import { Card, CardBody, CardImg, CardTitle } from 'reactstrap';
-import { useDashboardFournisseurCount } from '../../Api/queriesDashboard';
+import { useAllFournisseur } from '../../Api/queriesFournisseur';
 import fourImg from './../../assets/images/delivery.png';
 import LoadingSpiner from '../components/LoadingSpiner';
 import { useNavigate } from 'react-router-dom';
 import { connectedUserRole } from '../Authentication/userInfos';
 
 export default function TotalFounisseurs() {
-  /**
-   * MODIF (Dashboard perf/RAM)
-   * -------------------------
-   * Avant: `useAllFournisseur()` ramenait tous les fournisseurs puis on faisait `length`.
-   * Maintenant: hook dashboard -> ne garde en cache que `{ total }`.
-   * Backend inchangé (contrainte respectée).
-   */
+  // Fournisseur Data
   const {
-    data: fournisseurCount,
+    data: fournisseurData,
     isLoading: fournisseurLoading,
     error: fournisseurError,
-  } = useDashboardFournisseurCount();
+  } = useAllFournisseur();
   const navigate = useNavigate();
 
   const handleNavigate = () => {
@@ -43,10 +37,7 @@ export default function TotalFounisseurs() {
           />
           <CardBody>
             <CardTitle className='text-center'>
-              {/* MODIF: compteur direct, pas une grosse liste */}
-              <span className='text-info fs-5'>
-                {fournisseurCount?.total ?? 0}
-              </span>
+              <span className='text-info fs-5'>{fournisseurData.length}</span>
               <p>Fournisseurs</p>
             </CardTitle>
           </CardBody>
