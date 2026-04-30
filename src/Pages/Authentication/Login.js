@@ -18,6 +18,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 import { useFormik } from 'formik';
 import { useLogin } from '../../Api/queriesAuth';
+import { useAuth } from '../../Auth/useAuth';
 import {
   errorMessageAlert,
   successMessageAlert,
@@ -34,6 +35,14 @@ const Login = () => {
 
   // Query de Login
   const { mutate: loginUser } = useLogin();
+  /**
+   * IMPORTANT (redirection dashboard après succès) :
+   * - `useLogin` enregistre déjà le JWT dans `localStorage` (voir `queriesAuth.js`).
+   * - Mais `PrivateRoute` s'appuie sur `useAuth()` (AuthContext) : si `auth` reste `null`,
+   *   `navigate('/dashboard')` est immédiatement annulé par `<Navigate to='/login' />`.
+   * - Donc après un login réussi, on synchronise aussi le contexte via `login(...)`.
+   */
+  const { login: loginIntoContext } = useAuth();
   // State de chargement des données
   const [isLoading, setIsLoading] = useState(false);
 
@@ -64,8 +73,13 @@ const Login = () => {
       setIsLoading(true);
       // Appel de la mutation pour se connecter
       loginUser(values, {
-        onSuccess: () => {
+        onSuccess: (response) => {
           setIsLoading(false);
+
+          loginIntoContext({
+            token: response.data.token,
+            user: response.data.user,
+          });
 
           resetForm();
           // Afficher un message de succès ou une alerte
@@ -73,9 +87,7 @@ const Login = () => {
           // Redirection vers le tableau de bord
           setTimeout(() => {
             try {
-              const authUser = localStorage.getItem('authUser');
-              const dataParse = JSON.parse(authUser);
-              const role = dataParse?.user?.role;
+              const role = response?.data?.user?.role;
 
               if (!role) {
                 return errorMessageAlert('Rôle utilisateur introuvable.');
