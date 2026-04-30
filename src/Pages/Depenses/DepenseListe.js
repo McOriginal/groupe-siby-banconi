@@ -12,7 +12,20 @@ import { connectedUserBoutique } from '../Authentication/userInfos';
 export default function DepenseListe() {
   const [form_modal, setForm_modal] = useState(false);
   const [formModalTitle, setFormModalTitle] = useState('Ajouter une Dépense');
-  const { data: depenseData, isLoading, error } = useAllDepenses();
+  /**
+   * OPTIMISATION PRO (Dépenses)
+   *
+   * Avant:
+   * - Chargement complet + recherche JS + total calculé sur le front
+   *
+   * Maintenant:
+   * - Mode backend `paged=1` (même endpoint)
+   * - Recherche serveur `q`
+   * - Pagination
+   * - Totaux serveur `totals.sumTotalExpense`
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
   const { mutate: deleteDepense, isDeleting } = useDeleteDepense();
   const [depenseToUpdate, setDepenseToUpdate] = useState(null);
   const [todayExpense, setTodayExpense] = useState(false);
@@ -20,36 +33,31 @@ export default function DepenseListe() {
   // Search State
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fonction pour la recherche
-  const filterSearchDepense = depenseData
-    ?.filter((depense) => {
-      const search = searchTerm.toLowerCase();
+  // Debounce (évite spam réseau) + reset page
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-      return (
-        depense.motifDepense.toLowerCase().includes(search) ||
-        depense.totalAmount.toString().includes(search) ||
-        new Date(depense.dateOfDepense)
-          .toLocaleDateString('fr-Fr')
-          .toString()
-          .includes(search)
-      );
-    })
+  const { data: depenseData, isLoading, error } = useAllDepenses({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
+    today: todayExpense ? 1 : 0,
+  });
 
-    ?.filter((item) => {
-      if (todayExpense) {
-        return (
-          new Date(item?.dateOfDepense).toLocaleDateString() ===
-          new Date().toLocaleDateString()
-        );
-      }
-      return true;
-    });
+  // Données paginées (on garde le nom `filterSearchDepense` pour ne pas toucher le reste)
+  const filterSearchDepense = depenseData?.items || [];
+  const total = depenseData?.total ?? 0;
+  const totalPages = depenseData?.totalPages ?? 1;
 
   // Total Expense
-  const sumTotalExpense = filterSearchDepense?.reduce(
-    (curr, item) => (curr += item?.totalAmount),
-    0
-  );
+  const sumTotalExpense = depenseData?.totals?.sumTotalExpense ?? 0;
 
   // Ouverture de Modal Form
   function tog_form_modal() {
@@ -102,7 +110,7 @@ export default function DepenseListe() {
                       </Col>
 
                       <Col className='col-sm'>
-                        <div className='d-flex justify-content-sm-end gap-2'>
+                        <div className='d-flex justify-content-sm-end gap-2 flex-wrap'>
                           {searchTerm !== '' && (
                             <Button
                               color='danger'
@@ -121,6 +129,59 @@ export default function DepenseListe() {
                             />
                           </div>
                         </div>
+
+                        {/* Pagination (en haut) */}
+                        {!error && !isLoading && totalPages > 1 && (
+                          <div className='d-flex justify-content-sm-end align-items-center gap-2 flex-wrap mt-2'>
+                            <div
+                              className='d-inline-flex gap-2'
+                              role='group'
+                              aria-label='Pagination depenses'
+                            >
+                              <Button
+                                color='info'
+                                className='shadow-sm'
+                                disabled={page <= 1}
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                              >
+                                <i className='bx bx-chevron-left'></i>
+                              </Button>
+                              <Button
+                                color='primary'
+                                className='shadow-sm'
+                                disabled={page >= totalPages}
+                                onClick={() =>
+                                  setPage((p) => Math.min(totalPages, p + 1))
+                                }
+                              >
+                                <i className='bx bx-chevron-right'></i>
+                              </Button>
+                            </div>
+                            <span className='small fw-semibold text-dark'>
+                              Page <span className='badge bg-primary'>{page}</span> /{' '}
+                              <span className='badge bg-primary'>{totalPages}</span> ·{' '}
+                              <span className='badge bg-info'>{total}</span> résultats
+                            </span>
+                            <div className='d-flex align-items-center gap-2'>
+                              <span className='text-dark small fw-semibold'>
+                                Par page
+                              </span>
+                              <select
+                                className='form-select form-select-sm border border-primary'
+                                style={{ width: 95 }}
+                                value={limit}
+                                onChange={(e) => {
+                                  setLimit(Number(e.target.value));
+                                  setPage(1);
+                                }}
+                              >
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
                       </Col>
                     </Row>
                     <div className='d-flex justify-content-around mt-4 flex-wrap'>

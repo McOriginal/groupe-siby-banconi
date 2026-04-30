@@ -20,10 +20,27 @@ export const useUpdateDepense = () => {
   });
 };
 // Lire toutes les depenses
-export const useAllDepenses = () =>
+export const useAllDepenses = (params) =>
   useQuery({
-    queryKey: ['depenses'],
-    queryFn: () => api.get('/depenses/getAllDepense').then((res) => res.data),
+    /**
+     * CACHE + PAGINATION (optionnel)
+     *
+     * Contrainte:
+     * - On garde le même hook `useAllDepenses`
+     * - On ne change pas l'URL `/depenses/getAllDepense`
+     *
+     * Usage:
+     * - useAllDepenses() => historique (tableau complet)
+     * - useAllDepenses({ paged: 1, page: 1, limit: 25, q: '...', today: 1 }) => paginé
+     */
+    queryKey: params ? ['depenses', params] : ['depenses', 'all'],
+    queryFn: () =>
+      api
+        .get('/depenses/getAllDepense', { params: params || undefined })
+        .then((res) => res.data),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 10,
+    placeholderData: (prev) => prev,
   });
 
 // Obtenir une Depense
