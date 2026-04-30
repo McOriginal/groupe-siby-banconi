@@ -17,15 +17,15 @@ const RapportBySemaine = () => {
    */
   const commandesParams =
     startDate && endDate
-      ? { paged: 1, export: 1, from: startDate, to: endDate }
+      ? { stats: 'range', from: startDate, to: endDate }
       : { paged: 1, page: 1, limit: 25 };
   const paiementsParams =
     startDate && endDate
-      ? { paged: 1, export: 1, deep: 1, from: startDate, to: endDate }
+      ? { stats: 'bilans', from: startDate, to: endDate }
       : { paged: 1, page: 1, limit: 25 };
   const depensesParams =
     startDate && endDate
-      ? { paged: 1, export: 1, from: startDate, to: endDate }
+      ? { paged: 1, page: 1, limit: 1, from: startDate, to: endDate }
       : { paged: 1, page: 1, limit: 25 };
 
   const { data: commandes } = useAllCommandes(commandesParams);
@@ -47,9 +47,12 @@ const RapportBySemaine = () => {
   // Calcul de Nombre de Commande pour le 7 dernier jour
   const recentCommande = useMemo(
     () =>
-      commandes?.commandesListe?.filter((item) => {
-        return isBetweenDates(item.commandeDate);
-      }),
+      // Compat: si pas de filtre => on garde l'ancien calcul sur la liste paginée
+      startDate && endDate
+        ? new Array(Number(commandes?.countCommandes || 0)).fill(1)
+        : commandes?.commandesListe?.filter((item) => {
+            return isBetweenDates(item.commandeDate);
+          }),
     [commandes, isBetweenDates]
   );
   // Calcul de la somme total de Commande pour le 7 dernier jour
@@ -58,22 +61,28 @@ const RapportBySemaine = () => {
   // Recente Paiements Amount Paye
   const recentPaiement = useMemo(
     () =>
-      paiementsData?.paiements?.filter((item) => {
-        return isBetweenDates(item.paiementDate);
-      }),
+      // Compat: en mode stats=bilans, il n'y a pas de liste `paiements`
+      startDate && endDate
+        ? null
+        : paiementsData?.paiements?.filter((item) => {
+            return isBetweenDates(item.paiementDate);
+          }),
     [paiementsData, isBetweenDates]
   );
 
   // Calculer le total de Somme à Payé pour le 7 dernier jour
-  const totalPaiementsAmount = recentPaiement?.reduce(
-    (acc, item) => acc + Number(item.totalAmount || 0),
-    0
-  );
+  const totalPaiementsAmount =
+    startDate && endDate
+      ? Number(paiementsData?.sumTotalAmount || 0)
+      : recentPaiement?.reduce(
+          (acc, item) => acc + Number(item.totalAmount || 0),
+          0
+        );
   // Calculer le total de Somme Payé pour le 7 dernier jour
-  const totalPaiementsPaye = recentPaiement?.reduce(
-    (acc, item) => acc + Number(item.totalPaye || 0),
-    0
-  );
+  const totalPaiementsPaye =
+    startDate && endDate
+      ? Number(paiementsData?.sumTotalPaye || 0)
+      : recentPaiement?.reduce((acc, item) => acc + Number(item.totalPaye || 0), 0);
   // Calculer le total de Somme Impayé pour le 7 dernier jour
   const totalPaiementsToPaye = totalPaiementsAmount - totalPaiementsPaye || 0;
 
@@ -87,39 +96,42 @@ const RapportBySemaine = () => {
   );
 
   // Calculer la somme Dépensés pour le 7 dernier jour
-  const totalDepenses = recentDepense.reduce(
-    (acc, item) => acc + Number(item.totalAmount || 0),
-    0
-  );
+  const totalDepenses =
+    startDate && endDate
+      ? Number(depenseData?.totals?.sumTotalExpense || 0)
+      : recentDepense.reduce((acc, item) => acc + Number(item.totalAmount || 0), 0);
 
   // Calcule de CA , REVENUE, BENEFICE
   // const { totalCA, totalAchat, benefice } = useMemo(() => {
   const { totalAchat, benefice } = useMemo(() => {
-    if (!paiementsData?.paiements) {
-      return { totalAchat: 0, benefice: 0 };
+    // Mode optimisé: stats=bilans renvoie directement totalAchat.
+    if (startDate && endDate) {
+      const achat = Number(paiementsData?.totalAchat || 0);
+      const total = totalPaiementsPaye - achat;
+      const benefice = total - totalDepenses;
+      return { totalAchat: achat, benefice };
     }
 
-    // On filtre d'abord les paiements par date sélectionnée
-    const paiementsFiltres = paiementsData.paiements.filter((item) => {
+    // Fallback (ancien comportement) si pas de filtre sélectionné.
+    const paiementsArray = Array.isArray(paiementsData?.paiements)
+      ? paiementsData.paiements
+      : [];
+    const paiementsFiltres = paiementsArray.filter((item) => {
       return isBetweenDates(item?.paiementDate);
     });
-
-    // let totalCA = 0; // chiffre d’affaires
-    let totalAchat = 0; // coût d’achat
-
+    let totalAchat = 0;
     paiementsFiltres.forEach((paiement) => {
-      paiement.commande?.items.forEach((item) => {
+      const items = Array.isArray(paiement?.commande?.items)
+        ? paiement.commande.items
+        : [];
+      items.forEach((item) => {
         const produit = item?.produit;
         if (!produit) return;
-
-        // totalCA += (item?.customerPrice || 0) * (item?.quantity || 0);
         totalAchat += (produit?.achatPrice || 0) * (item?.quantity || 0);
       });
     });
-
     const total = totalPaiementsPaye - totalAchat;
     const benefice = total - totalDepenses;
-
     return { totalAchat, benefice };
   }, [paiementsData, isBetweenDates, totalPaiementsPaye, totalDepenses]);
 

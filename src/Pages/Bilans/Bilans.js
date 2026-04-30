@@ -25,22 +25,94 @@ export default function Bilans() {
    * IMPORTANT:
    * - On ne change pas l'URL API, uniquement des query params optionnels.
    */
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
+  /**
+   * Filtre par défaut (demande utilisateur):
+   * - À l'ouverture de la page, on doit afficher les données sur les 7 derniers jours
+   *   et ces dates doivent être visibles dans les champs "Début" et "Fin".
+   *
+   * Format:
+   * - On garde le format ISO `YYYY-MM-DD` car il est directement compatible
+   *   avec les `<input type="date" />` et les query params backend `from/to`.
+   */
+  const todayISO = new Date().toISOString().split('T')[0];
+  const sevenDaysAgoISO = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6); // aujourd'hui inclus => 7 jours (J-6 .. J)
+    return d.toISOString().split('T')[0];
+  })();
+  const [startDate, setStartDate] = useState(sevenDaysAgoISO);
+  const [endDate, setEndDate] = useState(todayISO);
+
+  /**
+   * OPTIMISATION (SANS CHANGER LE TABLEAU)
+   *
+   * Problème:
+   * - Les totaux (CA / Payé / Dépenses / Achats / Bénéfice) calculés côté navigateur
+   *   deviennent faux dès qu'on ne charge qu'une page (paged) ou quand le dataset est gros.
+   * - `deep=1` (populate complet produits) peut devenir très lourd.
+   *
+   * Solution:
+   * - On garde EXACTEMENT le même tableau (paiements + articles + quantité + prix).
+   * - On récupère les totaux fiables via un mode serveur `stats=bilans`
+   *   (payload minuscule, pas de boucle lourde côté navigateur).
+   * - On conserve le fetch "détails" pour alimenter le tableau, mais on évite de recalculer
+   *   les totaux à partir de ces détails.
+   *
+   * Contrainte:
+   * - On ne change pas les noms de fonctions/variables (useAllPaiements/useAllDepenses, etc.)
+   * - On ne change pas les URLs API, uniquement des query params optionnels.
+   */
 
   const paiementsParams =
     startDate && endDate
       ? { paged: 1, export: 1, deep: 1, from: startDate, to: endDate }
-      : { paged: 1, page: 1, limit: 25 };
+      : {
+          /**
+           * IMPORTANT (affichage du tableau inchangé):
+           * - Le tableau Bilans affiche Articles/Quantité/Prix via `paiement.commande.items`.
+           * - En backend, `deep=0` (mode résumé) n'inclut pas `items` pour économiser la RAM.
+           * - Donc ici on force `deep=1` même sans filtre date, afin que le tableau
+           *   reste affiché exactement comme avant (avec les articles).
+           *
+           * Optimisation:
+           * - On reste paginé (25 lignes) pour éviter un payload énorme.
+           * - Les totaux globaux, eux, viennent de `stats=bilans` (fiables et légers).
+           */
+          paged: 1,
+          page: 1,
+          limit: 25,
+          deep: 1,
+        };
   const depensesParams =
     startDate && endDate
-      ? { paged: 1, export: 1, from: startDate, to: endDate }
+      ? {
+          /**
+           * Dépenses:
+           * - Le tableau Bilans n'affiche pas la liste des dépenses, seulement le total.
+           * - Donc on n'a PAS besoin de `export=1` ici (ça renverrait toutes les lignes inutilement).
+           * - On limite volontairement la page à 1 ligne, mais les `totals` (serveur) restent justes.
+           */
+          paged: 1,
+          page: 1,
+          limit: 1,
+          from: startDate,
+          to: endDate,
+        }
       : { paged: 1, page: 1, limit: 25 };
 
   const { data: paiementsData, isLoading, error } = useAllPaiements(
     paiementsParams
   );
   const { data: depenseData } = useAllDepenses(depensesParams);
+
+  // Totaux fiables (serveur) pour Bilans.
+  // NB: Si from/to ne sont pas définis, le backend limite par défaut aux 7 derniers jours.
+  const { data: paiementsStats } = useAllPaiements({
+    paged: 1,
+    stats: 'bilans',
+    from: startDate ?? undefined,
+    to: endDate ?? undefined,
+  });
   const tableRef = useRef(null);
   // State de Recherche
 
@@ -67,49 +139,60 @@ export default function Bilans() {
     return isBetweenDates(item?.dateOfDepense);
   });
 
-  // Total de commandes
-  const sumTotalAmount = filterPaiement?.reduce((curr, item) => {
-    return (curr += item?.totalAmount);
-  }, 0);
+  /**
+   * Totaux:
+   * - Si `paiementsStats` est dispo => chiffres fiables (serveur) sans boucle lourde
+   * - Sinon => fallback (ancien comportement) à partir des lignes chargées
+   */
+  const sumTotalAmount =
+    typeof paiementsStats?.sumTotalAmount === 'number'
+      ? paiementsStats.sumTotalAmount
+      : filterPaiement?.reduce((curr, item) => (curr += item?.totalAmount), 0);
 
-  // Total Payés
-  const sumTotalPaye = filterPaiement?.reduce((curr, item) => {
-    return (curr += item?.totalPaye);
-  }, 0);
+  const sumTotalPaye =
+    typeof paiementsStats?.sumTotalPaye === 'number'
+      ? paiementsStats.sumTotalPaye
+      : filterPaiement?.reduce((curr, item) => (curr += item?.totalPaye), 0);
 
-  // Total Depensés
-  const sumTotalDepense = filterDepense?.reduce((curr, item) => {
-    return (curr += item?.totalAmount);
-  }, 0);
+  const sumTotalDepense =
+    typeof depenseData?.totals?.sumTotalExpense === 'number'
+      ? depenseData.totals.sumTotalExpense
+      : filterDepense?.reduce((curr, item) => (curr += item?.totalAmount), 0);
 
   const { totalAchat, benefice } = useMemo(() => {
-    if (!paiementsData?.paiements) {
-      return { totalAchat: 0, benefice: 0 };
+    // Chemin optimisé: le serveur renvoie directement `totalAchat` (agrégation).
+    if (typeof paiementsStats?.totalAchat === 'number') {
+      const total = sumTotalPaye - paiementsStats.totalAchat;
+      const benefice = total - sumTotalDepense;
+      return { totalAchat: paiementsStats.totalAchat, benefice };
     }
 
-    // On filtre d'abord les paiements par date sélectionnée
-    const paiementsFiltres = paiementsData?.paiements?.filter((item) => {
+    /**
+     * Fallback (ancien comportement):
+     * - Calcul côté front uniquement si `paiementsStats` indisponible.
+     * - On garde les protections anti-crash.
+     */
+    const paiementsArray = Array.isArray(paiementsData?.paiements)
+      ? paiementsData.paiements
+      : [];
+    const paiementsFiltres = paiementsArray.filter((item) => {
       return isBetweenDates(item?.paiementDate);
     });
-
-    // let totalCA = 0; // chiffre d’affaires
-    let totalAchat = 0; // coût d’achat
-
+    let totalAchat = 0;
     paiementsFiltres.forEach((paiement) => {
-      paiement.commande?.items.forEach((item) => {
+      const items = Array.isArray(paiement?.commande?.items)
+        ? paiement.commande.items
+        : [];
+      items.forEach((item) => {
         const produit = item?.produit;
         if (!produit) return;
-
-        // totalCA += (item?.customerPrice || 0) * (item?.quantity || 0);
         totalAchat += (produit?.achatPrice || 0) * (item?.quantity || 0);
       });
     });
-
     const total = sumTotalPaye - totalAchat;
     const benefice = total - sumTotalDepense;
-
     return { totalAchat, benefice };
-  }, [paiementsData, isBetweenDates, sumTotalPaye, sumTotalDepense]);
+  }, [paiementsStats, paiementsData, isBetweenDates, sumTotalPaye, sumTotalDepense]);
 
   return (
     <React.Fragment>

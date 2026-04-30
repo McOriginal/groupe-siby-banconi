@@ -3,7 +3,7 @@ name: Deploy Frontend To VPS
 on:
   push:
     branches:
-      - Main
+      - v2_frontend
 
 jobs:
   deploy:
@@ -28,7 +28,7 @@ jobs:
 
             # Pull latest changes
             git reset --hard
-            git pull origin Main 
+            git pull origin v2_frontend 
 
             echo "Pull was successful, installing dependencies..."
             npm install

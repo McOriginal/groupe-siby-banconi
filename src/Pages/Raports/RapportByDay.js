@@ -20,53 +20,46 @@ const RapportByDay = () => {
    * - On ne récupère que la journée sélectionnée via `from/to` + `export=1`
    * - Pour paiements, on active `deep=1` (besoin de items.produit.achatPrice)
    */
+  /**
+   * IMPORTANT (performance / RAM):
+   * - Pour le journalier, on a uniquement besoin des agrégats (totaux) + du compteur commandes.
+   * - On évite de charger toutes les lignes, surtout `deep=1`.
+   *
+   * On conserve les mêmes hooks/variables, mais on change le mode:
+   * - Commandes: `stats=range` => renvoie `{ countCommandes }`
+   * - Paiements: `stats=bilans` => renvoie `{ sumTotalAmount, sumTotalPaye, sumReliquat, totalAchat, countPaiements }`
+   * - Dépenses: `paged=1` avec `from/to` et `limit=1` => `totals.sumTotalExpense` fiable sur la période
+   */
   const { data: commandes } = useAllCommandes({
-    paged: 1,
-    export: 1,
+    stats: 'range',
     from: selectedDate,
     to: selectedDate,
   });
   const { data: paiementsData } = useAllPaiements({
-    paged: 1,
-    export: 1,
-    deep: 1,
+    stats: 'bilans',
     from: selectedDate,
     to: selectedDate,
   });
   const { data: depenseData } = useAllDepenses({
     paged: 1,
-    export: 1,
+    page: 1,
+    limit: 1,
     from: selectedDate,
     to: selectedDate,
   });
 
   // Calcul de Nombre total de COMMANDE pour le mois sélectionné
   const totalCommandesNumber = useMemo(() => {
-    return commandes?.commandesListe?.filter((item) => {
-      const date = new Date(item.commandeDate).toISOString().slice(0, 10);
-      return date === selectedDate;
-    }).length;
+    return Number(commandes?.countCommandes || 0);
   }, [commandes, selectedDate]);
 
   // Calcul le total de somme Payés pour le mois sélectionné
   const totalPaiements = useMemo(() => {
-    return paiementsData?.paiements?.reduce((acc, item) => {
-      const date = new Date(item?.paiementDate).toISOString().slice(0, 10);
-      if (date === selectedDate) {
-        acc += Number(item?.totalAmount || 0);
-      }
-      return acc;
-    }, 0);
+    return Number(paiementsData?.sumTotalAmount || 0);
   }, [paiementsData, selectedDate]);
   // Calcul le total de somme Paiyés pour le mois sélectionné
   const totalPaiementsAmountPayed = useMemo(() => {
-    return paiementsData?.paiements?.reduce((acc, item) => {
-      const date = new Date(item?.paiementDate).toISOString().slice(0, 10);
-      if (date === selectedDate) {
-        acc += Number(item?.totalPaye || 0);
-      }
-      return acc;
-    }, 0);
+    return Number(paiementsData?.sumTotalPaye || 0);
   }, [paiementsData, selectedDate]);
 
   // Calcul le total de somme Impayés pour le mois sélectionné
@@ -74,13 +67,7 @@ const RapportByDay = () => {
 
   // Calcul le total pour Dépenses pour le mois sélectionné
   const totalDepenses = useMemo(() => {
-    return (depenseData?.items || [])?.reduce((acc, item) => {
-      const date = new Date(item.dateOfDepense).toISOString().slice(0, 10);
-      if (date === selectedDate) {
-        acc += Number(item.totalAmount || 0);
-      }
-      return acc;
-    }, 0);
+    return Number(depenseData?.totals?.sumTotalExpense || 0);
   }, [depenseData, selectedDate]);
 
   // Calculer Le revenu (Bénéfice) pour le mois sélectionné
@@ -88,33 +75,10 @@ const RapportByDay = () => {
   // Calcule de CA , REVENUE, BENEFICE
   // const { totalCA, totalAchat, benefice } = useMemo(() => {
   const { totalAchat, benefice } = useMemo(() => {
-    if (!paiementsData?.paiements) {
-      return { totalAchat: 0, benefice: 0 };
-    }
-
-    // On filtre d'abord les paiements par date sélectionnée
-    const paiementsFiltres = paiementsData.paiements.filter((item) => {
-      const date = new Date(item?.paiementDate).toISOString().slice(0, 10);
-      return date === selectedDate;
-    });
-
-    // let totalCA = 0; // chiffre d’affaires
-    let totalAchat = 0; // coût d’achat
-
-    paiementsFiltres.forEach((paiement) => {
-      paiement.commande?.items.forEach((item) => {
-        const produit = item?.produit;
-        if (!produit) return;
-
-        // totalCA += (item?.customerPrice || 0) * (item?.quantity || 0);
-        totalAchat += (produit?.achatPrice || 0) * (item?.quantity || 0);
-      });
-    });
-
-    const total = totalPaiementsAmountPayed - totalAchat;
+    const achat = Number(paiementsData?.totalAchat || 0);
+    const total = totalPaiementsAmountPayed - achat;
     const benefice = total - totalDepenses;
-
-    return { totalAchat, benefice };
+    return { totalAchat: achat, benefice };
   }, [paiementsData, selectedDate, totalPaiementsAmountPayed, totalDepenses]);
 
   return (
