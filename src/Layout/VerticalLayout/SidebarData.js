@@ -90,13 +90,18 @@ const SidebarData = [
     isMainMenu: true,
   },
   {
-    label: 'Devis',
-    icon: 'fas fa-question',
-    subItem: [
-      { sublabel: 'Nouveau Devis', link: '/newDevis' },
-      { sublabel: 'Historique de Devis', link: '/devisListe' },
-    ],
+    label: 'Nouveau Devis',
+    icon: 'fas fa-file-alt',
+    isHasArrow: true,
+    url: '/newDevis',
   },
+  {
+    label: 'Historique de Devis',
+    icon: 'fas fa-file-alt',
+    isHasArrow: true,
+    url: '/devisListe',
+  },
+ 
 
   // ----------------------------------------------------------------------
   // Médecins
