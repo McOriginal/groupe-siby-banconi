@@ -19,11 +19,10 @@ import PaiementsHistoriqueForm from './PaiementsHistoriqueForm';
 import {
   useAllPaiementsHistorique,
   useDeletePaiementHistorique,
-} from '../../../Api/queriesPaiementHistorique';
+} from '../../../Api/queriesPaiementHistorique';  
 import PaiementForm from '../../Paiements/PaiementForm';
 import FacturePaiement from './FacturePaiement';
 import {
-  connectedUserBoutique,
   connectedUserRole,
 } from '../../Authentication/userInfos';
 

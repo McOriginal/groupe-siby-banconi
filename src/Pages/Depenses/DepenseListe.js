@@ -7,7 +7,6 @@ import { capitalizeWords, formatPrice } from '../components/capitalizeFunction';
 import { deleteButton } from '../components/AlerteModal';
 import { useAllDepenses, useDeleteDepense } from '../../Api/queriesDepense';
 import DepenseForm from './DepenseForm';
-import { connectedUserBoutique } from '../Authentication/userInfos';
 
 export default function DepenseListe() {
   const [form_modal, setForm_modal] = useState(false);

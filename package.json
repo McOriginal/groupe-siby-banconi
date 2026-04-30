@@ -81,6 +81,10 @@
     "yup": "^1.6.1"
   },
   "scripts": {
+    "prestart": "node scripts/ensure-html2pdf-sourcemap.js",
+    "prebuild": "node scripts/ensure-html2pdf-sourcemap.js",
+    "postinstall": "node scripts/ensure-html2pdf-sourcemap.js",
+    "fix-html2pdf-sourcemap": "node scripts/ensure-html2pdf-sourcemap.js",
     "start": "react-scripts --openssl-legacy-provider start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -105,12 +109,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "overrides": {
-    "source-map-loader": {
-      "exclude": [
-        "node_modules/html2pdf.js"
-      ]
-    }
   }
 }
