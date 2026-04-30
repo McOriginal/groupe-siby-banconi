@@ -156,6 +156,118 @@ exports.getAllPaiements = async (req, res) => {
     }
 
     /**
+     * MODE "STATS BILANS" (Bilans page - totaux fiables sans charger toutes les lignes)
+     *
+     * Objectif:
+     * - La page Bilans affiche un tableau (détails) + des totaux (CA, payé, reliquat, achats, bénéfice...).
+     * - Charger toutes les lignes + `deep=1` (populate produit complet) peut saturer RAM/CPU sur VPS.
+     *
+     * Solution:
+     * - Un mode optionnel `stats=bilans` renvoie UNIQUEMENT des agrégats:
+     *   - countPaiements
+     *   - sumTotalAmount
+     *   - sumTotalPaye
+     *   - sumReliquat
+     *   - totalAchat  (sum(items.quantity * produit.achatPrice))
+     *
+     * Contrainte:
+     * - On ne change pas l'URL `/paiements/getAllPaiements`
+     * - Les autres modes (paged/list/month) restent compatibles
+     *
+     * Appel:
+     * - `/paiements/getAllPaiements?stats=bilans&from=YYYY-MM-DD&to=YYYY-MM-DD`
+     *
+     * Note:
+     * - Si from/to absents, on limite par défaut aux 7 derniers jours (évite full scan historique).
+     */
+    if (req.query?.stats === 'bilans') {
+      const from = (req.query?.from ?? '').toString().trim();
+      const to = (req.query?.to ?? '').toString().trim();
+
+      let start;
+      let end;
+      if (from && to) {
+        start = new Date(from);
+        end = new Date(to);
+        if (!Number.isNaN(end.getTime())) end.setHours(23, 59, 59, 999);
+      } else {
+        // fallback: 7 derniers jours
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
+        start = new Date();
+        start.setDate(start.getDate() - 6);
+        start.setHours(0, 0, 0, 0);
+      }
+
+      if (Number.isNaN(start?.getTime?.()) || Number.isNaN(end?.getTime?.())) {
+        return res.status(400).json({
+          status: 'error',
+          message: "Paramètres de date invalides pour stats=bilans (attendu: from/to en YYYY-MM-DD).",
+        });
+      }
+
+      const pipeline = [
+        { $match: { paiementDate: { $gte: start, $lte: end } } },
+        {
+          $lookup: {
+            from: 'commandes',
+            localField: 'commande',
+            foreignField: '_id',
+            as: 'commande',
+          },
+        },
+        { $unwind: { path: '$commande', preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: '$commande.items', preserveNullAndEmptyArrays: true } },
+        {
+          $lookup: {
+            from: 'produits',
+            localField: 'commande.items.produit',
+            foreignField: '_id',
+            as: 'produit',
+          },
+        },
+        { $unwind: { path: '$produit', preserveNullAndEmptyArrays: true } },
+        {
+          $group: {
+            _id: null,
+            countPaiements: { $addToSet: '$_id' },
+            sumTotalAmount: { $sum: '$totalAmount' },
+            sumTotalPaye: { $sum: '$totalPaye' },
+            totalAchat: {
+              $sum: {
+                $multiply: [
+                  { $ifNull: ['$commande.items.quantity', 0] },
+                  { $ifNull: ['$produit.achatPrice', 0] },
+                ],
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            countPaiements: { $size: '$countPaiements' },
+            sumTotalAmount: 1,
+            sumTotalPaye: 1,
+            sumReliquat: { $subtract: ['$sumTotalAmount', '$sumTotalPaye'] },
+            totalAchat: 1,
+          },
+        },
+      ];
+
+      const agg = await Paiement.aggregate(pipeline);
+      const row = agg?.[0] || {
+        countPaiements: 0,
+        sumTotalAmount: 0,
+        sumTotalPaye: 0,
+        sumReliquat: 0,
+        totalAchat: 0,
+      };
+
+      return res.status(200).json(row);
+    }
+
+    /**
      * MODE PAGINÉ + RECHERCHE (Historique de facture / PaiementsListe)
      *
      * Appel:
@@ -181,6 +293,9 @@ exports.getAllPaiements = async (req, res) => {
       const deep =
         req.query?.deep === '1' || req.query?.deep === 'true';
 
+      // 1) Filtrer les paiements (reliquat / today / from-to)
+      const paiementMatch = {};
+
       // Filtre date (Bilans / Rapports): from/to (YYYY-MM-DD)
       const from = (req.query?.from ?? '').toString().trim();
       const to = (req.query?.to ?? '').toString().trim();
@@ -193,8 +308,6 @@ exports.getAllPaiements = async (req, res) => {
         }
       }
 
-      // 1) Filtrer les paiements (reliquat / today)
-      const paiementMatch = {};
       if (reliquaOnly) {
         // totalAmount - totalPaye > 0
         paiementMatch.$expr = {
@@ -246,11 +359,32 @@ exports.getAllPaiements = async (req, res) => {
 
       // deep=1 => on populate items.produit pour calculer les achats côté front (Bilans/Rapports)
       const commandePopulate = deep
-        ? { path: 'commande', populate: { path: 'items.produit' } }
-        : { path: 'commande', select: 'fullName phoneNumber adresse commandeDate items' };
+        ? {
+            /**
+             * IMPORTANT (optimisation RAM):
+             * - `deep=1` est utilisé par Bilans/Rapports pour avoir accès à `produit.achatPrice`.
+             * - On limite volontairement les champs produits au strict nécessaire (name + achatPrice)
+             *   pour éviter un payload énorme.
+             */
+            path: 'commande',
+            populate: { path: 'items.produit', select: 'name achatPrice' },
+          }
+        : {
+            /**
+             * IMPORTANT (demande optimisation):
+             * - En liste "Historique de Facture", on ne renvoie QUE le résumé:
+             *   client, date, totalAmount, id
+             * - Donc on exclut `items` ici (pas besoin en liste)
+             * - Le détail (articles) est chargé uniquement sur la page facture/détails.
+             */
+            path: 'commande',
+            select: 'fullName phoneNumber adresse commandeDate',
+          };
 
       const paiements = await query
         .populate(commandePopulate)
+        // Boutique utilisée par le front pour filtrer (Historique facture)
+        .populate({ path: 'user', select: 'boutique' })
         .select('totalAmount totalPaye reduction paiementDate methode commande user createdAt')
         .lean();
 

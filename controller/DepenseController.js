@@ -180,6 +180,8 @@ exports.getAllDepenses = async (req, res) => {
       const today = req.query?.today === '1' || req.query?.today === 'true';
       const exportAll = req.query?.export === '1' || req.query?.export === 'true';
 
+      const match = {};
+
       // Filtre date (Bilans / Rapports): from/to (YYYY-MM-DD)
       const from = (req.query?.from ?? '').toString().trim();
       const to = (req.query?.to ?? '').toString().trim();
@@ -191,8 +193,6 @@ exports.getAllDepenses = async (req, res) => {
           match.dateOfDepense = { $gte: start, $lte: end };
         }
       }
-
-      const match = {};
 
       if (today) {
         const start = new Date();

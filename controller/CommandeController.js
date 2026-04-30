@@ -228,6 +228,47 @@ exports.getAllCommandes = async (req, res) => {
     }
 
     /**
+     * MODE "STATS RANGE" (Rapports - compteur sur période)
+     *
+     * Objectif:
+     * - Les pages Rapport (jour / période) ont besoin du nombre de commandes,
+     *   mais n'ont pas besoin de charger toutes les lignes pour ce compteur.
+     *
+     * Appel:
+     * - `/commandes/getAllCommandes?stats=range&from=YYYY-MM-DD&to=YYYY-MM-DD`
+     *
+     * Réponse:
+     * - `{ countCommandes }`
+     *
+     * Contrainte:
+     * - On ne change pas l'URL existante.
+     * - Sans `stats=range`, comportement inchangé.
+     */
+    if (req.query?.stats === 'range') {
+      const from = (req.query?.from ?? '').toString().trim();
+      const to = (req.query?.to ?? '').toString().trim();
+      if (!from || !to) {
+        return res.status(400).json({
+          status: 'error',
+          message: "stats=range nécessite les paramètres from et to (YYYY-MM-DD).",
+        });
+      }
+      const start = new Date(from);
+      const end = new Date(to);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+        return res.status(400).json({
+          status: 'error',
+          message: "Paramètres de date invalides pour stats=range (attendu: YYYY-MM-DD).",
+        });
+      }
+      end.setHours(23, 59, 59, 999);
+      const countCommandes = await Commande.countDocuments({
+        commandeDate: { $gte: start, $lte: end },
+      });
+      return res.status(200).json({ countCommandes });
+    }
+
+    /**
      * MODE "SUMMARY" (Dashboard)
      *
      * Objectif:

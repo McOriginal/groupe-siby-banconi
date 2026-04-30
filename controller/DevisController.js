@@ -114,11 +114,18 @@ exports.getAllDevis = async (req, res) => {
       const total = await Devis.countDocuments(match);
       const totalPages = total === 0 ? 1 : Math.ceil(total / limit);
 
+      /**
+       * IMPORTANT (demande optimisation):
+       * - En liste (historique), on renvoie uniquement des champs "résumé"
+       *   => PAS de `items.produit` (ni populate) car c'est très lourd.
+       * - Le détail est chargé uniquement au clic via `getOneDevis/:id`
+       *   (là oui on populate `items.produit`).
+       */
       let items = await Devis.find(match)
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
-        .populate({ path: 'items.produit', select: 'name imageUrl price achatPrice' })
+        .select('fullName phoneNumber adresse totalAmount user createdAt')
         .populate({ path: 'user', select: 'boutique' })
         .lean();
 
