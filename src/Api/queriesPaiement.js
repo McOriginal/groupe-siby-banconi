@@ -20,11 +20,27 @@ export const useUpdatePaiement = () => {
   });
 };
 // Lire toutes les paiements
-export const useAllPaiements = () =>
+export const useAllPaiements = (params) =>
   useQuery({
-    queryKey: ['paiements'],
+    /**
+     * CACHE + PAGINATION (optionnel)
+     *
+     * Contrainte:
+     * - On garde le même hook `useAllPaiements`
+     * - On ne change pas l'URL: `/paiements/getAllPaiements`
+     *
+     * Usage:
+     * - useAllPaiements() => comportement historique
+     * - useAllPaiements({ paged: 1, page: 1, limit: 25, q: '...', reliquaOnly: 1, today: 1 })
+     */
+    queryKey: params ? ['paiements', params] : ['paiements', 'all'],
     queryFn: () =>
-      api.get('/paiements/getAllPaiements').then((res) => res.data),
+      api
+        .get('/paiements/getAllPaiements', { params: params || undefined })
+        .then((res) => res.data),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 10,
+    placeholderData: (prev) => prev,
   });
 
 // Obtenir une Paiement

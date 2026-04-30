@@ -16,7 +16,20 @@ import { connectedUserRole } from '../Authentication/userInfos';
 
 export default function PaiementsListe() {
   const [form_modal, setForm_modal] = useState(false);
-  const { data: paiementsData, isLoading, error } = useAllPaiements();
+  /**
+   * OPTIMISATION PRO (Historique de facture / Paiements)
+   *
+   * Avant:
+   * - `useAllPaiements()` chargeait tout l'historique + populate profond
+   * - Recherche et totaux calculés côté navigateur => lourd et lent
+   *
+   * Maintenant:
+   * - Mode backend `paged=1` (même endpoint) + recherche serveur `q`
+   * - Pagination
+   * - Totaux serveur (sur l'ensemble filtré) via `paiementsData.totals`
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
   const { mutate: deletePaiement, isDeleting } = useDeletePaiement();
   const [paiementToUpdate, setPaiementToUpdate] = useState(null);
   const [formModalTitle, setFormModalTitle] = useState('Nouveau Paiement');
@@ -28,48 +41,37 @@ export default function PaiementsListe() {
   const [filterReliqua, setFilterReliqua] = useState(false);
   const [todayPaiement, setTodayPaiement] = useState(false);
 
-  // Fonction de Rechercher
-  const filterSearchPaiement = paiementsData?.paiements
-    ?.filter((paiement) => {
-      const search = searchTerm.toLowerCase();
-      return (
-        `${paiement?.commande?.fullName}`.toLowerCase().includes(search) ||
-        paiement?.commande?.adresse.toLowerCase().includes(search) ||
-        (paiement?.commande?.phoneNumber || '').toString().includes(search) ||
-        paiement?.totalAmount.toString().includes(search) ||
-        (paiement?.totalPaye || '').toString().includes(search) ||
-        (paiement?.reduction || 0).toString().includes(search) ||
-        (
-          paiement?.paiementDate &&
-          new Date(paiement?.paiementDate).toLocaleDateString()
-        ).includes(search)
-      );
-    })
+  // Debounce (évite spam réseau) + reset page
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-    ?.filter((paiement) => {
-      if (!filterReliqua) return true; // pas de filtre
-      const reliqua = (paiement?.totalAmount || 0) - (paiement?.totalPaye || 0);
-      return reliqua > 0;
-    })
-    ?.filter((item) => {
-      if (todayPaiement) {
-        return (
-          new Date(item.paiementDate).toLocaleDateString() ===
-          new Date().toLocaleDateString()
-        );
-      }
-      return true;
-    });
+  // Récupérer la page filtrée côté serveur
+  const { data: paiementsData, isLoading, error } = useAllPaiements({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
+    reliquaOnly: filterReliqua ? 1 : 0,
+    today: todayPaiement ? 1 : 0,
+  });
+
+  // Données paginées (on garde le nom `filterSearchPaiement` pour ne pas toucher le reste)
+  const filterSearchPaiement = paiementsData?.paiements || [];
+  const total = paiementsData?.total ?? 0;
+  const totalPages = paiementsData?.totalPages ?? 1;
 
   // Total de commandes
-  const sumTotalAmount = filterSearchPaiement?.reduce((curr, item) => {
-    return (curr += item?.totalAmount);
-  }, 0);
-
-  // Total Payés
-  const sumTotalPaye = filterSearchPaiement?.reduce((curr, item) => {
-    return (curr += item?.totalPaye);
-  }, 0);
+  // IMPORTANT:
+  // - Les totaux doivent être sur l'ensemble filtré (pas seulement la page)
+  // - Le backend renvoie `totals` dans le mode paginé.
+  const sumTotalAmount = paiementsData?.totals?.sumTotalAmount ?? 0;
+  const sumTotalPaye = paiementsData?.totals?.sumTotalPaye ?? 0;
 
   // ------------------------------------------------------------------------
   // total de prix d'achat
@@ -169,7 +171,7 @@ export default function PaiementsListe() {
                       </Col>
 
                       <Col className='col-sm'>
-                        <div className='d-flex justify-content-sm-end gap-2'>
+                        <div className='d-flex justify-content-sm-end gap-2 flex-wrap'>
                           {searchTerm !== '' && (
                             <Button
                               color='danger'
@@ -188,6 +190,59 @@ export default function PaiementsListe() {
                             />
                           </div>
                         </div>
+
+                        {/* Pagination (en haut) */}
+                        {!error && !isLoading && totalPages > 1 && (
+                          <div className='d-flex justify-content-sm-end align-items-center gap-2 flex-wrap mt-2'>
+                            <div
+                              className='d-inline-flex gap-2'
+                              role='group'
+                              aria-label='Pagination paiements'
+                            >
+                              <Button
+                                color='info'
+                                className='shadow-sm'
+                                disabled={page <= 1}
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                              >
+                                <i className='bx bx-chevron-left'></i>
+                              </Button>
+                              <Button
+                                color='primary'
+                                className='shadow-sm'
+                                disabled={page >= totalPages}
+                                onClick={() =>
+                                  setPage((p) => Math.min(totalPages, p + 1))
+                                }
+                              >
+                                <i className='bx bx-chevron-right'></i>
+                              </Button>
+                            </div>
+                            <span className='small fw-semibold text-dark'>
+                              Page <span className='badge bg-primary'>{page}</span> /{' '}
+                              <span className='badge bg-primary'>{totalPages}</span> ·{' '}
+                              <span className='badge bg-info'>{total}</span> résultats
+                            </span>
+                            <div className='d-flex align-items-center gap-2'>
+                              <span className='text-dark small fw-semibold'>
+                                Par page
+                              </span>
+                              <select
+                                className='form-select form-select-sm border border-primary'
+                                style={{ width: 95 }}
+                                value={limit}
+                                onChange={(e) => {
+                                  setLimit(Number(e.target.value));
+                                  setPage(1);
+                                }}
+                              >
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
                       </Col>
                       <Col
                         md='12'

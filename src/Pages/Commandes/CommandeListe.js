@@ -12,8 +12,21 @@ import { useAllCommandes, useDeleteCommande } from '../../Api/queriesCommande';
 import { useNavigate } from 'react-router-dom';
 
 export default function CommandeListe() {
-  // Afficher toutes les commandes
-  const { data: commandes, isLoading, error } = useAllCommandes();
+  /**
+   * OPTIMISATION PRO (Historique des Commandes)
+   *
+   * Avant:
+   * - `useAllCommandes()` chargeait toute la liste + toutes les factures
+   * - Puis recherche/filtre côté navigateur => lourd RAM/CPU et lent
+   *
+   * Maintenant:
+   * - On active le mode backend `paged=1` (même endpoint, juste query params)
+   * - Recherche côté serveur (`q`)
+   * - Pagination => on ne charge qu'une page
+   * - On garde les mêmes variables/structures attendues (`commandesListe`, `factures`)
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const { mutate: deleteCommandeAndRestorStock } = useDeleteCommande();
 
   // State de chargement pour la suppression
@@ -109,43 +122,38 @@ export default function CommandeListe() {
   const [todayCommande, setTodayCommande] = useState(false);
   const [delivredCommande, setDelivredCommande] = useState(false);
   const [notDelivredCommande, setNotdelivredCommande] = useState(false);
-  // Fonction de Recherche dans la barre de recherche
-  const filterCommandes = commandes?.commandesListe
-    ?.filter((comm) => {
-      const search = searchTerm.toLowerCase();
-      return (
-        comm?.fullName.toLowerCase().includes(search) ||
-        comm?.phoneNumber.toString().includes(search) ||
-        comm?.adresse.toLowerCase().includes(search) ||
-        comm?.items?.length.toString().includes(search) ||
-        comm?.statut.toLowerCase().includes(search) ||
-        new Date(comm?.commandeDate)
-          .toLocaleDateString('fr-FR')
-          .includes(search)
-      );
-    })
+  // Debounce pour éviter un appel réseau à chaque frappe
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-    ?.filter((item) => {
-      if (todayCommande) {
-        return (
-          new Date(item?.createdAt).toLocaleDateString() ===
-          new Date().toLocaleDateString()
-        );
-      }
-      return true;
-    })
-    ?.filter((item) => {
-      if (delivredCommande) {
-        return item.statut.toLowerCase() === 'en cours';
-      }
-      return true;
-    })
-    ?.filter((item) => {
-      if (notDelivredCommande) {
-        return item.statut.toLowerCase() === 'en attente';
-      }
-      return true;
-    });
+  // Mapping filtres UI => filtres serveur
+  // - On conserve vos states (todayCommande, delivredCommande, notDelivredCommande)
+  // - On les utilise pour construire des query params sans changer l'API
+  const statutParam = delivredCommande
+    ? 'en cours'
+    : notDelivredCommande
+      ? 'en attente'
+      : '';
+
+  const { data: commandes, isLoading, error } = useAllCommandes({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
+    today: todayCommande ? 1 : 0,
+    statut: statutParam,
+  });
+
+  // Données paginées
+  const filterCommandes = commandes?.commandesListe || [];
+  const total = commandes?.total ?? 0;
+  const totalPages = commandes?.totalPages ?? 1;
 
   // Total Commandes Livrés
   const totalCommandesLivres = filterCommandes?.filter(
@@ -197,6 +205,59 @@ export default function CommandeListe() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
+
+                    {/* Pagination (en haut) */}
+                    {!error && !isLoading && totalPages > 1 && (
+                      <div className='d-flex align-items-center gap-2 flex-wrap mt-3'>
+                        <div
+                          className='d-inline-flex gap-2'
+                          role='group'
+                          aria-label='Pagination commandes'
+                        >
+                          <Button
+                            color='info'
+                            className='shadow-sm'
+                            disabled={page <= 1}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          >
+                            <i className='bx bx-chevron-left'></i>
+                          </Button>
+                          <Button
+                            color='primary'
+                            className='shadow-sm'
+                            disabled={page >= totalPages}
+                            onClick={() =>
+                              setPage((p) => Math.min(totalPages, p + 1))
+                            }
+                          >
+                            <i className='bx bx-chevron-right'></i>
+                          </Button>
+                        </div>
+                        <span className='small fw-semibold text-dark'>
+                          Page <span className='badge bg-primary'>{page}</span> /{' '}
+                          <span className='badge bg-primary'>{totalPages}</span> ·{' '}
+                          <span className='badge bg-info'>{total}</span> résultats
+                        </span>
+                        <div className='d-flex align-items-center gap-2'>
+                          <span className='text-dark small fw-semibold'>
+                            Par page
+                          </span>
+                          <select
+                            className='form-select form-select-sm border border-primary'
+                            style={{ width: 95 }}
+                            value={limit}
+                            onChange={(e) => {
+                              setLimit(Number(e.target.value));
+                              setPage(1);
+                            }}
+                          >
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {!isLoading && !error && (
                     <div className='d-flex  justify-content-around align-items-center flex-wrap'>

@@ -35,22 +35,55 @@ export default function NewCommande() {
   // State de navigation
   const navigate = useNavigate();
 
-  // Query pour afficher les Médicament
-  const { data: produitsData, isLoading, error } = useAllProduit();
+  /**
+   * OPTIMISATION PRO (Ajouter une commande)
+   *
+   * Avant:
+   * - Chargement de TOUS les produits via `useAllProduit()`
+   * - Recherche côté navigateur (filtre JS)
+   *
+   * Problèmes:
+   * - RAM/CPU élevés quand la base grossit
+   * - Temps de chargement important
+   *
+   * Maintenant:
+   * - Mode backend `paged=1` sur le même endpoint `/produits/getAllProduits`
+   * - Recherche côté serveur via `q`
+   * - Pagination => on ne charge qu'une page de produits
+   *
+   * IMPORTANT:
+   * - On garde le même hook `useAllProduit` et le même modèle de données de commande.
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(24);
+
   // Recherche State
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fontion pour Rechercher
-  const filterSearchProduits = produitsData?.filter((prod) => {
-    const search = searchTerm.toLowerCase();
+  // Debounce (évite un appel réseau à chaque frappe)
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-    return (
-      prod?.stock > 0 &&
-      (prod.name?.toLowerCase().includes(search) ||
-        prod.stock?.toString().includes(search) ||
-        prod.price?.toString().includes(search))
-    );
+  // Query produits paginée (stock > 0)
+  const { data: produitsData, isLoading, error } = useAllProduit({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
+    stockGt: 0,
   });
+
+  // Liste des produits (page courante) - on garde le nom `filterSearchProduits`
+  // pour éviter de toucher aux usages plus bas dans le composant.
+  const filterSearchProduits = produitsData?.items || [];
+  const totalPages = produitsData?.totalPages ?? 1;
+  const totalProduits = produitsData?.total ?? 0;
 
   // Query pour ajouter une COMMANDE dans la base de données
   const { mutate: createCommande } = useCreateCommande();
@@ -585,6 +618,59 @@ export default function NewCommande() {
                         />
                       </div>
                     </div>
+
+                    {/* Pagination (produits) - visible, moderne, responsive */}
+                    {!error && !isLoading && totalPages > 1 && (
+                      <div className='d-flex align-items-center gap-2 flex-wrap px-2 mt-2'>
+                        <div
+                          className='d-inline-flex gap-2'
+                          role='group'
+                          aria-label='Pagination produits (commande)'
+                        >
+                          <Button
+                            color='info'
+                            className='shadow-sm'
+                            disabled={page <= 1}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          >
+                            <i className='bx bx-chevron-left'></i>
+                          </Button>
+                          <Button
+                            color='primary'
+                            className='shadow-sm'
+                            disabled={page >= totalPages}
+                            onClick={() =>
+                              setPage((p) => Math.min(totalPages, p + 1))
+                            }
+                          >
+                            <i className='bx bx-chevron-right'></i>
+                          </Button>
+                        </div>
+                        <span className='small fw-semibold text-dark'>
+                          Page <span className='badge bg-primary'>{page}</span> /{' '}
+                          <span className='badge bg-primary'>{totalPages}</span> ·{' '}
+                          <span className='badge bg-info'>{totalProduits}</span> produits
+                        </span>
+                        <div className='d-flex align-items-center gap-2'>
+                          <span className='text-dark small fw-semibold'>
+                            Par page
+                          </span>
+                          <select
+                            className='form-select form-select-sm border border-primary'
+                            style={{ width: 95 }}
+                            value={limit}
+                            onChange={(e) => {
+                              setLimit(Number(e.target.value));
+                              setPage(1);
+                            }}
+                          >
+                            <option value={12}>12</option>
+                            <option value={24}>24</option>
+                            <option value={48}>48</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
                   </Col>
 
                   {/* --------------------------------------------------------------- */}

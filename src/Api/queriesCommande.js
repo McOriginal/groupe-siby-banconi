@@ -26,11 +26,27 @@ export const useUpdateCommande = () => {
   });
 };
 // Lire toutes les commandes
-export const useAllCommandes = () =>
+export const useAllCommandes = (params) =>
   useQuery({
-    queryKey: ['commandes'],
+    /**
+     * CACHE + PAGINATION (optionnel)
+     *
+     * Contrainte:
+     * - On garde le même hook `useAllCommandes`
+     * - On ne change pas l'URL: `/commandes/getAllCommandes`
+     *
+     * Usage:
+     * - useAllCommandes() => comportement historique (liste complète + factures)
+     * - useAllCommandes({ paged: 1, page: 1, limit: 20, q: '...' }) => version paginée
+     */
+    queryKey: params ? ['commandes', params] : ['commandes', 'all'],
     queryFn: () =>
-      api.get('/commandes/getAllCommandes').then((res) => res.data),
+      api
+        .get('/commandes/getAllCommandes', { params: params || undefined })
+        .then((res) => res.data),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 10,
+    placeholderData: (prev) => prev,
   });
 
 /**
