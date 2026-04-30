@@ -1,5 +1,46 @@
 const Paiement = require('../models/PaiementModel');
 const PaiementHistorique = require('../models/PaiementHistoriqueModel');
+const Commande = require('../models/CommandeModel');
+
+/**
+ * Helpers - pagination / recherche (mode optionnel `paged=1`)
+ *
+ * Contrainte:
+ * - On ne change PAS l'URL existante `/paiements/getAllPaiements`
+ * - Sans `paged=1`, comportement historique inchangé
+ */
+function toInt(value, fallback) {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) ? n : fallback;
+}
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+function escapeRegex(input) {
+  return String(input).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function parseDateRange(qRaw) {
+  const s = String(qRaw || '').trim();
+  if (!s) return null;
+  const fr = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/;
+  let day, month, year;
+  if (fr.test(s)) {
+    const m = s.match(fr);
+    day = Number(m[1]);
+    month = Number(m[2]);
+    year = Number(m[3]);
+  } else if (iso.test(s)) {
+    const m = s.match(iso);
+    year = Number(m[1]);
+    month = Number(m[2]);
+    day = Number(m[3]);
+  } else return null;
+  const start = new Date(year, month - 1, day, 0, 0, 0, 0);
+  const end = new Date(year, month - 1, day, 23, 59, 59, 999);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  return { start, end };
+}
 
 // Enregistrer un paiement
 exports.createPaiement = async (req, res) => {
@@ -60,6 +101,125 @@ exports.updatePaiement = async (req, res) => {
 // Historique des paiements
 exports.getAllPaiements = async (req, res) => {
   try {
+    /**
+     * MODE PAGINÉ + RECHERCHE (Historique de facture / PaiementsListe)
+     *
+     * Appel:
+     * - `/paiements/getAllPaiements?paged=1&page=1&limit=25&q=...&reliquaOnly=1&today=1`
+     *
+     * Réponse:
+     * - `{ paiements, page, limit, total, totalPages, totals }`
+     *
+     * NOTE:
+     * - On fait la recherche côté serveur en trouvant d'abord les commandes qui matchent `q`,
+     *   puis on récupère les paiements liés à ces commandes (pagination).
+     */
+    const paged = req.query?.paged === '1' || req.query?.paged === 'true';
+    if (paged) {
+      const page = clamp(toInt(req.query?.page, 1), 1, 100_000);
+      const limit = clamp(toInt(req.query?.limit, 25), 1, 200);
+      const qRaw = (req.query?.q ?? '').toString().trim();
+      const reliquaOnly =
+        req.query?.reliquaOnly === '1' || req.query?.reliquaOnly === 'true';
+      const today = req.query?.today === '1' || req.query?.today === 'true';
+
+      // 1) Filtrer les paiements (reliquat / today)
+      const paiementMatch = {};
+      if (reliquaOnly) {
+        // totalAmount - totalPaye > 0
+        paiementMatch.$expr = {
+          $gt: [{ $subtract: ['$totalAmount', '$totalPaye'] }, 0],
+        };
+      }
+      if (today) {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        paiementMatch.paiementDate = { $gte: start, $lte: end };
+      }
+
+      // 2) Recherche sur la COMMANDE (client/tél/adresse/date)
+      let commandeIds = null; // null => pas de filtre commande
+      if (qRaw) {
+        const regex = new RegExp(escapeRegex(qRaw), 'i');
+        const asNumber = Number(qRaw);
+        const dateRange = parseDateRange(qRaw);
+
+        const commandeMatch = {
+          $or: [
+            { fullName: regex },
+            { adresse: regex },
+            ...(Number.isFinite(asNumber) ? [{ phoneNumber: asNumber }] : []),
+            ...(dateRange
+              ? [{ commandeDate: { $gte: dateRange.start, $lte: dateRange.end } }]
+              : []),
+          ].filter(Boolean),
+        };
+
+        const commandes = await Commande.find(commandeMatch)
+          .select('_id')
+          .lean();
+        commandeIds = commandes.map((c) => c._id);
+        paiementMatch.commande = { $in: commandeIds };
+      }
+
+      const total = await Paiement.countDocuments(paiementMatch);
+      const totalPages = total === 0 ? 1 : Math.ceil(total / limit);
+
+      // 3) Page de paiements (projection + populate léger)
+      const paiements = await Paiement.find(paiementMatch)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate({
+          path: 'commande',
+          select: 'fullName phoneNumber adresse commandeDate items',
+        })
+        .select('totalAmount totalPaye reduction paiementDate methode commande user createdAt')
+        .lean();
+
+      /**
+       * Totaux (sur l'ensemble filtré, pas seulement la page):
+       * - sumTotalAmount
+       * - sumTotalPaye
+       * - sumReliquat
+       */
+      const totalsAgg = await Paiement.aggregate([
+        { $match: paiementMatch },
+        {
+          $group: {
+            _id: null,
+            sumTotalAmount: { $sum: '$totalAmount' },
+            sumTotalPaye: { $sum: '$totalPaye' },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            sumTotalAmount: 1,
+            sumTotalPaye: 1,
+            sumReliquat: { $subtract: ['$sumTotalAmount', '$sumTotalPaye'] },
+          },
+        },
+      ]);
+
+      const totals = totalsAgg?.[0] || {
+        sumTotalAmount: 0,
+        sumTotalPaye: 0,
+        sumReliquat: 0,
+      };
+
+      return res.status(200).json({
+        paiements,
+        page,
+        limit,
+        total,
+        totalPages,
+        totals,
+      });
+    }
+
     const paiements = await Paiement.find()
       .populate({ path: 'commande', populate: { path: 'items.produit' } })
       .populate('user')

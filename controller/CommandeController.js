@@ -5,6 +5,47 @@ const Produit = require('../models/ProduitModel');
 const PaiementHistorique = require('../models/PaiementHistoriqueModel');
 const LivraisonHistorique = require('../models/LivraisonHistoriqueModel');
 
+/**
+ * Helpers - pagination / recherche (mode optionnel `paged=1`)
+ *
+ * Contrainte:
+ * - On ne change PAS les URLs existantes
+ * - Sans `paged=1`, le comportement historique reste identique
+ */
+function toInt(value, fallback) {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) ? n : fallback;
+}
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+function escapeRegex(input) {
+  return String(input).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function parseDateRange(qRaw) {
+  // Support dd/mm/yyyy et yyyy-mm-dd pour la recherche par date
+  const s = String(qRaw || '').trim();
+  if (!s) return null;
+  const fr = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/;
+  let day, month, year;
+  if (fr.test(s)) {
+    const m = s.match(fr);
+    day = Number(m[1]);
+    month = Number(m[2]);
+    year = Number(m[3]);
+  } else if (iso.test(s)) {
+    const m = s.match(iso);
+    year = Number(m[1]);
+    month = Number(m[2]);
+    day = Number(m[3]);
+  } else return null;
+  const start = new Date(year, month - 1, day, 0, 0, 0, 0);
+  const end = new Date(year, month - 1, day, 23, 59, 59, 999);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  return { start, end };
+}
+
 // Créer une COMMANDE
 exports.createCommande = async (req, res) => {
   const session = await Produit.startSession();
@@ -186,6 +227,88 @@ exports.getAllCommandes = async (req, res) => {
           totalEnCours,
           totalLivree,
         },
+      });
+    }
+
+    /**
+     * MODE PAGINÉ (Historique des commandes)
+     *
+     * Appel:
+     * - `/commandes/getAllCommandes?paged=1&page=1&limit=20&q=...&today=1&statut=en%20attente`
+     *
+     * Réponse:
+     * - `{ commandesListe, factures, page, limit, total, totalPages }`
+     *
+     * IMPORTANT:
+     * - On conserve les mêmes clés `commandesListe` et `factures` pour ne pas casser le front.
+     * - `factures` dans ce mode est une liste "légère" utilisée uniquement pour savoir
+     *   si une commande est facturée (icône check/cross dans le tableau).
+     */
+    const paged = req.query?.paged === '1' || req.query?.paged === 'true';
+    if (paged) {
+      const page = clamp(toInt(req.query?.page, 1), 1, 100_000);
+      const limit = clamp(toInt(req.query?.limit, 20), 1, 200);
+      const qRaw = (req.query?.q ?? '').toString().trim();
+      const today = req.query?.today === '1' || req.query?.today === 'true';
+      const statut = (req.query?.statut ?? '').toString().trim(); // 'en cours' | 'en attente' | 'livré'
+
+      const match = {};
+
+      if (statut) {
+        match.statut = statut;
+      }
+
+      if (today) {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        match.createdAt = { $gte: start, $lte: end };
+      }
+
+      if (qRaw) {
+        const regex = new RegExp(escapeRegex(qRaw), 'i');
+        const asNumber = Number(qRaw);
+        const dateRange = parseDateRange(qRaw);
+
+        match.$or = [
+          { fullName: regex },
+          { adresse: regex },
+          { statut: regex },
+          ...(Number.isFinite(asNumber) ? [{ phoneNumber: asNumber }] : []),
+          ...(dateRange
+            ? [{ commandeDate: { $gte: dateRange.start, $lte: dateRange.end } }]
+            : []),
+        ].filter(Boolean);
+      }
+
+      const total = await Commande.countDocuments(match);
+      const totalPages = total === 0 ? 1 : Math.ceil(total / limit);
+
+      // Liste commandes (sans populate items.produit) => léger, on a seulement besoin de items.length.
+      const commandesListe = await Commande.find(match)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .select('fullName phoneNumber adresse items statut commandeDate createdAt')
+        .lean();
+
+      // Factures "légères" (uniquement pour marquer les commandes facturées)
+      const commandeIds = commandesListe.map((c) => c._id);
+      const paiements = await Paiement.find({ commande: { $in: commandeIds } })
+        .select('commande')
+        .lean();
+
+      // On conserve la forme attendue par le front: fact.commande._id
+      const factures = paiements.map((p) => ({ commande: { _id: p.commande } }));
+
+      return res.status(200).json({
+        commandesListe,
+        factures,
+        page,
+        limit,
+        total,
+        totalPages,
       });
     }
 
