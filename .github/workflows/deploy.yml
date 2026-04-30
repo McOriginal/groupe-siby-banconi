@@ -1,4 +1,4 @@
-name: Déploiement sur Render
+name: Deploy Frontend To VPS
 
 on:
   push:
@@ -9,11 +9,34 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout du code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Déclenchement du Deploy Hook de Render
-        run: curl -X POST ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
 
-      - name: Statut du déploiement
-        run: echo "✨ Déployé avec Succès ✅"
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+
+            echo "Starting deployment..."
+
+            #Go to project folder
+            cd /home/mohamed/apps/boutique_banconi/frontend || exit 1
+
+            # Pull latest changes
+            git reset --hard
+            git pull origin Main 
+
+            echo "Pull was successful, installing dependencies..."
+            npm install
+            npm run build
+
+            echo "Dependencies installed, Restart frontend (Nginx)..."
+            sudo systemctl restart nginx
+            sudo nginx -t
+
+
+            echo "Deployment completed successfully!"

@@ -2,8 +2,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://backend-groupe-siby-banconi-0mu5.onrender.com/api',
-  // 'http://localhost:5000/api',
+  baseURL: 'http://localhost:5001/api',
+  // baseURL: '/api',
 
   headers: {
     'Content-Type': 'application/json',
