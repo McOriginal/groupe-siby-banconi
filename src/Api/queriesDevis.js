@@ -20,10 +20,27 @@ export const useUpdateDevis = () => {
 };
 
 // Lire toutes les Deviss
-export const useAllDevis = () =>
+export const useAllDevis = (params) =>
   useQuery({
-    queryKey: ['devis'],
-    queryFn: () => api.get('/devis/getAllDevis').then((res) => res.data),
+    /**
+     * CACHE + PAGINATION (optionnel)
+     *
+     * Contrainte:
+     * - On garde le même hook `useAllDevis`
+     * - On ne change pas l'URL `/devis/getAllDevis`
+     *
+     * Usage:
+     * - useAllDevis() => comportement historique (tableau complet)
+     * - useAllDevis({ paged: 1, page: 1, limit: 10, q: '...', boutique: 1 }) => paginé
+     */
+    queryKey: params ? ['devis', params] : ['devis', 'all'],
+    queryFn: () =>
+      api
+        .get('/devis/getAllDevis', { params: params || undefined })
+        .then((res) => res.data),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 10,
+    placeholderData: (prev) => prev,
   });
 
 // Obtenir un Devis

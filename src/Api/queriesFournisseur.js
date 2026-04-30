@@ -12,12 +12,29 @@ export const useCreateFournisseur = () => {
 };
 
 // Obtenir une Fournisseur
-export const useAllFournisseur = () =>
+export const useAllFournisseur = (params) =>
   useQuery({
-    queryKey: ['fournisseur'],
+    /**
+     * CACHE + PAGINATION (optionnel)
+     *
+     * Contrainte:
+     * - On garde le même hook `useAllFournisseur`
+     * - On ne change pas l'URL `/fournisseurs/getAllFournisseurs`
+     *
+     * Important (bug fix cache):
+     * - Vos mutations invalident `['fournisseurs']` mais ce query utilisait `['fournisseur']`
+     *   => le cache n'était pas invalidé après ajout/modif/suppression.
+     * - On aligne donc le queryKey sur `['fournisseurs', ...]` (amélioration interne, sans
+     *   toucher vos variables/formulaires).
+     */
+    queryKey: params ? ['fournisseurs', params] : ['fournisseurs', 'all'],
     queryFn: () =>
-      api.get('/fournisseurs/getAllFournisseurs').then((res) => res.data),
-    staleTime: 1000 * 60 * 5, //chaque 5 minutes rafraichir les données
+      api
+        .get('/fournisseurs/getAllFournisseurs', { params: params || undefined })
+        .then((res) => res.data),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 10,
+    placeholderData: (prev) => prev,
   });
 
 // Obtenir une Fournisseur

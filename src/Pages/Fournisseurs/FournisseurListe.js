@@ -16,7 +16,19 @@ import FournisseurForm from './FournisseurForm';
 
 export default function FournisseurListe() {
   const [form_modal, setForm_modal] = useState(false);
-  const { data: fournisseurData, isLoading, error } = useAllFournisseur();
+  /**
+   * OPTIMISATION PRO (Fournisseurs)
+   *
+   * Avant:
+   * - Chargement complet + recherche côté navigateur
+   *
+   * Maintenant:
+   * - Mode backend `paged=1` (même endpoint)
+   * - Recherche serveur `q`
+   * - Pagination + cache React Query
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
   const { mutate: deleteFournisseur, isDeleting } = useDeleteFournisseur();
   const [fournisseurToUpdate, setFournisseurToUpdate] = useState(null);
   const [formModalTitle, setFormModalTitle] = useState(
@@ -26,18 +38,27 @@ export default function FournisseurListe() {
   // State de Rechercher
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fonction pour filtrer les fournisseurs en fonction du terme de recherche
-  const filteredFournisseurs = fournisseurData?.filter((fournisseur) => {
-    const search = searchTerm.toLowerCase();
-    return (
-      `${fournisseur.firstName} ${fournisseur.lastName}`
-        .toLowerCase()
-        .includes(search) ||
-      fournisseur.emailAdresse.toLowerCase().includes(search) ||
-      fournisseur.adresse.toLowerCase().includes(search) ||
-      fournisseur.phoneNumber.toString().includes(search)
-    );
+  // Debounce (évite spam réseau) + reset page
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  const { data: fournisseurData, isLoading, error } = useAllFournisseur({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
   });
+
+  // Données paginées (on garde le nom `filteredFournisseurs` pour ne pas toucher le reste)
+  const filteredFournisseurs = fournisseurData?.items || [];
+  const total = fournisseurData?.total ?? 0;
+  const totalPages = fournisseurData?.totalPages ?? 1;
 
   function tog_form_modal() {
     setForm_modal(!form_modal);
@@ -94,12 +115,12 @@ export default function FournisseurListe() {
                           Fournisseurs Total:{' '}
                           <span className='text-warning'>
                             {' '}
-                            {fournisseurData?.length}{' '}
+                            {total}{' '}
                           </span>
                         </p>
                       </Col>
                       <Col className='col-sm'>
-                        <div className='d-flex justify-content-sm-end gap-2'>
+                        <div className='d-flex justify-content-sm-end gap-2 flex-wrap'>
                           {searchTerm !== '' && (
                             <Button
                               color='danger'
@@ -118,6 +139,59 @@ export default function FournisseurListe() {
                             />
                           </div>
                         </div>
+
+                        {/* Pagination (en haut) */}
+                        {!error && !isLoading && totalPages > 1 && (
+                          <div className='d-flex justify-content-sm-end align-items-center gap-2 flex-wrap mt-2'>
+                            <div
+                              className='d-inline-flex gap-2'
+                              role='group'
+                              aria-label='Pagination fournisseurs'
+                            >
+                              <Button
+                                color='info'
+                                className='shadow-sm'
+                                disabled={page <= 1}
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                              >
+                                <i className='bx bx-chevron-left'></i>
+                              </Button>
+                              <Button
+                                color='primary'
+                                className='shadow-sm'
+                                disabled={page >= totalPages}
+                                onClick={() =>
+                                  setPage((p) => Math.min(totalPages, p + 1))
+                                }
+                              >
+                                <i className='bx bx-chevron-right'></i>
+                              </Button>
+                            </div>
+                            <span className='small fw-semibold text-dark'>
+                              Page <span className='badge bg-primary'>{page}</span> /{' '}
+                              <span className='badge bg-primary'>{totalPages}</span> ·{' '}
+                              <span className='badge bg-info'>{total}</span> résultats
+                            </span>
+                            <div className='d-flex align-items-center gap-2'>
+                              <span className='text-dark small fw-semibold'>
+                                Par page
+                              </span>
+                              <select
+                                className='form-select form-select-sm border border-primary'
+                                style={{ width: 95 }}
+                                value={limit}
+                                onChange={(e) => {
+                                  setLimit(Number(e.target.value));
+                                  setPage(1);
+                                }}
+                              >
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
                       </Col>
                     </Row>
                     {error && (

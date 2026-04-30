@@ -35,21 +35,47 @@ export default function NewDevis() {
   // State de navigation
   const navigate = useNavigate();
 
-  // Query pour afficher les Médicament
-  const { data: produitsData, isLoading, error } = useAllProduit();
+  /**
+   * OPTIMISATION PRO (Nouveau Devis)
+   *
+   * Avant:
+   * - Chargement de tous les produits puis filtre JS
+   *
+   * Maintenant:
+   * - Mode backend `paged=1` sur `/produits/getAllProduits` (même endpoint)
+   * - Recherche serveur `q`
+   * - Pagination => évite RAM saturée
+   *
+   * IMPORTANT:
+   * - On garde la variable `filterSearchProduits` utilisée plus bas.
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(24);
+
   // Recherche State
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fontion pour Rechercher
-  const filterSearchProduits = produitsData?.filter((prod) => {
-    const search = searchTerm.toLowerCase();
+  // Debounce (évite spam réseau)
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-    return (
-      prod.name?.toLowerCase().includes(search) ||
-      prod.stock?.toString().includes(search) ||
-      prod.price?.toString().includes(search)
-    );
+  // Query produits paginée
+  const { data: produitsData, isLoading, error } = useAllProduit({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
   });
+
+  const filterSearchProduits = produitsData?.items || [];
+  const totalPages = produitsData?.totalPages ?? 1;
+  const totalProduits = produitsData?.total ?? 0;
 
   // Query pour ajouter un Devis dans la base de données
   const { mutate: createDevis } = useCreateDevis();
@@ -473,6 +499,59 @@ export default function NewDevis() {
                         />
                       </div>
                     </div>
+
+                    {/* Pagination produits (en haut) */}
+                    {!error && !isLoading && totalPages > 1 && (
+                      <div className='d-flex align-items-center gap-2 flex-wrap px-2 mt-2'>
+                        <div
+                          className='d-inline-flex gap-2'
+                          role='group'
+                          aria-label='Pagination produits (devis)'
+                        >
+                          <Button
+                            color='info'
+                            className='shadow-sm'
+                            disabled={page <= 1}
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          >
+                            <i className='bx bx-chevron-left'></i>
+                          </Button>
+                          <Button
+                            color='primary'
+                            className='shadow-sm'
+                            disabled={page >= totalPages}
+                            onClick={() =>
+                              setPage((p) => Math.min(totalPages, p + 1))
+                            }
+                          >
+                            <i className='bx bx-chevron-right'></i>
+                          </Button>
+                        </div>
+                        <span className='small fw-semibold text-dark'>
+                          Page <span className='badge bg-primary'>{page}</span> /{' '}
+                          <span className='badge bg-primary'>{totalPages}</span> ·{' '}
+                          <span className='badge bg-info'>{totalProduits}</span> produits
+                        </span>
+                        <div className='d-flex align-items-center gap-2'>
+                          <span className='text-dark small fw-semibold'>
+                            Par page
+                          </span>
+                          <select
+                            className='form-select form-select-sm border border-primary'
+                            style={{ width: 95 }}
+                            value={limit}
+                            onChange={(e) => {
+                              setLimit(Number(e.target.value));
+                              setPage(1);
+                            }}
+                          >
+                            <option value={12}>12</option>
+                            <option value={24}>24</option>
+                            <option value={48}>48</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
                   </Col>
 
                   {/* --------------------------------------------------------------- */}

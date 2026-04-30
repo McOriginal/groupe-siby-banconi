@@ -25,31 +25,46 @@ import { companyName } from '../CompanyInfo/CompanyInfo';
 import { connectedUserBoutique } from '../Authentication/userInfos';
 
 export default function DevisListe() {
-  // Afficher tous les Devis
-  const { data: devisData, isLoading, error } = useAllDevis();
+  /**
+   * OPTIMISATION PRO (Historique de Devis)
+   *
+   * Avant:
+   * - Chargement complet + filtre côté navigateur
+   *
+   * Maintenant:
+   * - Mode backend `paged=1` (même endpoint)
+   * - Recherche serveur `q`
+   * - Pagination (évite RAM saturée)
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
 
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBoutique, setSelectedBoutique] = useState(null);
-  // Fonction de Recherche dans la barre de recherche
-  const filterDevis = devisData
-    ?.filter((fac) => {
-      const search = searchTerm.toLowerCase();
-      return (
-        fac?.fullName.toLowerCase().includes(search) ||
-        fac?.phoneNumber.toString().includes(search) ||
-        fac?.adresse.toLowerCase().includes(search) ||
-        fac?.totalAmount?.toString().includes(search) ||
-        new Date(fac?.createdAt).toLocaleDateString('fr-FR').includes(search)
-      );
-    })
-    ?.filter((item) => {
-      if (selectedBoutique !== null) {
-        return Number(item.user?.boutique) === selectedBoutique;
-      }
-      return true;
-    });
+  // Debounce recherche (évite un appel réseau à chaque frappe)
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  const { data: devisData, isLoading, error } = useAllDevis({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
+    boutique: selectedBoutique ?? '',
+  });
+
+  // Données paginées
+  const filterDevis = devisData?.items || [];
+  const total = devisData?.total ?? 0;
+  const totalPages = devisData?.totalPages ?? 1;
 
   return (
     <React.Fragment>
@@ -106,9 +121,58 @@ export default function DevisListe() {
             <h5>
               Total Enregistrée:{' '}
               <span className='text-info'>
-                {formatPrice(filterDevis?.length)}
+                {formatPrice(total)}
               </span>
             </h5>
+
+            {/* Pagination (en haut) */}
+            {!error && !isLoading && totalPages > 1 && (
+              <div className='d-flex align-items-center gap-2 flex-wrap mt-2'>
+                <div
+                  className='d-inline-flex gap-2'
+                  role='group'
+                  aria-label='Pagination devis'
+                >
+                  <Button
+                    color='info'
+                    className='shadow-sm'
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    <i className='bx bx-chevron-left'></i>
+                  </Button>
+                  <Button
+                    color='primary'
+                    className='shadow-sm'
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    <i className='bx bx-chevron-right'></i>
+                  </Button>
+                </div>
+                <span className='small fw-semibold text-dark'>
+                  Page <span className='badge bg-primary'>{page}</span> /{' '}
+                  <span className='badge bg-primary'>{totalPages}</span> ·{' '}
+                  <span className='badge bg-info'>{total}</span> résultats
+                </span>
+                <div className='d-flex align-items-center gap-2'>
+                  <span className='text-dark small fw-semibold'>Par page</span>
+                  <select
+                    className='form-select form-select-sm border border-primary'
+                    style={{ width: 95 }}
+                    value={limit}
+                    onChange={(e) => {
+                      setLimit(Number(e.target.value));
+                      setPage(1);
+                    }}
+                  >
+                    <option value={3}>3</option>
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </Card>
           {error && (
             <div className='text-danger text-center'>
