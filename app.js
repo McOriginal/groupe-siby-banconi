@@ -73,40 +73,40 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Utilisation des routes étudiant
 // Ajoute un préfixe /api à toutes les routes
 
-app.use('/', userRoute);
+// app.use('/', userRoute);
 
 // Utilisation des routes Utilisateur
-app.use('/api/users', userRoute);
+app.use('/boutique_banconi/api/users', userRoute);
 
 // Utilisation des routes Produit
-app.use('/api/produits', produitRoute);
+app.use('/boutique_banconi/api/produits', produitRoute);
 
 // Utilisation des routes Fournisseur
-app.use('/api/fournisseurs', fournisseurRoute);
+app.use('/boutique_banconi/api/fournisseurs', fournisseurRoute);
 
 // Utilisation des routes Commande
-app.use('/api/commandes', commandeRoute);
+app.use('/boutique_banconi/api/commandes', commandeRoute);
 
 // Utilisation des routes Devis
-app.use('/api/devis', deivisRoute);
+app.use('/boutique_banconi/api/devis', deivisRoute);
 
 // Utilisation des routes Paiement
-app.use('/api/paiements', paiementRoute);
+app.use('/boutique_banconi/api/paiements', paiementRoute);
 
 // Utilisation des routes Paiement
-app.use('/api/paiements_historique', paiementHistoriqueRoute);
+app.use('/boutique_banconi/api/paiements_historique', paiementHistoriqueRoute);
 
 // Utilisation des routes Approvisonnement
-app.use('/api/approvisonnements', approvisonementsRoute);
+app.use('/boutique_banconi/api/approvisonnements', approvisonementsRoute);
 
 // Utilisation des routes Livraison Historique
-app.use('/api/livraison_historique', livraisonHistoriqueRoute);
+app.use('/boutique_banconi/api/livraison_historique', livraisonHistoriqueRoute);
 
 // Utilisation des routes Depense
-app.use('/api/depenses', depenseRoute);
+app.use('/boutique_banconi/api/depenses', depenseRoute);
 
 // Utilisation des routes pour la vérification inventaire
-app.use('/api/inventaires', inventaireRoute);
+app.use('/boutique_banconi/api/inventaires', inventaireRoute);
 
 //  Exporter le fichier APP
 module.exports = app;
