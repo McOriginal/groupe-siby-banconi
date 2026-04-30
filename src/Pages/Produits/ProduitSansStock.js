@@ -105,7 +105,7 @@ export default function ProduitSansStock() {
                         </p>
                       </Col>
                       <Col>
-                        <div className='d-flex justify-content-sm-end gap-2'>
+                        <div className='d-flex justify-content-sm-end gap-2 flex-wrap'>
                           {searchTerm !== '' && (
                             <Button
                               color='danger'
@@ -124,6 +124,60 @@ export default function ProduitSansStock() {
                             />
                           </div>
                         </div>
+
+                        {/* Pagination (en haut) */}
+                        {!err && !loading && totalPages > 1 && (
+                          <div className='d-flex justify-content-sm-end align-items-center gap-2 flex-wrap mt-2'>
+                            {/* Même principe que ProduitListe:
+                              - `d-inline-flex gap-2` => petit espace entre les 2 boutons
+                            */}
+                            <div
+                              className='d-inline-flex gap-2'
+                              role='group'
+                              aria-label='Pagination produits stock faible'
+                            >
+                              <Button
+                                color='info'
+                                className='shadow-sm'
+                                disabled={page <= 1}
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                              >
+                                <i className='bx bx-chevron-left'></i>
+                              </Button>
+                              <Button
+                                color='primary'
+                                className='shadow-sm'
+                                disabled={page >= totalPages}
+                                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                              >
+                                <i className='bx bx-chevron-right'></i>
+                              </Button>
+                            </div>
+
+                            <span className='small fw-semibold text-dark'>
+                              Page <span className='badge bg-primary'>{page}</span> /{' '}
+                              <span className='badge bg-primary'>{totalPages}</span> ·{' '}
+                              <span className='badge bg-info'>{totalProduits}</span> résultats
+                            </span>
+
+                            <div className='d-flex align-items-center gap-2'>
+                              <span className='text-dark small fw-semibold'>Par page</span>
+                              <select
+                                className='form-select form-select-sm border border-primary'
+                                style={{ width: 95 }}
+                                value={limit}
+                                onChange={(e) => {
+                                  setLimit(Number(e.target.value));
+                                  setPage(1);
+                                }}
+                              >
+                                <option value={12}>12</option>
+                                <option value={24}>24</option>
+                                <option value={48}>48</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
                       </Col>
                     </Row>
                   </div>
@@ -221,50 +275,6 @@ export default function ProduitSansStock() {
                 </Card>
               ))}
           </div>
-
-          {/* Pagination */}
-          {!err && !loading && totalPages > 1 && (
-            <div className='d-flex justify-content-center align-items-center gap-2 mt-4 flex-wrap'>
-              <Button
-                color='secondary'
-                outline
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Précédent
-              </Button>
-
-              <span className='text-muted'>
-                Page <b>{page}</b> / <b>{totalPages}</b>
-              </span>
-
-              <Button
-                color='secondary'
-                outline
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                Suivant
-              </Button>
-
-              <div className='d-flex align-items-center gap-2'>
-                <span className='text-muted'>Par page</span>
-                <select
-                  className='form-select form-select-sm'
-                  style={{ width: 90 }}
-                  value={limit}
-                  onChange={(e) => {
-                    setLimit(Number(e.target.value));
-                    setPage(1);
-                  }}
-                >
-                  <option value={12}>12</option>
-                  <option value={24}>24</option>
-                  <option value={48}>48</option>
-                </select>
-              </div>
-            </div>
-          )}
         </Container>
       </div>
     </React.Fragment>

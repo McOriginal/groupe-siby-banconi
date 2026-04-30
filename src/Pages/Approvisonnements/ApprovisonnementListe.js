@@ -165,7 +165,7 @@ export default function ApprovisonnementListe() {
                       </p>
                     </Col>
                     <Col className='col-sm'>
-                      <div className='d-flex gap-3 justify-content-sm-end'>
+                      <div className='d-flex gap-3 justify-content-sm-end flex-wrap'>
                         {searchTerm !== '' && (
                           <Button
                             color='danger'
@@ -184,6 +184,62 @@ export default function ApprovisonnementListe() {
                           />
                         </div>
                       </div>
+
+                      {/* Pagination (en haut) */}
+                      {!error && !isLoading && totalPages > 1 && (
+                        <div className='d-flex justify-content-sm-end align-items-center gap-2 flex-wrap mt-2'>
+                          {/* Même principe:
+                            - `d-inline-flex gap-2` => marge entre Précédent et Suivant
+                          */}
+                          <div
+                            className='d-inline-flex gap-2'
+                            role='group'
+                            aria-label='Pagination approvisionnements'
+                          >
+                            <Button
+                              color='info'
+                              className='shadow-sm'
+                              disabled={page <= 1}
+                              onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            >
+                              <i className='bx bx-chevron-left'></i>
+                            </Button>
+                            <Button
+                              color='primary'
+                              className='shadow-sm'
+                              disabled={page >= totalPages}
+                              onClick={() =>
+                                setPage((p) => Math.min(totalPages, p + 1))
+                              }
+                            >
+                              <i className='bx bx-chevron-right'></i>
+                            </Button>
+                          </div>
+
+                          <span className='small fw-semibold text-dark'>
+                            Page <span className='badge bg-primary'>{page}</span> /{' '}
+                            <span className='badge bg-primary'>{totalPages}</span> ·{' '}
+                            <span className='badge bg-info'>{totalApprovisonnements}</span> résultats
+                          </span>
+
+                          <div className='d-flex align-items-center gap-2'>
+                            <span className='text-dark small fw-semibold'>Par page</span>
+                            <select
+                              className='form-select form-select-sm border border-primary'
+                              style={{ width: 95 }}
+                              value={limit}
+                              onChange={(e) => {
+                                setLimit(Number(e.target.value));
+                                setPage(1);
+                              }}
+                            >
+                              <option value={10}>10</option>
+                              <option value={20}>20</option>
+                              <option value={50}>50</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
                     </Col>
                   </Row>
                   <div id='approvisonnementList'>
@@ -302,50 +358,6 @@ export default function ApprovisonnementListe() {
               </Card>
             </Col>
           </Row>
-
-          {/* Pagination */}
-          {!error && !isLoading && totalPages > 1 && (
-            <div className='d-flex justify-content-center align-items-center gap-2 mt-4 flex-wrap'>
-              <Button
-                color='secondary'
-                outline
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Précédent
-              </Button>
-
-              <span className='text-muted'>
-                Page <b>{page}</b> / <b>{totalPages}</b>
-              </span>
-
-              <Button
-                color='secondary'
-                outline
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                Suivant
-              </Button>
-
-              <div className='d-flex align-items-center gap-2'>
-                <span className='text-muted'>Par page</span>
-                <select
-                  className='form-select form-select-sm'
-                  style={{ width: 90 }}
-                  value={limit}
-                  onChange={(e) => {
-                    setLimit(Number(e.target.value));
-                    setPage(1);
-                  }}
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
-            </div>
-          )}
         </Container>
       </div>
     </React.Fragment>
