@@ -1,116 +1,59 @@
-import React, { useRef, useState } from 'react';
-import {
-  Button,
-  Card,
-  CardBody,
-  CardFooter,
-  CardText,
-  Col,
-  Container,
-  Row,
-} from 'reactstrap';
+import React, { useState } from 'react';
+import { Button, Card, CardBody, Container } from 'reactstrap';
 import Breadcrumbs from '../../components/Common/Breadcrumb';
-
 import LoadingSpiner from '../components/LoadingSpiner';
 import {
   capitalizeWords,
   formatPhoneNumber,
   formatPrice,
 } from '../components/capitalizeFunction';
-import { companyName } from '../CompanyInfo/CompanyInfo';
-import { useAllCommandes } from '../../Api/queriesCommande';
+// NOTE: suppression totale de `selectedBoutique` (demande utilisateur)
+import { useAllPaiements } from '../../Api/queriesPaiement';
+import { useNavigate } from 'react-router-dom';
 
-import html2pdf from 'html2pdf.js';
-import { useReactToPrint } from 'react-to-print';
-import FactureHeader from './Details/FactureHeader';
-import LogoFiligran from './Details/LogoFiligran';
-import { connectedUserBoutique } from '../Authentication/userInfos';
-
-// Export En PDF
-// ------------------------------------------
-// ------------------------------------------
-const exportPDFFacture = () => {
-  const element = document.getElementById('facture');
-  const opt = {
-    filename: 'facture.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-  };
-
-  html2pdf()
-    .from(element)
-    .set(opt)
-    .save()
-    .catch((err) => console.error('Error generating PDF:', err));
-};
-
-// ----------------------------------------
-// ----------------------------------------
-// ----------------------------------------
 export default function FactureListe() {
-  const { data: commandes, isLoading, error } = useAllCommandes();
-  const contentRef = useRef();
-  const reactToPrintFn = useReactToPrint({ contentRef });
+  /**
+   * IMPORTANT (demande optimisation):
+   * - En historique de facture, on ne charge QUE les champs résumé
+   *   (client, date, totalAmount, id)
+   * - Pas de `items.produit` ici.
+   * - Le détail complet est chargé uniquement au clic "Détails" (page facture).
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(25);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedBoutique, setSelectedBoutique] = useState(null);
-  // Fonction de Recherche dans la barre de recherche
-  const filterCommandesFacture = commandes?.factures
-    ?.filter((fac) => {
-      const search = searchTerm.toLowerCase();
-      return (
-        fac?.commande?.fullName.toLowerCase().includes(search) ||
-        fac?.commande?.phoneNumber.toString().includes(search) ||
-        fac?.commande?.adresse.toLowerCase().includes(search) ||
-        fac?.totalAmount?.toString().includes(search) ||
-        fac?.totalPaye?.toString().includes(search) ||
-        new Date(fac?.commande?.commandeDate || fac?.paiementDate)
-          .toLocaleDateString('fr-FR')
-          .includes(search)
-      );
-    })
-    ?.filter((item) => {
-      if (selectedBoutique !== null) {
-        return Number(item.user?.boutique) === selectedBoutique;
-      }
-      return true;
-    });
+  const navigate = useNavigate();
+
+  // Debounce (évite spam réseau)
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
+  const { data, isLoading, error } = useAllPaiements({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
+  });
+
+  const factures = data?.paiements || [];
+
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+
   return (
     <React.Fragment>
       <div className='page-content'>
         <Container fluid>
-          <Breadcrumbs title='Commande' breadcrumbItem='Liste de Factures' />
-          <Card className='p-4'>
-            <div className=' d-flex align-items-center gap-3 mb-4 justify-content-between flex-wrap'>
-              {/* Selectonner la boutique */}
-              <div className='mb-3'>
-                <h6>Filtrer par Boutique </h6>
-                <select
-                  value={selectedBoutique ?? ''}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSelectedBoutique(v === '' ? null : Number(v));
-                  }}
-                  className='form-select border border-dark rounded '
-                  style={{ cursor: 'pointer' }}
-                >
-                  <option value=''>Toutes</option>
-                  <option value={connectedUserBoutique ?? 0}>
-                    {connectedUserBoutique ?? 0} - Ma Boutique
-                  </option>
-                  {connectedUserBoutique === 1 ? (
-                    <option value='2'>Boutique - 2</option>
-                  ) : connectedUserBoutique === 2 ? (
-                    <option value='1'>Boutique - 1</option>
-                  ) : (
-                    <optgroup label='autres'>
-                      <option value='1'>Boutique - 1</option>
-                      <option value='2'>Boutique - 2</option>
-                    </optgroup>
-                  )}
-                </select>
-              </div>
+          <Breadcrumbs title='Commande' breadcrumbItem='Historique de Factures' />
 
+          <Card className='p-4'>
+            <div className='d-flex align-items-center gap-3 mb-4 justify-content-between flex-wrap'>
               <div className='search-box me-2 d-flex align-items-center gap-2'>
                 {searchTerm !== '' && (
                   <Button color='danger' onClick={() => setSearchTerm('')}>
@@ -126,178 +69,122 @@ export default function FactureListe() {
                 />
               </div>
             </div>
+
+            {/* Pagination (en haut) */}
+            {!error && !isLoading && totalPages > 1 && (
+              <div className='d-flex align-items-center gap-2 flex-wrap'>
+                <div
+                  className='d-inline-flex gap-2'
+                  role='group'
+                  aria-label='Pagination factures'
+                >
+                  <Button
+                    color='info'
+                    className='shadow-sm'
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    <i className='bx bx-chevron-left'></i>
+                  </Button>
+                  <Button
+                    color='primary'
+                    className='shadow-sm'
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  >
+                    <i className='bx bx-chevron-right'></i>
+                  </Button>
+                </div>
+                <span className='small fw-semibold text-dark'>
+                  Page <span className='badge bg-primary'>{page}</span> /{' '}
+                  <span className='badge bg-primary'>{totalPages}</span> ·{' '}
+                  <span className='badge bg-info'>{total}</span> factures
+                </span>
+                <div className='d-flex align-items-center gap-2'>
+                  <span className='text-dark small fw-semibold'>Par page</span>
+                  <select
+                    className='form-select form-select-sm border border-primary'
+                    style={{ width: 95 }}
+                    value={limit}
+                    onChange={(e) => {
+                      setLimit(Number(e.target.value));
+                      setPage(1);
+                    }}
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </Card>
+
           {error && (
             <div className='text-danger text-center'>
               Erreur de chargement des données
             </div>
           )}
           {isLoading && <LoadingSpiner />}
-          {filterCommandesFacture?.length === 0 && !isLoading && (
+
+          {!error && !isLoading && factures?.length === 0 && (
             <div className='text-center text-secondary mt-4'>
               Aucune facture pour le moment.
             </div>
           )}
-          {!error &&
-            !isLoading &&
-            filterCommandesFacture?.length > 0 &&
-            filterCommandesFacture?.map((comm, index) => (
-              <Row
-                key={comm._id}
-                className='d-flex flex-column justify-content-center'
-              >
-                {/* // Bouton */}
-                <Col className='col-sm-auto'>
-                  <div className='d-flex gap-4 mb-3  justify-content-center align-items-center'>
-                    <Button
-                      color='info'
-                      className='add-btn'
-                      id='create-btn'
-                      onClick={reactToPrintFn}
-                    >
-                      <i className='fas fa-print align-center me-1'></i>{' '}
-                      Imprimer
-                    </Button>
 
-                    <Button color='danger' onClick={exportPDFFacture}>
-                      <i className='fas fa-paper-plane  me-1 '></i>
-                      Télécharger en PDF
-                    </Button>
-                  </div>
-                </Col>
-                {/* // ------------------------------------------- */}
-
-                <div ref={contentRef}>
-                  <Card
-                    id='facture'
-                    className='d-flex justify-content-center border border-info'
-                    style={{
-                      boxShadow: '0px 0px 10px rgba(100, 169, 238, 0.5)',
-                      borderRadius: '15px',
-                      width: '583px',
-                      margin: '20px auto',
-                      position: 'relative',
-                    }}
-                  >
-                    <CardBody>
-                      <FactureHeader />
-                      <div className='border-bottom border-info my-2 px-2 '>
-                        <div className='d-flex justify-content-between align-item-center mt-2'>
-                          <CardText>
-                            <strong>Facture N°: </strong>{' '}
-                            <span className='text-danger'>{index + 1} </span>
-                          </CardText>
-                          <CardText>
-                            <strong> Date:</strong>{' '}
-                            {new Date(comm.createdAt).toLocaleDateString()}
-                          </CardText>
-                        </div>
-
-                        {/* Infos Client */}
-                        <div className='d-flex justify-content-between align-item-center  '>
-                          <CardText>
-                            <strong>Client: </strong>
-                            {capitalizeWords(comm?.commande?.fullName)}{' '}
-                          </CardText>
-                          <CardText className='me-2'>
-                            <strong>Tél: </strong>
-                            {formatPhoneNumber(comm?.commande?.phoneNumber) ||
-                              '-----'}
-                          </CardText>
-                        </div>
-                        <CardText className='text-start'>
-                          <strong>Livraison: </strong>
-                          {capitalizeWords(comm?.commande?.adresse)}
-                        </CardText>
-                      </div>
-                      {/* Bordure Séparateur */}
-
-                      {/* Logo Filigran */}
-                      <LogoFiligran />
-
-                      <div className='my-2 p-2'>
-                        <table className='table align-middle table-nowrap table-hover table-bordered border-2 border-info text-center'>
-                          <thead>
-                            <tr>
-                              <th>Qté</th>
-                              <th>Désignations</th>
-                              <th>P.U</th>
-                              <th>Montant</th>
-                            </tr>
-                          </thead>
-
-                          <tbody>
-                            {comm?.commande?.items.map((article) => (
-                              <tr key={article._id}>
-                                <td>{article?.quantity} </td>
-                                <td className='text-wrap'>
-                                  {capitalizeWords(article?.produit?.name)}{' '}
-                                </td>
-                                <td>
-                                  {formatPrice(article?.customerPrice)} F{' '}
-                                </td>
-                                <td>
-                                  {formatPrice(
-                                    article?.customerPrice * article?.quantity
-                                  )}
-                                  {' F'}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-
-                      <CardFooter>
-                        <div className='p-1'>
-                          <div
-                            className='d-flex
-                  justify-content-between align-item-center'
-                          >
-                            <CardText className={'text-center'}>
-                              Total:{' '}
-                              <strong style={{ fontSize: '14px' }}>
-                                {' '}
-                                {formatPrice(comm?.totalAmount)} F{' '}
-                              </strong>{' '}
-                            </CardText>
-                            <div>
-                              <CardText className='text-center '>
-                                Payé:
-                                <strong style={{ fontSize: '14px' }}>
-                                  {' '}
-                                  {formatPrice(comm?.totalPaye)} F{' '}
-                                </strong>{' '}
-                              </CardText>
-                              <CardText className='text-center '>
-                                Reliquat:
-                                <strong style={{ fontSize: '14px' }}>
-                                  {' '}
-                                  {formatPrice(
-                                    comm?.totalAmount - comm?.totalPaye
-                                  )}{' '}
-                                  F{' '}
-                                </strong>
-                              </CardText>
-                            </div>
-                          </div>
-                        </div>
-                        <p className=' mt-2 text-info'>
-                          Arrêté la présente facture à la somme de:{' '}
-                          <strong style={{ fontSize: '14px' }}>
-                            {formatPrice(comm?.totalAmount)} F
-                          </strong>
-                        </p>
-                        <p className='font-size-10 text-center'>
-                          Merci pour votre confiance et votre achat chez{' '}
-                          {companyName}. Nous espérons vous revoir bientôt!
-                        </p>
-                      </CardFooter>
-                    </CardBody>
-                  </Card>
+          {!error && !isLoading && factures?.length > 0 && (
+            <Card className='mt-3'>
+              <CardBody>
+                <div className='table-responsive'>
+                  <table className='table align-middle table-nowrap table-hover'>
+                    <thead className='table-light'>
+                      <tr className='text-center'>
+                        <th>Date</th>
+                        <th>Client</th>
+                        <th>Téléphone</th>
+                        <th>Total</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className='text-center'>
+                      {factures.map((fac) => (
+                        <tr key={fac?._id}>
+                          <td>
+                            {new Date(
+                              fac?.commande?.commandeDate || fac?.paiementDate
+                            ).toLocaleDateString('fr-FR')}
+                          </td>
+                          <td>{capitalizeWords(fac?.commande?.fullName)}</td>
+                          <td>
+                            {formatPhoneNumber(fac?.commande?.phoneNumber) ||
+                              '---'}
+                          </td>
+                          <td className='text-info'>
+                            {formatPrice(fac?.totalAmount)} F
+                          </td>
+                          <td>
+                            <Button
+                              color='info'
+                              size='sm'
+                              className='shadow-sm'
+                              onClick={() =>
+                                // Détail complet (articles) chargé sur la page facture
+                                navigate(`/facture/${fac?.commande?._id}`)
+                              }
+                            >
+                              <i className='bx bx-show align-center me-1'></i>
+                              Détails
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              </Row>
-            ))}
+              </CardBody>
+            </Card>
+          )}
         </Container>
       </div>
     </React.Fragment>
