@@ -145,6 +145,50 @@ exports.updateCommande = async (req, res) => {
 // Trouver toutes les commandes
 exports.getAllCommandes = async (req, res) => {
   try {
+    /**
+     * MODE "SUMMARY" (Dashboard)
+     *
+     * Objectif:
+     * - Le dashboard a uniquement besoin des TOTAUX (compteurs)
+     * - Éviter de charger en RAM:
+     *   - la liste complète des commandes
+     *   - la liste complète des paiements/factures
+     *   - les `populate()` (items.produit, user, ...)
+     *
+     * Contrainte demandée:
+     * - On ne change PAS l'API existante
+     *   => même endpoint: `/commandes/getAllCommandes`
+     * - On ajoute un comportement optionnel via query param:
+     *   => `/commandes/getAllCommandes?summary=1`
+     *
+     * Compatibilité:
+     * - Si `summary` n'est pas demandé, on conserve l'ancien comportement (liste + factures).
+     */
+    const summaryParam = req.query?.summary;
+    const isSummary =
+      summaryParam === '1' || summaryParam === 'true' || summaryParam === true;
+
+    if (isSummary) {
+      // NB: Dans votre schéma `CommandeModel`, le champ est `statut` (pas `status`).
+      // On compte directement en base (super léger) au lieu de tout récupérer puis filtrer en JS.
+      const [totalCommandes, totalEnAttente, totalEnCours, totalLivree] =
+        await Promise.all([
+          Commande.countDocuments({}),
+          Commande.countDocuments({ statut: 'en attente' }),
+          Commande.countDocuments({ statut: 'en cours' }),
+          Commande.countDocuments({ statut: 'livré' }),
+        ]);
+
+      return res.status(200).json({
+        counts: {
+          totalCommandes,
+          totalEnAttente,
+          totalEnCours,
+          totalLivree,
+        },
+      });
+    }
+
     const commandesListe = await Commande.find()
       // Trie par date de création, du plus récent au plus ancien
       .sort({ createdAt: -1 })
