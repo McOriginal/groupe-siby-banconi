@@ -16,32 +16,32 @@ const queryClient = new QueryClient();
 
 /**
  * IMPORTANT:
- * Tu veux que l'app soit TOUJOURS servie sous /boutique_kabala (dev + prod),
- * comme ta config Nginx qui redirige / -> /boutique_kabala.
+ * Tu veux que l'app soit TOUJOURS servie sous /boutique_banconi (dev + prod),
+ * comme ta config Nginx qui redirige / -> /boutique_banconi.
  *
  * Donc:
- * - basename fixe = '/boutique_kabala'
- * - si on arrive sur '/', on redirige automatiquement vers '/boutique_kabala'
+ * - basename fixe = '/boutique_banconi'
+ * - si on arrive sur '/', on redirige automatiquement vers '/boutique_banconi'
  */
-const basename = '/boutique_banconi';
+// const basename = '/boutique_banconi';
 
-// Redirection automatique (dev + prod) pour éviter “page blanche” si on ouvre /
-if (
-  typeof window !== 'undefined' &&
-  !window.location.pathname.startsWith(basename)
-) {
-  const nextPath = `${basename}${window.location.pathname}`.replace(
-    /\/+/g,
-    '/'
-  );
-  window.history.replaceState(null, '', `${nextPath}${window.location.search}${window.location.hash}`);
-}
+// // Redirection automatique (dev + prod) pour éviter “page blanche” si on ouvre /
+// if (
+//   typeof window !== 'undefined' &&
+//   !window.location.pathname.startsWith(basename)
+// ) {
+//   const nextPath = `${basename}${window.location.pathname}`.replace(
+//     /\/+/g,
+//     '/'
+//   );
+//   window.history.replaceState(null, '', `${nextPath}${window.location.search}${window.location.hash}`);
+// }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <Provider store={configureStore({})}>
     <React.Fragment>
-      <BrowserRouter basename={basename}>
+      <BrowserRouter basename={"/boutique_banconi"}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <App />
