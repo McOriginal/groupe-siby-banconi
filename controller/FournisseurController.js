@@ -2,6 +2,24 @@ const mongoose = require('mongoose');
 const Fournisseur = require('../models/FournisseurModel');
 const textValidation = require('./regexValidation');
 
+/**
+ * Helpers - pagination / recherche (mode optionnel `paged=1`)
+ *
+ * Contrainte:
+ * - On ne change PAS l'URL `/fournisseurs/getAllFournisseurs`
+ * - Sans `paged=1`, comportement historique inchangé (tableau complet + populate)
+ */
+function toInt(value, fallback) {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) ? n : fallback;
+}
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
+}
+function escapeRegex(input) {
+  return String(input).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Créer un Fournisseur
 exports.createFournisseur = async (req, res) => {
   try {
@@ -170,6 +188,51 @@ exports.updateFournisseur = async (req, res) => {
 // Obtenir tous les Fournisseurs
 exports.getAllFournisseurs = async (req, res) => {
   try {
+    /**
+     * MODE PAGINÉ + RECHERCHE (Fournisseurs)
+     *
+     * Appel:
+     * - `/fournisseurs/getAllFournisseurs?paged=1&page=1&limit=25&q=...`
+     *
+     * Réponse:
+     * - `{ items, page, limit, total, totalPages }`
+     *
+     * IMPORTANT:
+     * - Sans `paged=1`, on renvoie le tableau complet (compat).
+     */
+    const paged = req.query?.paged === '1' || req.query?.paged === 'true';
+    if (paged) {
+      const page = clamp(toInt(req.query?.page, 1), 1, 100_000);
+      const limit = clamp(toInt(req.query?.limit, 25), 1, 200);
+      const qRaw = (req.query?.q ?? '').toString().trim();
+
+      const match = {};
+      if (qRaw) {
+        const regex = new RegExp(escapeRegex(qRaw), 'i');
+        const asNumber = Number(qRaw);
+        match.$or = [
+          { firstName: regex },
+          { lastName: regex },
+          { emailAdresse: regex },
+          { adresse: regex },
+          ...(Number.isFinite(asNumber) ? [{ phoneNumber: asNumber }] : []),
+        ].filter(Boolean);
+      }
+
+      const total = await Fournisseur.countDocuments(match);
+      const totalPages = total === 0 ? 1 : Math.ceil(total / limit);
+
+      const items = await Fournisseur.find(match)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .select('firstName lastName emailAdresse adresse phoneNumber user createdAt')
+        .populate({ path: 'user', select: 'boutique' })
+        .lean();
+
+      return res.status(200).json({ items, page, limit, total, totalPages });
+    }
+
     const fournisseurs = await Fournisseur.find()
       .populate('user')
       .sort({ createdAt: -1 });
