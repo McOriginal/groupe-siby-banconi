@@ -4,15 +4,29 @@ import LoadingSpiner from '../components/LoadingSpiner';
 import comImg from './../../assets/images/passer-la-commande.png';
 import rechargeImg from './../../assets/images/recharge.png';
 import carImg from './../../assets/images/car.png';
-import { useAllCommandes } from '../../Api/queriesCommande';
+import { useDashboardCommandeCounts } from '../../Api/queriesDashboard';
 import { useNavigate } from 'react-router-dom';
 
 const TotalCommande = () => {
+  /**
+   * MODIF (Dashboard perf/RAM)
+   * -------------------------
+   * Avant: `useAllCommandes()` mettait en cache `{ commandesListe, factures }` (potentiellement très lourd)
+   * et on utilisait seulement `.length` / `.filter().length`.
+   *
+   * Maintenant: `useDashboardCommandeCounts()` calcule et retourne UNIQUEMENT:
+   * - total
+   * - enAttente
+   * - enCours
+   *
+   * Résultat: cache React Query beaucoup plus petit, re-renders plus rapides.
+   * Contrainte respectée: aucune modification backend.
+   */
   const {
-    data: commandeData,
+    data: commandeCounts,
     isLoading: loadingCommande,
     error: commandeError,
-  } = useAllCommandes();
+  } = useDashboardCommandeCounts();
   const navigate = useNavigate();
 
   const handleNavigate = () => {
@@ -37,7 +51,8 @@ const TotalCommande = () => {
           <CardBody>
             <CardTitle className='text-center'>
               <span className='text-info fs-5'>
-                {commandeData?.commandesListe?.length}
+                {/* MODIF: total direct (pas besoin de garder commandesListe en mémoire) */}
+                {commandeCounts?.total ?? 0}
               </span>
               <p>Commandes Enregistrées</p>
             </CardTitle>
@@ -49,10 +64,10 @@ const TotalCommande = () => {
 };
 const TotalCommandeNotDelivred = () => {
   const {
-    data: commandeData,
+    data: commandeCounts,
     isLoading: loadingCommande,
     error: commandeError,
-  } = useAllCommandes();
+  } = useDashboardCommandeCounts();
   const navigate = useNavigate();
 
   const handleNavigate = () => {
@@ -78,11 +93,8 @@ const TotalCommandeNotDelivred = () => {
           <CardBody>
             <CardTitle className='text-center'>
               <span className='text-danger fs-5'>
-                {
-                  commandeData?.commandesListe?.filter(
-                    (cmd) => cmd.status === 'en attente'
-                  ).length
-                }
+                {/* MODIF: plus de filter() sur une grosse liste, on utilise le compteur préparé */}
+                {commandeCounts?.enAttente ?? 0}
               </span>
               <p>Commandes Non Livrés</p>
             </CardTitle>
@@ -94,10 +106,10 @@ const TotalCommandeNotDelivred = () => {
 };
 const TotalCommandeToDelivre = () => {
   const {
-    data: commandeData,
+    data: commandeCounts,
     isLoading: loadingCommande,
     error: commandeError,
-  } = useAllCommandes();
+  } = useDashboardCommandeCounts();
   const navigate = useNavigate();
 
   const handleNavigate = () => {
@@ -123,11 +135,8 @@ const TotalCommandeToDelivre = () => {
           <CardBody>
             <CardTitle className='text-center'>
               <span className='text-warning fs-5'>
-                {
-                  commandeData?.commandesListe?.filter(
-                    (cmd) => cmd?.status === 'en cours'
-                  )?.length
-                }
+                {/* MODIF: compteur direct "en cours" */}
+                {commandeCounts?.enCours ?? 0}
               </span>
               <p>Commandes En Cours</p>
             </CardTitle>
