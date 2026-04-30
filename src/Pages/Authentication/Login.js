@@ -95,7 +95,7 @@ const Login = () => {
               // Recharger la page pour mettre à jour l'état de l'application
               // Cela peut être utile si vous avez des données qui doivent être rafraîchies
               // mais dans ce cas, on utilise navigate pour aller à la bonne page
-              window.location.reload();
+              // window.location.reload();
 
               // -----------------------
             } catch (err) {
