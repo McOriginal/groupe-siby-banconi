@@ -22,13 +22,28 @@ export const useUpdateApprovisonnement = () => {
 };
 
 // Lire toutes les approvisonnements
-export const useAllApprovisonnement = () =>
+export const useAllApprovisonnement = (params) =>
   useQuery({
-    queryKey: ['approvisonnements'],
+    /**
+     * APPROVISIONNEMENTS - cache + pagination + recherche serveur
+     *
+     * Contrainte:
+     * - On garde le même hook `useAllApprovisonnement`
+     * - On garde la même URL backend: `/approvisonnements/getAllApprovisonements`
+     *
+     * Usage:
+     * - useAllApprovisonnement({ paged: 1, page: 1, limit: 20, q: '...' })
+     */
+    queryKey: params ? ['approvisonnements', params] : ['approvisonnements', 'all'],
     queryFn: () =>
       api
-        .get('/approvisonnements/getAllApprovisonements')
+        .get('/approvisonnements/getAllApprovisonements', {
+          params: params || undefined,
+        })
         .then((res) => res.data),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 10,
+    placeholderData: (prev) => prev,
   });
 
 // Obtenir une Approvisonnement

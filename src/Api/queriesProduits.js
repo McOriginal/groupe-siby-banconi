@@ -21,18 +21,76 @@ export const useUpdateProduit = () => {
 };
 
 // Lire toutes les produits
-export const useAllProduit = () =>
+export const useAllProduit = (params) =>
   useQuery({
-    queryKey: ['produits'],
-    queryFn: () => api.get('/produits/getAllProduits').then((res) => res.data),
+    /**
+     * CACHE + PAGINATION "PRO"
+     *
+     * Contrainte:
+     * - On garde le même hook `useAllProduit` (pas de renommage)
+     * - On ne change pas l'URL backend: `/produits/getAllProduits`
+     *
+     * Amélioration:
+     * - Si `params` contient `paged: 1`, on récupère une réponse paginée du backend
+     * - Sinon, comportement historique: tableau complet (comme avant)
+     *
+     * Exemple (page Produits):
+     * - useAllProduit({ paged: 1, page: 1, limit: 24, q: 'vis', stockGt: 0 })
+     */
+    /**
+     * NOTE cache:
+     * - On évite `params || {}` dans le queryKey car `{}` est recréé à chaque render
+     *   => invalidation du cache / refetch infini.
+     */
+    queryKey: params ? ['produits', params] : ['produits', 'all'],
+    queryFn: () =>
+      api
+        .get('/produits/getAllProduits', {
+          // IMPORTANT: params optionnel => ne casse pas les usages existants
+          params: params || undefined,
+        })
+        .then((res) => res.data),
+    /**
+     * Réglages cache:
+     * - staleTime: évite de refetch inutilement quand on navigue / revient sur la page
+     * - keepPreviousData: garde la page précédente à l'écran pendant le chargement
+     *   => UX fluide + pas de "flash" vide
+     */
+    staleTime: 1000 * 30, // 30s
+    gcTime: 1000 * 60 * 10, // 10 min
+    /**
+     * React Query v5:
+     * - `keepPreviousData` n'est plus l'option recommandée
+     * - `placeholderData(prev) => prev` garde l'ancienne page pendant le chargement
+     */
+    placeholderData: (prev) => prev,
   });
 
 // Produit dont le Stock est terminé
-export const useAllProduitWithStockInferieure = () =>
+export const useAllProduitWithStockInferieure = (params) =>
   useQuery({
-    queryKey: ['produits'],
+    /**
+     * STOCK FAIBLE - cache + pagination + recherche serveur
+     *
+     * Contrainte:
+     * - On garde le même hook `useAllProduitWithStockInferieure`
+     * - On garde la même URL backend: `/produits/getAllProduitWithStockFinish`
+     *
+     * Usage:
+     * - useAllProduitWithStockInferieure({ paged: 1, page: 1, limit: 24, q: '...' })
+     */
+    queryKey: params
+      ? ['produits', 'stock-faible', params]
+      : ['produits', 'stock-faible', 'all'],
     queryFn: () =>
-      api.get('/produits/getAllProduitWithStockFinish').then((res) => res.data),
+      api
+        .get('/produits/getAllProduitWithStockFinish', {
+          params: params || undefined,
+        })
+        .then((res) => res.data),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 10,
+    placeholderData: (prev) => prev,
   });
 
 // Obtenir un Produit

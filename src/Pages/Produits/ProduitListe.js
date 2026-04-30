@@ -31,7 +31,22 @@ import {
 
 export default function ProduitListe() {
   const [form_modal, setForm_modal] = useState(false);
-  const { data: produits, isLoading, error } = useAllProduit();
+  /**
+   * PAGINATION + RECHERCHE (mode pro)
+   *
+   * Avant:
+   * - On chargeait TOUTES les données (`getAllProduits`) puis on filtrait en JS.
+   * - Problèmes:
+   *   - RAM navigateur + lenteur
+   *   - recherche non scalable (plus il y a de produits, plus c'est lourd)
+   *
+   * Maintenant:
+   * - On utilise le mode backend `paged=1` (même endpoint, juste des query params).
+   * - La recherche est côté serveur => elle couvre "toutes les données".
+   * - On garde un cache React Query + `keepPreviousData` pour un UX fluide.
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(24);
   const { mutate: deleteProduit, isLoading: isDeletingProduct } =
     useDeleteProduit();
   const [produitToUpdate, setProduitToUpdate] = useState(null);
@@ -40,17 +55,42 @@ export default function ProduitListe() {
   // Recherche State
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fontion pour Rechercher
-  const filterSearchProduits = produits?.filter((prod) => {
-    const search = searchTerm.toLowerCase();
+  /**
+   * Débounce "pro" côté front:
+   * - évite de déclencher un appel réseau à chaque frappe
+   * - donne une sensation plus fluide
+   *
+   * NOTE:
+   * - On n'introduit pas une nouvelle dépendance; on fait un debounce simple.
+   */
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      // Quand la recherche change, on revient à la page 1 pour éviter une page vide.
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-    return (
-      prod?.stock > 0 &&
-      (prod?.name?.toLowerCase().includes(search) ||
-        prod?.stock?.toString().includes(search) ||
-        prod?.price?.toString().includes(search))
-    );
+  const {
+    data: produits,
+    isLoading,
+    error,
+  } = useAllProduit({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
+    // Conserve votre logique "page Produits = seulement en stock"
+    // (anciennement: `prod.stock > 0` côté front)
+    stockGt: 0,
   });
+
+  // Données paginées: `items` contient seulement la page courante.
+  const produitsItems = produits?.items || [];
+  const totalProduits = produits?.total ?? 0;
+  const totalPages = produits?.totalPages ?? 1;
 
   // Utilisation de useNavigate pour la navigation
   const navigate = useNavigate();
@@ -63,9 +103,13 @@ export default function ProduitListe() {
     setForm_modal(!form_modal);
   }
 
-  const sumTotalAchatPrice = filterSearchProduits?.reduce((value, item) => {
-    return (value += item?.achatPrice * item?.stock);
-  }, 0);
+  /**
+   * Valeur de boutique (global):
+   * - Avant: calcul côté front sur TOUTE la liste (très coûteux).
+   * - Maintenant: le backend calcule `totals.sumTotalAchatPrice` via aggregation
+   *   (sur toutes les données filtrées, pas uniquement la page).
+   */
+  const sumTotalAchatPrice = produits?.totals?.sumTotalAchatPrice ?? 0;
 
   return (
     <React.Fragment>
@@ -142,7 +186,7 @@ export default function ProduitListe() {
                         Produit Enregistrées:{' '}
                         <span className='text-warning text-bold'>
                           {' '}
-                          {filterSearchProduits?.length}{' '}
+                          {totalProduits}{' '}
                         </span>
                       </p>
                       {connectedUserEmail === 'tandiadiaby186@gmail.com' && (
@@ -168,13 +212,13 @@ export default function ProduitListe() {
                 Erreur lors de chargement des données
               </div>
             )}
-            {!error && !isLoading && filterSearchProduits?.length === 0 && (
+            {!error && !isLoading && produitsItems?.length === 0 && (
               <div className='text-center'>Aucun Produit trouvés</div>
             )}
             {!error &&
               !isLoading &&
-              filterSearchProduits?.length > 0 &&
-              filterSearchProduits?.map((prod, index) => (
+              produitsItems?.length > 0 &&
+              produitsItems?.map((prod, index) => (
                 <Card
                   key={index}
                   style={{
@@ -297,6 +341,54 @@ export default function ProduitListe() {
                 </Card>
               ))}
           </div>
+
+          {/* ---------------- PAGINATION (UI simple & pro) ----------------
+            - keepPreviousData (React Query) + boutons => navigation fluide
+            - On ne surcharge pas l'écran: juste Prev/Next + page info
+          */}
+          {!error && !isLoading && totalPages > 1 && (
+            <div className='d-flex justify-content-center align-items-center gap-2 mt-4 flex-wrap'>
+              <Button
+                color='secondary'
+                outline
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Précédent
+              </Button>
+
+              <span className='text-muted'>
+                Page <b>{page}</b> / <b>{totalPages}</b>
+              </span>
+
+              <Button
+                color='secondary'
+                outline
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Suivant
+              </Button>
+
+              {/* Limite par page (optionnel mais utile quand la liste grandit) */}
+              <div className='d-flex align-items-center gap-2'>
+                <span className='text-muted'>Par page</span>
+                <select
+                  className='form-select form-select-sm'
+                  style={{ width: 90 }}
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                >
+                  <option value={12}>12</option>
+                  <option value={24}>24</option>
+                  <option value={48}>48</option>
+                </select>
+              </div>
+            </div>
+          )}
         </Container>
       </div>
     </React.Fragment>

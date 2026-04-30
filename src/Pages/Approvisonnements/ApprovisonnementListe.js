@@ -16,12 +16,20 @@ import {
 import Swal from 'sweetalert2';
 
 export default function ApprovisonnementListe() {
-  // Recuperer la Liste des APPROVISONNEMENT
-  const {
-    data: approvisonnementData,
-    isLoading,
-    error,
-  } = useAllApprovisonnement();
+  /**
+   * APPROVISIONNEMENTS - Pagination + recherche serveur (pro)
+   *
+   * Avant:
+   * - Chargement complet de tous les approvisionnements + filtre côté navigateur
+   * - Problèmes: RAM / lenteur / recherche limitée au dataset déjà chargé
+   *
+   * Maintenant:
+   * - On active le mode backend `paged=1` via query params (même endpoint)
+   * - La recherche est faite côté serveur => couvre toutes les données
+   * - React Query garde un cache + `keepPreviousData` => pagination fluide
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
 
   // Annuler une APPROVISONNEMENT
   const { mutate: cancelApprovisonnement } = useCancelApprovisonnement();
@@ -38,25 +46,31 @@ export default function ApprovisonnementListe() {
   // Search State
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fonction pour la recherche
-  const filterSearchApprovisonnement = approvisonnementData?.filter((appro) => {
-    const search = searchTerm.toLowerCase();
+  // Debounce (évite spam réseau) + reset page quand la recherche change
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-    return (
-      `${appro?.fournisseur?.firstName} ${appro?.fournisseur?.lasttName}`
-        .toLowerCase()
-        .includes(search) ||
-      (appro?.fournisseur?.phoneNumber || '').toString().includes(search) ||
-      appro?.fournisseur?.adresse.toLowerCase().includes(search) ||
-      appro?.produit?.name.toLowerCase().includes(search) ||
-      appro?.quantity.toString().includes(search) ||
-      appro?.price.toString().includes(search) ||
-      new Date(appro?.delivryDate)
-        .toLocaleDateString('fr-Fr')
-        .toString()
-        .includes(search)
-    );
+  // Récupérer la liste paginée (serveur)
+  const {
+    data: approvisonnementData,
+    isLoading,
+    error,
+  } = useAllApprovisonnement({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
   });
+
+  const approvisonnementItems = approvisonnementData?.items || [];
+  const totalApprovisonnements = approvisonnementData?.total ?? 0;
+  const totalPages = approvisonnementData?.totalPages ?? 1;
 
   // ---------------------------
   // Fonction pour exeuter l'annulation de la décrementation des stocks
@@ -146,7 +160,7 @@ export default function ApprovisonnementListe() {
                         Approvisionnement Total:{' '}
                         <span className='text-warning'>
                           {' '}
-                          {approvisonnementData?.length}{' '}
+                          {totalApprovisonnements}{' '}
                         </span>
                       </p>
                     </Col>
@@ -181,7 +195,7 @@ export default function ApprovisonnementListe() {
                     {isLoading && <LoadingSpiner />}
 
                     <div className='table-responsive table-card mt-3 mb-1'>
-                      {!filterSearchApprovisonnement?.length &&
+                      {!approvisonnementItems?.length &&
                         !isLoading &&
                         !error && (
                           <div className='text-center text-mutate'>
@@ -189,7 +203,7 @@ export default function ApprovisonnementListe() {
                           </div>
                         )}
                       {!error &&
-                        filterSearchApprovisonnement?.length > 0 &&
+                        approvisonnementItems?.length > 0 &&
                         !isLoading && (
                           <table
                             className='table align-middle table-nowrap table-hover'
@@ -215,7 +229,7 @@ export default function ApprovisonnementListe() {
                             </thead>
 
                             <tbody className='list form-check-all text-center'>
-                              {filterSearchApprovisonnement?.map((appro) => (
+                              {approvisonnementItems?.map((appro) => (
                                 <tr key={appro._id} className='text-center'>
                                   <th scope='row'>
                                     {' '}
@@ -288,6 +302,50 @@ export default function ApprovisonnementListe() {
               </Card>
             </Col>
           </Row>
+
+          {/* Pagination */}
+          {!error && !isLoading && totalPages > 1 && (
+            <div className='d-flex justify-content-center align-items-center gap-2 mt-4 flex-wrap'>
+              <Button
+                color='secondary'
+                outline
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Précédent
+              </Button>
+
+              <span className='text-muted'>
+                Page <b>{page}</b> / <b>{totalPages}</b>
+              </span>
+
+              <Button
+                color='secondary'
+                outline
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Suivant
+              </Button>
+
+              <div className='d-flex align-items-center gap-2'>
+                <span className='text-muted'>Par page</span>
+                <select
+                  className='form-select form-select-sm'
+                  style={{ width: 90 }}
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+          )}
         </Container>
       </div>
     </React.Fragment>

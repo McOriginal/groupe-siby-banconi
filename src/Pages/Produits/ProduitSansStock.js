@@ -23,25 +23,55 @@ import { useNavigate } from 'react-router-dom';
 import { useAllProduitWithStockInferieure } from '../../Api/queriesProduits';
 
 export default function ProduitSansStock() {
-  const {
-    data: produits,
-    isLoading,
-    error,
-  } = useAllProduitWithStockInferieure();
-
+  /**
+   * PAGINATION + RECHERCHE (stock faible)
+   *
+   * Avant:
+   * - Chargement complet + filtre côté navigateur
+   *
+   * Maintenant:
+   - Mode backend `paged=1` sur le même endpoint
+   * - Recherche serveur => couvre toutes les données
+   */
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(24);
   // Recherche State
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fontion pour Rechercher
-  const filterSearchProduits = produits?.filter((prod) => {
-    const search = searchTerm.toLowerCase();
+  // Debounce + reset page (même logique que ProduitListe)
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  React.useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
-    return (
-      prod?.name?.toLowerCase().includes(search) ||
-      prod?.stock?.toString().includes(search) ||
-      prod?.price?.toString().includes(search)
-    );
+  /**
+   * IMPORTANT:
+   * - On utilise le même hook (même nom) mais avec des params => backend renvoie paginé.
+   * - On ne change pas les URLs.
+   */
+  const {
+    data: produitsPaged,
+    isLoading: isLoadingPaged,
+    error: errorPaged,
+  } = useAllProduitWithStockInferieure({
+    paged: 1,
+    page,
+    limit,
+    q: debouncedSearch,
+    // Optionnel: on garde le seuil backend par défaut (stock < 10)
+    stockLt: 10,
   });
+
+  // Données paginées (pro)
+  const produitsItems = produitsPaged?.items || [];
+  const totalProduits = produitsPaged?.total ?? 0;
+  const totalPages = produitsPaged?.totalPages ?? 1;
+  const loading = isLoadingPaged;
+  const err = errorPaged;
 
   // Utilisation de useNavigate pour la navigation
   const navigate = useNavigate();
@@ -70,7 +100,7 @@ export default function ProduitSansStock() {
                           Produit Total:{' '}
                           <span className='text-warning'>
                             {' '}
-                            {produits?.length}{' '}
+                            {totalProduits}{' '}
                           </span>
                         </p>
                       </Col>
@@ -102,21 +132,21 @@ export default function ProduitSansStock() {
             </Col>
           </Row>
           <div className='d-flex justify-content-center align-items-center gap-4 flex-wrap'>
-            {isLoading && <LoadingSpiner />}
-            {error && (
+            {loading && <LoadingSpiner />}
+            {err && (
               <div className='text-danger text-center'>
                 Erreur lors de chargement des données
               </div>
             )}
-            {!error && !isLoading && filterSearchProduits?.length === 0 && (
+            {!err && !loading && produitsItems?.length === 0 && (
               <div className='text-center'>
                 Aucun Produit sans stock pour le moment
               </div>
             )}
-            {!error &&
-              !isLoading &&
-              filterSearchProduits?.length > 0 &&
-              filterSearchProduits?.map((prod, index) => (
+            {!err &&
+              !loading &&
+              produitsItems?.length > 0 &&
+              produitsItems?.map((prod, index) => (
                 <Card
                   key={index}
                   style={{
@@ -191,6 +221,50 @@ export default function ProduitSansStock() {
                 </Card>
               ))}
           </div>
+
+          {/* Pagination */}
+          {!err && !loading && totalPages > 1 && (
+            <div className='d-flex justify-content-center align-items-center gap-2 mt-4 flex-wrap'>
+              <Button
+                color='secondary'
+                outline
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Précédent
+              </Button>
+
+              <span className='text-muted'>
+                Page <b>{page}</b> / <b>{totalPages}</b>
+              </span>
+
+              <Button
+                color='secondary'
+                outline
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Suivant
+              </Button>
+
+              <div className='d-flex align-items-center gap-2'>
+                <span className='text-muted'>Par page</span>
+                <select
+                  className='form-select form-select-sm'
+                  style={{ width: 90 }}
+                  value={limit}
+                  onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1);
+                  }}
+                >
+                  <option value={12}>12</option>
+                  <option value={24}>24</option>
+                  <option value={48}>48</option>
+                </select>
+              </div>
+            </div>
+          )}
         </Container>
       </div>
     </React.Fragment>

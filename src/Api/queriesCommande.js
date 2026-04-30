@@ -67,9 +67,25 @@ export const useOneCommande = (id) =>
 // Liste des Produits les plus Commandés
 export const useGetTopProduitCommande = () => {
   return useQuery({
-    queryKey: ['commandes'],
+    /**
+     * TOP PRODUITS - cache "pro"
+     *
+     * Remarques:
+     * - On garde le même hook `useGetTopProduitCommande`
+     * - On ne change pas l'URL backend: `/commandes/topProduitsCommande`
+     * - On ajoute seulement un paramètre `limit` pour éviter une réponse énorme
+     *
+     * IMPORTANT:
+     * - On change le queryKey pour éviter les collisions avec d'autres requêtes "commandes"
+     *   (sinon React Query peut réutiliser le mauvais cache).
+     */
+    queryKey: ['commandes', 'top-produits', { limit: 20 }],
     queryFn: () =>
-      api.get('/commandes/topProduitsCommande').then((res) => res.data),
+      api
+        .get('/commandes/topProduitsCommande', { params: { limit: 20 } })
+        .then((res) => res.data),
+    staleTime: 1000 * 60 * 5, // ces données changent moins souvent
+    gcTime: 1000 * 60 * 30,
   });
 };
 
