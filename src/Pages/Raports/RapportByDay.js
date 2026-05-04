@@ -2,7 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardBody, Col, Input, Row } from 'reactstrap';
 import { useAllPaiements } from '../../Api/queriesPaiement';
 import { useAllDepenses } from '../../Api/queriesDepense';
-import { formatPrice } from '../components/capitalizeFunction';
+import {
+  asMoneyNumber,
+  formatPrice,
+} from '../components/capitalizeFunction';
 import { useAllCommandes } from '../../Api/queriesCommande';
 
 const RapportByDay = () => {
@@ -35,6 +38,21 @@ const RapportByDay = () => {
     from: selectedDate,
     to: selectedDate,
   });
+  /**
+   * IMPORTANT (règle métier demandée):
+   * - Total à payé = Σ commandesListe.totalAmount
+   * - Total payé   = Σ factures.totalPaye
+   * - Impayé       = Total à payé − Total payé
+   *
+   * Donc on récupère aussi `commandesListe` + `factures.totalPaye` via `facturesTotals=1`.
+   */
+  const { data: commandesData } = useAllCommandes({
+    paged: 1,
+    export: 1,
+    from: selectedDate,
+    to: selectedDate,
+    facturesTotals: 1,
+  });
   const { data: paiementsData } = useAllPaiements({
     stats: 'bilans',
     from: selectedDate,
@@ -57,19 +75,40 @@ const RapportByDay = () => {
 
   // Calcul le total de somme Payés pour le mois sélectionné
   const totalPaiements = useMemo(() => {
-    return Number(paiementsData?.sumTotalAmount || 0);
-  }, [paiementsData, selectedDate]);
-  // Calcul le total de somme Paiyés pour le mois sélectionné
+    // Total à payer = Σ commandesListe.totalAmount (règle métier).
+    return (commandesData?.commandesListe || []).reduce(
+      (acc, c) => acc + asMoneyNumber(c?.totalAmount),
+      0
+    );
+  }, [commandesData, selectedDate]);
+  // Total payé = Σ factures.totalPaye (règle métier).
   const totalPaiementsAmountPayed = useMemo(() => {
-    return Number(paiementsData?.sumTotalPaye || 0);
-  }, [paiementsData, selectedDate]);
+    return (commandesData?.factures || []).reduce(
+      (acc, f) => acc + asMoneyNumber(f?.totalPaye),
+      0
+    );
+  }, [commandesData, selectedDate]);
 
   // Calcul le total de somme Impayés pour le mois sélectionné
-  const totalAmountNotPayed = totalPaiements - totalPaiementsAmountPayed || 0;
+  const totalAmountNotPayed =
+    asMoneyNumber(totalPaiements) - asMoneyNumber(totalPaiementsAmountPayed);
+
+  /**
+   * --- Rapport journalier : totaux « commande / paiement » (stats=bilans sur la date) ---
+   * Total à payer : somme des `totalAmount` = **montant des commandes** à payer (inclut l’impayé dans chaque commande).
+   * Total payé    : somme des `totalPaye` = **montants encaissés** (paiements effectués).
+   * Impayé        : **reste dû** sur les commandes ; on privilégie `sumReliquat` renvoyé par l’API (agrégat cohérent).
+   */
+  // Total à payer = somme des montants commande dus pour le jour sélectionné.
+  const rapportJourTotalCommandesAPayer = totalPaiements;
+  // Total payé = somme des encaissements (`totalPaye`) pour le même jour.
+  const rapportJourTotalPayeEncaisse = totalPaiementsAmountPayed;
+  // Impayé : `sumReliquat` serveur si présent et numérique, sinon différence à payer − payé (même résultat attendu).
+  const rapportJourMontantCommandesNonPayes = asMoneyNumber(totalAmountNotPayed);
 
   // Calcul le total pour Dépenses pour le mois sélectionné
   const totalDepenses = useMemo(() => {
-    return Number(depenseData?.totals?.sumTotalExpense || 0);
+    return asMoneyNumber(depenseData?.totals?.sumTotalExpense);
   }, [depenseData, selectedDate]);
 
   // Calculer Le revenu (Bénéfice) pour le mois sélectionné
@@ -77,7 +116,7 @@ const RapportByDay = () => {
   // Calcule de CA , REVENUE, BENEFICE
   // const { totalCA, totalAchat, benefice } = useMemo(() => {
   const { totalAchat, benefice } = useMemo(() => {
-    const achat = Number(paiementsData?.totalAchat || 0);
+    const achat = asMoneyNumber(paiementsData?.totalAchat);
     const total = totalPaiementsAmountPayed - achat;
     const benefice = total - totalDepenses;
     return { totalAchat: achat, benefice };
@@ -234,21 +273,21 @@ const RapportByDay = () => {
                 Total À Payé:{' '}
                 <span className='text-light'>
                   {' '}
-                  {formatPrice(totalPaiements)} F
+                  {formatPrice(rapportJourTotalCommandesAPayer)} F
                 </span>
               </h6>
               <h6 className='my-1 text-light'>
-                Net Payé:{' '}
+                Total payé:{' '}
                 <span className='text-success'>
                   {' '}
-                  {formatPrice(totalPaiementsAmountPayed)} F
+                  {formatPrice(rapportJourTotalPayeEncaisse)} F
                 </span>
               </h6>
               <h6 className='my-1 text-light'>
                 Impayé:{' '}
                 <span className='text-danger'>
                   {' '}
-                  {formatPrice(totalAmountNotPayed)} F
+                  {formatPrice(rapportJourMontantCommandesNonPayes)} F
                 </span>
               </h6>
             </Card>

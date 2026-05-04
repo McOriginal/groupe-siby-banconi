@@ -2,7 +2,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Card, Col, Row } from 'reactstrap';
 import { useAllPaiements } from '../../Api/queriesPaiement';
 import { useAllDepenses } from '../../Api/queriesDepense';
-import { formatPrice } from '../components/capitalizeFunction'; // Pour afficher les montants formatés
+import {
+  asMoneyNumber,
+  formatPrice,
+} from '../components/capitalizeFunction'; // Montants formatés + conversion API sûre
 import { useAllCommandes } from '../../Api/queriesCommande';
 
 const RapportBySemaine = () => {
@@ -35,6 +38,26 @@ const RapportBySemaine = () => {
       : { paged: 1, page: 1, limit: 25 };
 
   const { data: commandes } = useAllCommandes(commandesParams);
+  /**
+   * IMPORTANT (règle métier demandée):
+   * - Total à payé = Σ commandesListe.totalAmount
+   * - Total payé   = Σ factures.totalPaye
+   * - Impayé       = Total à payé − Total payé
+   *
+   * Donc on récupère aussi la liste (export) + `factures.totalPaye` via `facturesTotals=1`.
+   * (Sans changer l'URL API commandes, seulement un paramètre optionnel.)
+   */
+  const { data: commandesData } = useAllCommandes(
+    startDate && endDate
+      ? {
+          paged: 1,
+          export: 1,
+          from: startDate,
+          to: endDate,
+          facturesTotals: 1,
+        }
+      : { paged: 1, page: 1, limit: 25 }
+  );
   const { data: paiementsData } = useAllPaiements(paiementsParams);
   const { data: depenseData } = useAllDepenses(depensesParams);
 
@@ -59,7 +82,8 @@ const RapportBySemaine = () => {
         : commandes?.commandesListe?.filter((item) => {
             return isBetweenDates(item.commandeDate);
           }),
-    [commandes, isBetweenDates]
+    // On ajoute startDate/endDate pour satisfaire eslint (sinon warning de deps manquantes).
+    [commandes, isBetweenDates, startDate, endDate]
   );
   // Calcul de la somme total de Commande pour le 7 dernier jour
   const totalCommandeNumber = recentCommande?.length;
@@ -73,24 +97,45 @@ const RapportBySemaine = () => {
         : paiementsData?.paiements?.filter((item) => {
             return isBetweenDates(item.paiementDate);
           }),
-    [paiementsData, isBetweenDates]
+    // On ajoute startDate/endDate pour satisfaire eslint (sinon warning de deps manquantes).
+    [paiementsData, isBetweenDates, startDate, endDate]
   );
 
-  // Calculer le total de Somme à Payé pour le 7 dernier jour
+  // Total à payer (règle métier) = Σ commandesListe.totalAmount
   const totalPaiementsAmount =
     startDate && endDate
-      ? Number(paiementsData?.sumTotalAmount || 0)
+      ? (commandesData?.commandesListe || []).reduce(
+          (acc, c) => acc + asMoneyNumber(c?.totalAmount),
+          0
+        )
       : recentPaiement?.reduce(
-          (acc, item) => acc + Number(item.totalAmount || 0),
+          (acc, item) => acc + asMoneyNumber(item.totalAmount),
           0
         );
-  // Calculer le total de Somme Payé pour le 7 dernier jour
+  // Total payé (règle métier) = Σ factures.totalPaye
   const totalPaiementsPaye =
     startDate && endDate
-      ? Number(paiementsData?.sumTotalPaye || 0)
-      : recentPaiement?.reduce((acc, item) => acc + Number(item.totalPaye || 0), 0);
+      ? (commandesData?.factures || []).reduce(
+          (acc, f) => acc + asMoneyNumber(f?.totalPaye),
+          0
+        )
+      : recentPaiement?.reduce((acc, item) => acc + asMoneyNumber(item.totalPaye), 0);
   // Calculer le total de Somme Impayé pour le 7 dernier jour
   const totalPaiementsToPaye = totalPaiementsAmount - totalPaiementsPaye || 0;
+
+  /**
+   * --- Carte « Total à payer / Total payé / Impayé » (Rapport par période) ---
+   * Total à payer : somme des **montants commande** à régler (TTC / dû sur le document paiement) = Σ `totalAmount`.
+   * Total payé    : somme des **encaissements** enregistrés = Σ `totalPaye` (montant réellement payé sur la commande).
+   * Impayé        : somme des **restes dus** ; si `stats=bilans` renvoie `sumReliquat`, on l’utilise (agrégat serveur),
+   *                 sinon différence « à payer − payé » sur les lignes chargées.
+   */
+  // Total à payer = montant total des commandes (somme des montants à payer, y compris part encore due).
+  const rapportTotalCommandesAPayer = totalPaiementsAmount;
+  // Total payé = somme des paiements encaissés sur la période (équivalent « commande ou paiement » payé).
+  const rapportTotalPayeEncaisse = totalPaiementsPaye;
+  // Impayé = reste dû : `sumReliquat` du backend si valeur numérique exploitable, sinon (à payer − payé).
+  const rapportMontantCommandesNonPayes = asMoneyNumber(totalPaiementsToPaye);
 
   // Recent Depense
   const recentDepense = useMemo(
@@ -104,7 +149,7 @@ const RapportBySemaine = () => {
   // Calculer la somme Dépensés pour le 7 dernier jour
   const totalDepenses =
     startDate && endDate
-      ? Number(depenseData?.totals?.sumTotalExpense || 0)
+      ? asMoneyNumber(depenseData?.totals?.sumTotalExpense)
       : recentDepense.reduce((acc, item) => acc + Number(item.totalAmount || 0), 0);
 
   // Calcule de CA , REVENUE, BENEFICE
@@ -112,7 +157,7 @@ const RapportBySemaine = () => {
   const { totalAchat, benefice } = useMemo(() => {
     // Mode optimisé: stats=bilans renvoie directement totalAchat.
     if (startDate && endDate) {
-      const achat = Number(paiementsData?.totalAchat || 0);
+      const achat = asMoneyNumber(paiementsData?.totalAchat);
       const total = totalPaiementsPaye - achat;
       const benefice = total - totalDepenses;
       return { totalAchat: achat, benefice };
@@ -139,7 +184,7 @@ const RapportBySemaine = () => {
     const total = totalPaiementsPaye - totalAchat;
     const benefice = total - totalDepenses;
     return { totalAchat, benefice };
-  }, [paiementsData, isBetweenDates, totalPaiementsPaye, totalDepenses]);
+  }, [paiementsData, isBetweenDates, totalPaiementsPaye, totalDepenses, startDate, endDate]);
 
   return (
     <React.Fragment>
@@ -306,21 +351,21 @@ const RapportBySemaine = () => {
                 Total À Payé:{' '}
                 <span className='text-light ps-2'>
                   {' '}
-                  {formatPrice(totalPaiementsAmount)} F
+                  {formatPrice(rapportTotalCommandesAPayer)} F
                 </span>
               </h5>
               <h5 className='my-1 text-light'>
-                Net Payé:{' '}
+                Total payé:{' '}
                 <span className='text-success ps-2'>
                   {' '}
-                  {formatPrice(totalPaiementsPaye)} F
+                  {formatPrice(rapportTotalPayeEncaisse)} F
                 </span>
               </h5>
               <h5 className='my-1 text-light'>
                 Impayé:{' '}
                 <span className='text-danger ps-2'>
                   {' '}
-                  {formatPrice(totalPaiementsToPaye)} F
+                  {formatPrice(rapportMontantCommandesNonPayes)} F
                 </span>
               </h5>
             </Card>{' '}

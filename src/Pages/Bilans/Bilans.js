@@ -4,12 +4,14 @@ import { DownloadTableExcel } from 'react-export-table-to-excel';
 import Breadcrumbs from '../../components/Common/Breadcrumb';
 import LoadingSpiner from '../components/LoadingSpiner';
 import {
+  asMoneyNumber,
   capitalizeWords,
   formatPhoneNumber,
   formatPrice,
 } from '../components/capitalizeFunction';
 import { useAllPaiements } from '../../Api/queriesPaiement';
 import { useAllDepenses } from '../../Api/queriesDepense';
+import { useAllCommandes } from '../../Api/queriesCommande';
 export default function Bilans() {
   /**
    * OPTIMISATION PRO (Bilans)
@@ -116,6 +118,23 @@ export default function Bilans() {
   );
   const { data: depenseData } = useAllDepenses(depensesParams);
 
+  /**
+   * IMPORTANT (règle métier demandée):
+   * - chiffre d'affaire = Σ commandesListe.totalAmount
+   * - revenu            = Σ factures.totalPaye
+   *
+   * Donc on récupère les commandes + factures via la MÊME API commandes
+   * (sans changer l'URL, seulement un paramètre optionnel `facturesTotals=1`).
+   */
+  const { data: commandesData } = useAllCommandes({
+    paged: 1,
+    export: 1,
+    from: startDate,
+    to: endDate,
+    // Demande au backend de renvoyer `factures.totalPaye` (sinon factures est "light").
+    facturesTotals: 1,
+  });
+
   // Totaux fiables (serveur) pour Bilans.
   // NB: Si from/to ne sont pas définis, le backend limite par défaut aux 7 derniers jours.
   const { data: paiementsStats } = useAllPaiements({
@@ -152,30 +171,84 @@ export default function Bilans() {
 
   /**
    * Totaux:
-   * - Si `paiementsStats` est dispo => chiffres fiables (serveur) sans boucle lourde
-   * - Sinon => fallback (ancien comportement) à partir des lignes chargées
+   * - On lit d’abord `paiementsStats` (agrégat serveur) en forçant un nombre avec `asMoneyNumber`
+   *   (les montants ne sont pas toujours des `number` JS stricts après JSON / cache).
+   * - Si la clé est absente ou non numérique (ex. placeholder React Query d’une autre forme de réponse),
+   *   on retombe sur la somme des **lignes du tableau** (même périmètre que l’affichage).
    */
+  const sumTotalAmountFromLines = () =>
+    (filterPaiement ?? []).reduce(
+      (acc, item) => acc + asMoneyNumber(item?.totalAmount),
+      0
+    );
+  const sumTotalPayeFromLines = () =>
+    (filterPaiement ?? []).reduce(
+      (acc, item) => acc + asMoneyNumber(item?.totalPaye),
+      0
+    );
+
   const sumTotalAmount =
-    typeof paiementsStats?.sumTotalAmount === 'number'
-      ? paiementsStats.sumTotalAmount
-      : filterPaiement?.reduce((curr, item) => (curr += item?.totalAmount), 0);
+    paiementsStats != null &&
+    paiementsStats.sumTotalAmount != null &&
+    Number.isFinite(Number(paiementsStats.sumTotalAmount))
+      ? asMoneyNumber(paiementsStats.sumTotalAmount)
+      : sumTotalAmountFromLines();
 
   const sumTotalPaye =
-    typeof paiementsStats?.sumTotalPaye === 'number'
-      ? paiementsStats.sumTotalPaye
-      : filterPaiement?.reduce((curr, item) => (curr += item?.totalPaye), 0);
+    paiementsStats != null &&
+    paiementsStats.sumTotalPaye != null &&
+    Number.isFinite(Number(paiementsStats.sumTotalPaye))
+      ? asMoneyNumber(paiementsStats.sumTotalPaye)
+      : sumTotalPayeFromLines();
 
   const sumTotalDepense =
-    typeof depenseData?.totals?.sumTotalExpense === 'number'
-      ? depenseData.totals.sumTotalExpense
-      : filterDepense?.reduce((curr, item) => (curr += item?.totalAmount), 0);
+    depenseData?.totals?.sumTotalExpense != null &&
+    Number.isFinite(Number(depenseData.totals.sumTotalExpense))
+      ? asMoneyNumber(depenseData.totals.sumTotalExpense)
+      : (filterDepense ?? []).reduce(
+          (acc, item) => acc + asMoneyNumber(item?.totalAmount),
+          0
+        );
+
+  /**
+   * --- Définitions affichage Bilans (une ligne = un paiement lié à une commande) ---
+   * Chiffre d'affaires : somme des **montants commande** à payer (TTC / dû), **y compris** la partie encore impayée
+   *                    => somme des `totalAmount` (identique aux colonnes "Montant de Commande" du tableau).
+   * Revenu           : somme des montants **effectivement payés** => somme des `totalPaye`.
+   * Réliquat         : somme des **restes dus** (impayés). On utilise `sumReliquat` du backend si présent
+   *                    (cohérent avec l’agrégat), sinon CA − revenu.
+   */
+  /**
+   * --- Règle métier (prioritaire) ---
+   * chiffre d'affaire = Σ commandesListe.totalAmount
+   * revenu            = Σ factures.totalPaye
+   * réliquat           = chiffre d'affaire − revenu
+   *
+   * NOTE:
+   * - On garde les autres calculs (paiementsStats) pour le bénéfice / achats,
+   *   mais pour CA/Revenu/Réliquat on suit strictement ta définition.
+   */
+  const chiffreAffairesTotalCommandesAvecImpaye = (commandesData?.commandesListe || []).reduce(
+    (acc, c) => acc + asMoneyNumber(c?.totalAmount),
+    0
+  );
+  const revenuTotalMontantsPayes = (commandesData?.factures || []).reduce(
+    (acc, f) => acc + asMoneyNumber(f?.totalPaye),
+    0
+  );
+  const reliquatSommeImpayes =
+    chiffreAffairesTotalCommandesAvecImpaye - revenuTotalMontantsPayes;
 
   const { totalAchat, benefice } = useMemo(() => {
     // Chemin optimisé: le serveur renvoie directement `totalAchat` (agrégation).
-    if (typeof paiementsStats?.totalAchat === 'number') {
-      const total = sumTotalPaye - paiementsStats.totalAchat;
+    if (
+      paiementsStats?.totalAchat != null &&
+      Number.isFinite(Number(paiementsStats.totalAchat))
+    ) {
+      const ta = asMoneyNumber(paiementsStats.totalAchat);
+      const total = sumTotalPaye - ta;
       const benefice = total - sumTotalDepense;
-      return { totalAchat: paiementsStats.totalAchat, benefice };
+      return { totalAchat: ta, benefice };
     }
 
     /**
@@ -240,19 +313,29 @@ export default function Bilans() {
                           <h6 className=''>
                             Commande Entregistrées:{' '}
                             <span className='text-info'>
-                              {formatPrice(filterPaiement?.length)}
+                              {formatPrice(
+                                /**
+                                 * IMPORTANT (règle métier):
+                                 * - Ici on veut le NOMBRE TOTAL de commandes enregistrées sur la période,
+                                 *   pas le nombre de paiements.
+                                 * - L'API commandes paginée renvoie `total` (compteur global sur le filtre),
+                                 *   sinon on retombe sur la longueur de `commandesListe`.
+                                 */
+                                commandesData?.total ??
+                                  (commandesData?.commandesListe || []).length
+                              )}
                             </span>
                           </h6>
                           <h6 className=''>
                             Chiffre d'Affaire:{' '}
                             <span className='text-info'>
-                              {formatPrice(sumTotalAmount)} F{' '}
+                              {formatPrice(chiffreAffairesTotalCommandesAvecImpaye)} F{' '}
                             </span>
                           </h6>
                           <h6 className=''>
                             Revenu :{' '}
                             <span className='text-success'>
-                              {formatPrice(sumTotalPaye)} F{' '}
+                              {formatPrice(revenuTotalMontantsPayes)} F{' '}
                             </span>
                           </h6>
                           <h6 className=''>
@@ -264,7 +347,7 @@ export default function Bilans() {
                           <h6 className=''>
                             Réliquat:{' '}
                             <span className='text-danger'>
-                              {formatPrice(sumTotalAmount - sumTotalPaye)} F{' '}
+                              {formatPrice(reliquatSommeImpayes)} F{' '}
                             </span>
                           </h6>
                           <h6 className=''>
@@ -442,13 +525,14 @@ export default function Bilans() {
                                   {' F '}
                                 </td>
                                 <td>
-                                  {paiement?.totalAmount - paiement?.totalPaye >
+                                  {asMoneyNumber(paiement?.totalAmount) -
+                                    asMoneyNumber(paiement?.totalPaye) >
                                   0 ? (
                                     <span className='text-danger'>
                                       {' '}
                                       {formatPrice(
-                                        paiement?.totalAmount -
-                                          paiement?.totalPaye
+                                        asMoneyNumber(paiement?.totalAmount) -
+                                          asMoneyNumber(paiement?.totalPaye)
                                       )}
                                       {' F '}
                                     </span>
@@ -456,8 +540,8 @@ export default function Bilans() {
                                     <span>
                                       {' '}
                                       {formatPrice(
-                                        paiement?.totalAmount -
-                                          paiement?.totalPaye
+                                        asMoneyNumber(paiement?.totalAmount) -
+                                          asMoneyNumber(paiement?.totalPaye)
                                       )}
                                       {' F '}
                                     </span>
