@@ -384,7 +384,15 @@ exports.getAllCommandes = async (req, res) => {
       // Liste commandes (sans populate items.produit) => léger, on a seulement besoin de items.length.
       const query = Commande.find(match)
         .sort({ createdAt: -1 })
-        .select('fullName phoneNumber adresse items statut commandeDate createdAt')
+        /**
+         * IMPORTANT:
+         * - On ajoute `totalAmount` (montant de commande) pour permettre aux pages Bilans/Rapports
+         *   de calculer correctement le chiffre d'affaire à partir de `commandesListe.totalAmount`,
+         *   sans changer le nom de clé `commandesListe`.
+         */
+        .select(
+          'fullName phoneNumber adresse items statut commandeDate createdAt totalAmount'
+        )
         .lean();
       if (!exportAll) {
         query.skip((page - 1) * limit).limit(limit);
@@ -393,12 +401,40 @@ exports.getAllCommandes = async (req, res) => {
 
       // Factures "légères" (uniquement pour marquer les commandes facturées)
       const commandeIds = commandesListe.map((c) => c._id);
+      /**
+       * IMPORTANT (compat front):
+       * - Par défaut, `factures` reste une liste légère utilisée par `CommandeListe`
+       *   pour afficher l'icône (facturé / non facturé) via `fact.commande._id`.
+       *
+       * Optimisation Bilans/Rapports:
+       * - Quand `facturesTotals=1`, on renvoie aussi `factures.totalPaye`
+       *   (et `factures.totalAmount` si présent) pour calculer:
+       *   - revenu = Σ factures.totalPaye
+       *   - impayé = Σ commandesListe.totalAmount − Σ factures.totalPaye
+       *
+       * Contrainte:
+       * - On ne change pas l'URL, seulement un query param optionnel.
+       */
+      const facturesTotals =
+        req.query?.facturesTotals === '1' ||
+        req.query?.facturesTotals === 'true';
+
       const paiements = await Paiement.find({ commande: { $in: commandeIds } })
-        .select('commande')
+        .select(facturesTotals ? 'commande totalPaye totalAmount' : 'commande')
         .lean();
 
       // On conserve la forme attendue par le front: fact.commande._id
-      const factures = paiements.map((p) => ({ commande: { _id: p.commande } }));
+      const factures = paiements.map((p) =>
+        facturesTotals
+          ? {
+              commande: { _id: p.commande },
+              // total payé (revenu) - utilisé par Bilans/Rapports
+              totalPaye: Number(p.totalPaye || 0),
+              // montant de commande côté paiement (optionnel) - ne remplace pas commandesListe.totalAmount
+              totalAmount: Number(p.totalAmount || 0),
+            }
+          : { commande: { _id: p.commande } }
+      );
 
       return res.status(200).json({
         commandesListe,

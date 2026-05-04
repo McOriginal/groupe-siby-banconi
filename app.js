@@ -40,6 +40,7 @@ const allowedOrigins = corsOriginsRaw
       'https://www.gestiongroupesiby.online',
       // Dev
       'http://localhost:3000',
+      'http://localhost:3000/boutique_banconi',
     ];
 
 // Petit helper pour tolérer www si l’admin l’utilise en prod.
@@ -62,7 +63,7 @@ const corsOptions = {
 };
 
 // CORS UNIQUEMENT pour l’API
-app.use('/api', cors(corsOptions));
+app.use('/boutique_banconi/api', cors(corsOptions));
 // Preflight pour toutes les routes /api/... (regex => pas de parsing path-to-regexp)
 app.options(/^\/api\/.*$/, cors(corsOptions));
 app.use(express.json()); // Parser les requêtes avec JSON

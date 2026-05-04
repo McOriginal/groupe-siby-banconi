@@ -176,6 +176,14 @@ exports.getAllPaiements = async (req, res) => {
      *
      * Appel:
      * - `/paiements/getAllPaiements?stats=bilans&from=YYYY-MM-DD&to=YYYY-MM-DD`
+     * - Optionnel: `basis=commande` pour filtrer sur **commandeDate** (comme le tableau Bilans),
+     *   défaut `basis=paiement` => filtre sur **paiementDate** (comportement historique).
+     *
+     * Corrections (bugs corrigés):
+     * - Avant: après `$unwind` des lignes `items`, on sommait `totalAmount` / `totalPaye` à chaque ligne
+     *   => montants multipliés par le nombre d'articles (CA / payé incohérents).
+     * - Maintenant: `$facet` => une branche agrège **un paiement = une ligne** pour les montants,
+     *   une autre branche calcule `totalAchat` sur les lignes articles.
      *
      * Note:
      * - Si from/to absents, on limite par défaut aux 7 derniers jours (évite full scan historique).
@@ -183,6 +191,11 @@ exports.getAllPaiements = async (req, res) => {
     if (req.query?.stats === 'bilans') {
       const from = (req.query?.from ?? '').toString().trim();
       const to = (req.query?.to ?? '').toString().trim();
+      const basisRaw = (req.query?.basis ?? 'paiement').toString().trim().toLowerCase();
+      const useCommandeDate =
+        basisRaw === 'commande' ||
+        basisRaw === 'commandedate' ||
+        basisRaw === 'commande_date';
 
       let start;
       let end;
@@ -207,50 +220,87 @@ exports.getAllPaiements = async (req, res) => {
       }
 
       const pipeline = [
-        { $match: { paiementDate: { $gte: start, $lte: end } } },
         {
           $lookup: {
             from: 'commandes',
             localField: 'commande',
             foreignField: '_id',
-            as: 'commande',
+            as: '_cmdBilans',
           },
         },
-        { $unwind: { path: '$commande', preserveNullAndEmptyArrays: true } },
-        { $unwind: { path: '$commande.items', preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: '$_cmdBilans', preserveNullAndEmptyArrays: false } },
+        ...(useCommandeDate
+          ? [{ $match: { '_cmdBilans.commandeDate': { $gte: start, $lte: end } } }]
+          : [{ $match: { paiementDate: { $gte: start, $lte: end } } }]),
         {
-          $lookup: {
-            from: 'produits',
-            localField: 'commande.items.produit',
-            foreignField: '_id',
-            as: 'produit',
-          },
-        },
-        { $unwind: { path: '$produit', preserveNullAndEmptyArrays: true } },
-        {
-          $group: {
-            _id: null,
-            countPaiements: { $addToSet: '$_id' },
-            sumTotalAmount: { $sum: '$totalAmount' },
-            sumTotalPaye: { $sum: '$totalPaye' },
-            totalAchat: {
-              $sum: {
-                $multiply: [
-                  { $ifNull: ['$commande.items.quantity', 0] },
-                  { $ifNull: ['$produit.achatPrice', 0] },
-                ],
+          $facet: {
+            paiementTotals: [
+              {
+                $group: {
+                  _id: null,
+                  sumTotalAmount: { $sum: '$totalAmount' },
+                  sumTotalPaye: { $sum: '$totalPaye' },
+                  countPaiements: { $sum: 1 },
+                },
               },
-            },
+            ],
+            achatRows: [
+              { $unwind: { path: '$_cmdBilans.items', preserveNullAndEmptyArrays: false } },
+              {
+                $lookup: {
+                  from: 'produits',
+                  localField: '_cmdBilans.items.produit',
+                  foreignField: '_id',
+                  as: '_prBilans',
+                },
+              },
+              { $unwind: { path: '$_prBilans', preserveNullAndEmptyArrays: true } },
+              {
+                $group: {
+                  _id: null,
+                  totalAchat: {
+                    $sum: {
+                      $multiply: [
+                        { $ifNull: ['$_cmdBilans.items.quantity', 0] },
+                        { $ifNull: ['$_prBilans.achatPrice', 0] },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
           },
         },
+        {
+          $addFields: {
+            _pt: { $arrayElemAt: ['$paiementTotals', 0] },
+            _ar: { $arrayElemAt: ['$achatRows', 0] },
+          },
+        },
+        /**
+         * Réponse `stats=bilans` — sémantique alignée Bilans / Rapports (sans changer les noms de champs) :
+         * - `sumTotalAmount` : total « à payer / chiffre d’affaires commande » = Σ montants commande (TTC dû), **incluant** l’impayé dans chaque commande.
+         * - `sumTotalPaye`   : total **encaissé** (revenu / total payé) = Σ `totalPaye`.
+         * - `sumReliquat`    : total **impayé / réliquat** = Σ (montant commande − montant payé) sur les paiements agrégés (une ligne paiement = une contribution).
+         */
         {
           $project: {
             _id: 0,
-            countPaiements: { $size: '$countPaiements' },
-            sumTotalAmount: 1,
-            sumTotalPaye: 1,
-            sumReliquat: { $subtract: ['$sumTotalAmount', '$sumTotalPaye'] },
-            totalAchat: 1,
+            // Nombre de documents paiement dans la période (après filtre date commande ou paiement).
+            countPaiements: { $ifNull: ['$_pt.countPaiements', 0] },
+            // Somme des montants de commande liés aux paiements (total à payer / CA avec impayé inclus).
+            sumTotalAmount: { $ifNull: ['$_pt.sumTotalAmount', 0] },
+            // Somme des montants réellement payés (encaissements).
+            sumTotalPaye: { $ifNull: ['$_pt.sumTotalPaye', 0] },
+            // Coût d’achat estimé (quantités × prix d’achat produit).
+            totalAchat: { $ifNull: ['$_ar.totalAchat', 0] },
+            // Reste dû global (impayés / réliquat agrégé).
+            sumReliquat: {
+              $subtract: [
+                { $ifNull: ['$_pt.sumTotalAmount', 0] },
+                { $ifNull: ['$_pt.sumTotalPaye', 0] },
+              ],
+            },
           },
         },
       ];
@@ -264,7 +314,18 @@ exports.getAllPaiements = async (req, res) => {
         totalAchat: 0,
       };
 
-      return res.status(200).json(row);
+      /**
+       * Forcer des **nombres JavaScript** dans la réponse JSON (impayé / réliquat).
+       * Sinon le driver peut laisser des types BSON (Long, Decimal128) que le front ne lit pas
+       * comme `number` et les montants impayés semblent « vides » ou incorrects.
+       */
+      return res.status(200).json({
+        countPaiements: Number(row.countPaiements ?? 0),
+        sumTotalAmount: Number(row.sumTotalAmount ?? 0),
+        sumTotalPaye: Number(row.sumTotalPaye ?? 0),
+        sumReliquat: Number(row.sumReliquat ?? 0),
+        totalAchat: Number(row.totalAchat ?? 0),
+      });
     }
 
     /**
@@ -299,12 +360,37 @@ exports.getAllPaiements = async (req, res) => {
       // Filtre date (Bilans / Rapports): from/to (YYYY-MM-DD)
       const from = (req.query?.from ?? '').toString().trim();
       const to = (req.query?.to ?? '').toString().trim();
+      const basisPagedRaw = (req.query?.basis ?? 'paiement').toString().trim().toLowerCase();
+      const useCommandeDateForPaged =
+        basisPagedRaw === 'commande' ||
+        basisPagedRaw === 'commandedate' ||
+        basisPagedRaw === 'commande_date';
+
       if (from && to) {
         const start = new Date(from);
         const end = new Date(to);
         if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
           end.setHours(23, 59, 59, 999);
-          paiementMatch.paiementDate = { $gte: start, $lte: end };
+          /**
+           * IMPORTANT (cohérence Bilans / Rapports):
+           * - Le tableau Bilans filtre les lignes sur **commandeDate** (date de commande affichée).
+           * - Sans `basis=commande`, le filtre `from/to` s'appliquait sur **paiementDate** => lignes
+           *   et totaux `stats=bilans` ne correspondaient pas.
+           * - `basis=commande` : on restreint aux paiements dont la commande est dans la plage
+           *   `commandeDate` (même logique que l'UI).
+           * - Défaut `basis=paiement` : inchangé pour tout appel existant qui ne passe pas `basis`.
+           */
+          if (useCommandeDateForPaged) {
+            const cmds = await Commande.find({
+              commandeDate: { $gte: start, $lte: end },
+            })
+              .select('_id')
+              .lean();
+            const ids = cmds.map((c) => c._id);
+            paiementMatch.commande = { $in: ids };
+          } else {
+            paiementMatch.paiementDate = { $gte: start, $lte: end };
+          }
         }
       }
 
@@ -344,6 +430,14 @@ exports.getAllPaiements = async (req, res) => {
           .select('_id')
           .lean();
         commandeIds = commandes.map((c) => c._id);
+        /**
+         * Si `from/to` + `basis=commande` a déjà posé `paiementMatch.commande`,
+         * on intersecte avec les IDs issus de la recherche `q` (sinon on écrase le filtre date).
+         */
+        if (paiementMatch.commande?.$in && Array.isArray(paiementMatch.commande.$in)) {
+          const allowed = new Set(paiementMatch.commande.$in.map((id) => String(id)));
+          commandeIds = commandeIds.filter((id) => allowed.has(String(id)));
+        }
         paiementMatch.commande = { $in: commandeIds };
       }
 
