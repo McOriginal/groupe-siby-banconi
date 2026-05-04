@@ -72,9 +72,14 @@ const Header = (props) => {
               </span>
             </div>
 
-            <button
+            
+          </div>
+
+  <div className='d-flex justify-content-center align-items-center'>
+
+<button
               type='button'
-              className='btn btn-sm px-3 font-size-24 header-item waves-effect  d-flex justify-content-center  text-info align-self-center '
+              className='btn btn-sm px-3 font-size-24 header-item waves-effect   text-info  '
               id='vertical-menu-btn'
               onClick={() => {
                 tToggle();
@@ -82,9 +87,14 @@ const Header = (props) => {
             >
               <i className='ri-menu-2-line align-middle'></i>
             </button>
-          </div>
+            </div>
+
 
           <div className='d-none d-md-flex flex-column justify-content-center align-items-center'>
+         
+         
+        
+         
             <p
               className='font-size-16 d-flex justify-content-center align-items-center fw-bold mb-0'
               style={{
