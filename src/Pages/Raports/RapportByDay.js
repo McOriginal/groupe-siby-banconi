@@ -39,6 +39,8 @@ const RapportByDay = () => {
     stats: 'bilans',
     from: selectedDate,
     to: selectedDate,
+    /** Aligné sur le compteur commandes (date de commande). */
+    basis: 'commande',
   });
   const { data: depenseData } = useAllDepenses({
     paged: 1,

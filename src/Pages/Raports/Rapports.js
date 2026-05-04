@@ -9,7 +9,7 @@ import SelectedMounthTotalResult from './SelectedMounthTotalResult';
 import { companyName } from '../CompanyInfo/CompanyInfo';
 
 const Rapports = () => {
-  document.title = 'Raports | Centre de Santé - MARHABA ';
+  document.title = 'Raports | Quincaillerie Générale Groupe Siby ';
   return (
     <React.Fragment>
       <div className='page-content'>

@@ -21,7 +21,13 @@ const RapportBySemaine = () => {
       : { paged: 1, page: 1, limit: 25 };
   const paiementsParams =
     startDate && endDate
-      ? { stats: 'bilans', from: startDate, to: endDate }
+      ? {
+          stats: 'bilans',
+          from: startDate,
+          to: endDate,
+          /** Même règle que Bilans : CA / payés sur commandes de la période (commandeDate). */
+          basis: 'commande',
+        }
       : { paged: 1, page: 1, limit: 25 };
   const depensesParams =
     startDate && endDate

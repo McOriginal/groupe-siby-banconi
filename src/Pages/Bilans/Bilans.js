@@ -65,7 +65,18 @@ export default function Bilans() {
 
   const paiementsParams =
     startDate && endDate
-      ? { paged: 1, export: 1, deep: 1, from: startDate, to: endDate }
+      ? {
+          paged: 1,
+          export: 1,
+          deep: 1,
+          from: startDate,
+          to: endDate,
+          /**
+           * `basis=commande` : filtre serveur sur **commandeDate** (comme le tableau Bilans),
+           * pas sur paiementDate — aligne lignes et totaux.
+           */
+          basis: 'commande',
+        }
       : {
           /**
            * IMPORTANT (affichage du tableau inchangé):
@@ -108,10 +119,10 @@ export default function Bilans() {
   // Totaux fiables (serveur) pour Bilans.
   // NB: Si from/to ne sont pas définis, le backend limite par défaut aux 7 derniers jours.
   const { data: paiementsStats } = useAllPaiements({
-    paged: 1,
     stats: 'bilans',
     from: startDate ?? undefined,
     to: endDate ?? undefined,
+    basis: 'commande',
   });
   const tableRef = useRef(null);
   // State de Recherche
@@ -176,7 +187,7 @@ export default function Bilans() {
       ? paiementsData.paiements
       : [];
     const paiementsFiltres = paiementsArray.filter((item) => {
-      return isBetweenDates(item?.paiementDate);
+      return isBetweenDates(item?.commande?.commandeDate);
     });
     let totalAchat = 0;
     paiementsFiltres.forEach((paiement) => {

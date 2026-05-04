@@ -2,8 +2,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // baseURL: 'http://localhost:5001/api',
-  baseURL: '/boutique_banconi/api',
+  baseURL: 'http://localhost:5001/boutique_banconi/api',
+  // baseURL: '/boutique_banconi/api',
 
   headers: {
     'Content-Type': 'application/json',
