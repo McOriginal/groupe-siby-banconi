@@ -61,7 +61,79 @@ const Header = (props) => {
   return (
     <React.Fragment>
       <header id='page-topbar'>
-        <div className='navbar-header'>
+     
+      <div className='navbar-header'>
+          <div className='d-flex'>
+            <div
+              className='navbar-brand-box text-center'
+              style={{ backgroundColor: ' #F7F4EA' }}
+            >
+              <span>
+                <img
+                  src={companySmallLogo}
+                  style={{
+                    width: '100px',
+                  }}
+                  alt='logo'
+                />
+              </span>
+            </div>
+
+            <button
+              type='button'
+              className='btn btn-sm px-3 font-size-24 header-item waves-effect  d-flex justify-content-center text-white align-self-center mx-3 pt-3'
+              id='vertical-menu-btn'
+              onClick={() => {
+                tToggle();
+              }}
+            >
+              <i className='dripicons-align-left align-middle text-info'></i>
+            </button>
+          </div>
+          <div className='d-none d-md-flex flex-column  align-items-center justify-content-center'>
+            <p className='fw-bold font-size-16 text-info my-1'>
+              {companyLittleName} |
+              <span className=' ms-2 text-warning'> {companyOwnerName}</span>
+            </p>
+            <p className='my-0 font-size-10 text-dark'>
+              {companyServices2}
+            </p>
+            <p className='my-0 font-size-10 text-dark'>
+              {companyServices1}
+            </p>
+          </div>
+          <div className='d-flex'>
+            <div className='dropdown d-none d-lg-inline-block ms-1'>
+              <button
+                type='button'
+                onClick={() => {
+                  toggleFullscreen();
+                }}
+                className='btn header-item noti-icon'
+                data-toggle='fullscreen'
+              >
+                <i className='ri-fullscreen-line' />
+              </button>
+            </div>
+
+            <ProfileMenu />
+
+            <div
+              className='dropdown d-inline-block'
+              onClick={() => {
+                props.showRightSidebarAction(!props.showRightSidebar);
+              }}
+            >
+              <button
+                type='button'
+                className='btn header-item noti-icon right-bar-toggle waves-effect'
+              >
+                <i className='mdi mdi-cog'></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* <div className='navbar-header'>
           <div className='d-flex'>
             <div
               className='navbar-brand-box text-center'
@@ -143,7 +215,7 @@ const Header = (props) => {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
       </header>
     </React.Fragment>
   );
