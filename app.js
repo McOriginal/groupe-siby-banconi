@@ -40,7 +40,7 @@ const allowedOrigins = corsOriginsRaw
       'https://www.gestiongroupesiby.online',
       // Dev
       'http://localhost:3000',
-      'http://localhost:3000/boutique_banconi',
+      'http://localhost:3000/boutique_banconi/',
     ];
 
 // Petit helper pour tolérer www si l’admin l’utilise en prod.
