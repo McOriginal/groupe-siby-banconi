@@ -23,6 +23,47 @@ export const asMoneyNumber = (value, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+/**
+ * Somme des restes dus (impayés) sur les factures / paiements.
+ * `totalAmount` côté paiement = montant net dû après réduction ; la réduction ne doit pas
+ * apparaître comme impayé (contrairement à Σ commande.totalAmount − Σ totalPaye).
+ */
+/** Somme des montants dus nets (paiement.totalAmount, déjà après réduction). */
+export const sumNetDueFromFactures = (factures = []) =>
+  factures.reduce((acc, f) => acc + asMoneyNumber(f?.totalAmount), 0);
+
+/** Somme des réductions (factures Bilans/Rapports ou lignes paiement). */
+export const sumReductionFromRows = (rows = []) =>
+  (rows || []).reduce((acc, r) => acc + asMoneyNumber(r?.reduction), 0);
+
+export const sumReliquatFromFactures = (factures = []) =>
+  factures.reduce(
+    (acc, f) =>
+      acc +
+      Math.max(0, asMoneyNumber(f?.totalAmount) - asMoneyNumber(f?.totalPaye)),
+    0
+  );
+
+/**
+ * Coût d'achat total (Σ prix achat × quantité) pour une liste de paiements.
+ * Attend `commande.items[].produit.achatPrice` (API paiements avec `deep=1`).
+ */
+export const sumAchatFromPaiements = (paiements = []) => {
+  let total = 0;
+  (paiements || []).forEach((paiement) => {
+    const items = Array.isArray(paiement?.commande?.items)
+      ? paiement.commande.items
+      : [];
+    items.forEach((item) => {
+      const produit = item?.produit;
+      if (!produit) return;
+      total +=
+        asMoneyNumber(produit.achatPrice) * asMoneyNumber(item.quantity, 1);
+    });
+  });
+  return total;
+};
+
 export const formatPrice = (number) => {
   if (number == null) return 'null';
 

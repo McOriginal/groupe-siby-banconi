@@ -5,6 +5,9 @@ import { useAllDepenses } from '../../Api/queriesDepense';
 import {
   asMoneyNumber,
   formatPrice,
+  sumNetDueFromFactures,
+  sumReductionFromRows,
+  sumReliquatFromFactures,
 } from '../components/capitalizeFunction'; // Montants formatés + conversion API sûre
 import { useAllCommandes } from '../../Api/queriesCommande';
 
@@ -40,9 +43,9 @@ const RapportBySemaine = () => {
   const { data: commandes } = useAllCommandes(commandesParams);
   /**
    * IMPORTANT (règle métier demandée):
-   * - Total à payé = Σ commandesListe.totalAmount
+   * - Total à payé = Σ factures.totalAmount (net)
    * - Total payé   = Σ factures.totalPaye
-   * - Impayé       = Total à payé − Total payé
+   * - Impayé       = Σ (net dû − payé)
    *
    * Donc on récupère aussi la liste (export) + `factures.totalPaye` via `facturesTotals=1`.
    * (Sans changer l'URL API commandes, seulement un paramètre optionnel.)
@@ -101,13 +104,16 @@ const RapportBySemaine = () => {
     [paiementsData, isBetweenDates, startDate, endDate]
   );
 
-  // Total à payer (règle métier) = Σ commandesListe.totalAmount
+  // Total à payer = Σ montants dus nets (après réduction), jamais le brut commande.
   const totalPaiementsAmount =
     startDate && endDate
-      ? (commandesData?.commandesListe || []).reduce(
-          (acc, c) => acc + asMoneyNumber(c?.totalAmount),
-          0
-        )
+      ? (() => {
+          const factures = commandesData?.factures || [];
+          if (factures.length > 0) return sumNetDueFromFactures(factures);
+          const st = paiementsData?.sumTotalAmount;
+          if (st != null && Number.isFinite(Number(st))) return asMoneyNumber(st);
+          return 0;
+        })()
       : recentPaiement?.reduce(
           (acc, item) => acc + asMoneyNumber(item.totalAmount),
           0
@@ -120,15 +126,25 @@ const RapportBySemaine = () => {
           0
         )
       : recentPaiement?.reduce((acc, item) => acc + asMoneyNumber(item.totalPaye), 0);
-  // Calculer le total de Somme Impayé pour le 7 dernier jour
-  const totalPaiementsToPaye = totalPaiementsAmount - totalPaiementsPaye || 0;
+  // Impayé : net dû − payé (réduction exclue de l’impayé).
+  const totalPaiementsToPaye =
+    startDate && endDate
+      ? sumReliquatFromFactures(commandesData?.factures || [])
+      : (recentPaiement ?? []).reduce(
+          (acc, item) =>
+            acc +
+            Math.max(
+              0,
+              asMoneyNumber(item?.totalAmount) - asMoneyNumber(item?.totalPaye)
+            ),
+          0
+        );
 
   /**
    * --- Carte « Total à payer / Total payé / Impayé » (Rapport par période) ---
-   * Total à payer : somme des **montants commande** à régler (TTC / dû sur le document paiement) = Σ `totalAmount`.
-   * Total payé    : somme des **encaissements** enregistrés = Σ `totalPaye` (montant réellement payé sur la commande).
-   * Impayé        : somme des **restes dus** ; si `stats=bilans` renvoie `sumReliquat`, on l’utilise (agrégat serveur),
-   *                 sinon différence « à payer − payé » sur les lignes chargées.
+   * Total à payer : Σ montants dus nets.
+   * Total payé    : Σ encaissements.
+   * Impayé        : Σ (montant dû net sur paiement − payé), pas (commande − payé).
    */
   // Total à payer = montant total des commandes (somme des montants à payer, y compris part encore due).
   const rapportTotalCommandesAPayer = totalPaiementsAmount;
@@ -136,6 +152,17 @@ const RapportBySemaine = () => {
   const rapportTotalPayeEncaisse = totalPaiementsPaye;
   // Impayé = reste dû : `sumReliquat` du backend si valeur numérique exploitable, sinon (à payer − payé).
   const rapportMontantCommandesNonPayes = asMoneyNumber(totalPaiementsToPaye);
+
+  const totalReduction =
+    startDate && endDate
+      ? (() => {
+          const factures = commandesData?.factures || [];
+          if (factures.length > 0) return sumReductionFromRows(factures);
+          const sr = paiementsData?.sumReduction;
+          if (sr != null && Number.isFinite(Number(sr))) return asMoneyNumber(sr);
+          return 0;
+        })()
+      : sumReductionFromRows(recentPaiement);
 
   // Recent Depense
   const recentDepense = useMemo(
@@ -344,7 +371,7 @@ const RapportBySemaine = () => {
                 background: 'linear-gradient(to top right , #090979, #222831)',
                 justifyContent: 'center',
                 alignItems: 'center',
-                height: '100px',
+                minHeight: '130px',
               }}
             >
               <h5 className='my-1 text-light'>
@@ -359,6 +386,13 @@ const RapportBySemaine = () => {
                 <span className='text-success ps-2'>
                   {' '}
                   {formatPrice(rapportTotalPayeEncaisse)} F
+                </span>
+              </h5>
+              <h5 className='my-1 text-light'>
+                Total de Réduction:{' '}
+                <span className='text-warning ps-2'>
+                  {' '}
+                  {formatPrice(totalReduction)} F
                 </span>
               </h5>
               <h5 className='my-1 text-light'>

@@ -35,8 +35,8 @@ jobs:
             npm run build
 
             echo "Dependencies installed, Restart frontend (Nginx)..."
-            sudo systemctl restart nginx
             sudo nginx -t
+            sudo systemctl restart nginx
 
 
             echo "Deployment completed successfully!"

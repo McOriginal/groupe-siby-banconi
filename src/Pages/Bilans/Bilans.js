@@ -8,6 +8,9 @@ import {
   capitalizeWords,
   formatPhoneNumber,
   formatPrice,
+  sumNetDueFromFactures,
+  sumReductionFromRows,
+  sumReliquatFromFactures,
 } from '../components/capitalizeFunction';
 import { useAllPaiements } from '../../Api/queriesPaiement';
 import { useAllDepenses } from '../../Api/queriesDepense';
@@ -120,7 +123,7 @@ export default function Bilans() {
 
   /**
    * IMPORTANT (règle métier demandée):
-   * - chiffre d'affaire = Σ commandesListe.totalAmount
+   * - chiffre d'affaire = Σ factures.totalAmount (net après réduction, pas le brut commande)
    * - revenu            = Σ factures.totalPaye
    *
    * Donc on récupère les commandes + factures via la MÊME API commandes
@@ -212,32 +215,48 @@ export default function Bilans() {
 
   /**
    * --- Définitions affichage Bilans (une ligne = un paiement lié à une commande) ---
-   * Chiffre d'affaires : somme des **montants commande** à payer (TTC / dû), **y compris** la partie encore impayée
-   *                    => somme des `totalAmount` (identique aux colonnes "Montant de Commande" du tableau).
-   * Revenu           : somme des montants **effectivement payés** => somme des `totalPaye`.
-   * Réliquat         : somme des **restes dus** (impayés). On utilise `sumReliquat` du backend si présent
-   *                    (cohérent avec l’agrégat), sinon CA − revenu.
+   * Chiffre d'affaires : Σ montants dus **nets** sur facture (hors réduction affichée à part).
+   * Revenu           : Σ encaissements (`totalPaye`).
+   * Réliquat         : Σ max(0, net dû − payé).
    */
-  /**
-   * --- Règle métier (prioritaire) ---
-   * chiffre d'affaire = Σ commandesListe.totalAmount
-   * revenu            = Σ factures.totalPaye
-   * réliquat           = chiffre d'affaire − revenu
-   *
-   * NOTE:
-   * - On garde les autres calculs (paiementsStats) pour le bénéfice / achats,
-   *   mais pour CA/Revenu/Réliquat on suit strictement ta définition.
-   */
-  const chiffreAffairesTotalCommandesAvecImpaye = (commandesData?.commandesListe || []).reduce(
-    (acc, c) => acc + asMoneyNumber(c?.totalAmount),
-    0
-  );
+  const facturesPourTotaux = commandesData?.factures || [];
+  const chiffreAffairesTotalCommandesAvecImpaye =
+    facturesPourTotaux.length > 0
+      ? sumNetDueFromFactures(facturesPourTotaux)
+      : paiementsStats != null &&
+          paiementsStats.sumTotalAmount != null &&
+          Number.isFinite(Number(paiementsStats.sumTotalAmount))
+        ? asMoneyNumber(paiementsStats.sumTotalAmount)
+        : sumTotalAmountFromLines();
   const revenuTotalMontantsPayes = (commandesData?.factures || []).reduce(
     (acc, f) => acc + asMoneyNumber(f?.totalPaye),
     0
   );
   const reliquatSommeImpayes =
-    chiffreAffairesTotalCommandesAvecImpaye - revenuTotalMontantsPayes;
+    facturesPourTotaux.length > 0
+      ? sumReliquatFromFactures(facturesPourTotaux)
+      : paiementsStats != null &&
+          paiementsStats.sumReliquat != null &&
+          Number.isFinite(Number(paiementsStats.sumReliquat))
+        ? asMoneyNumber(paiementsStats.sumReliquat)
+        : (filterPaiement ?? []).reduce(
+            (acc, item) =>
+              acc +
+              Math.max(
+                0,
+                asMoneyNumber(item?.totalAmount) - asMoneyNumber(item?.totalPaye)
+              ),
+            0
+          );
+
+  const totalReduction =
+    facturesPourTotaux.length > 0
+      ? sumReductionFromRows(facturesPourTotaux)
+      : paiementsStats != null &&
+          paiementsStats.sumReduction != null &&
+          Number.isFinite(Number(paiementsStats.sumReduction))
+        ? asMoneyNumber(paiementsStats.sumReduction)
+        : sumReductionFromRows(filterPaiement);
 
   const { totalAchat, benefice } = useMemo(() => {
     // Chemin optimisé: le serveur renvoie directement `totalAchat` (agrégation).
@@ -345,6 +364,12 @@ export default function Bilans() {
                             </span>
                           </h6>
                           <h6 className=''>
+                            Total de Réduction :{' '}
+                            <span className='text-warning'>
+                              {formatPrice(totalReduction)} F{' '}
+                            </span>
+                          </h6>
+                          <h6 className=''>
                             Réliquat:{' '}
                             <span className='text-danger'>
                               {formatPrice(reliquatSommeImpayes)} F{' '}
@@ -443,8 +468,7 @@ export default function Bilans() {
                             <th data-sort='phoneNumber'>Téléphone</th>
                             <th data-sort='adresse'>Adresse de Livraison</th>
 
-                            <th data-sort='totaAmount'>Montant de Commande</th>
-                            <th data-sort='motif'>Réduction</th>
+                            <th data-sort='totaAmount'>Montant dû</th>
                             <th className='sort' data-sort='totaPayer'>
                               Total Payé
                             </th>
@@ -516,9 +540,6 @@ export default function Bilans() {
                                 <td>
                                   {formatPrice(paiement?.totalAmount)}
                                   {' F '}
-                                </td>
-                                <td className='text-warning'>
-                                  {formatPrice(paiement?.reduction)} F
                                 </td>
                                 <td>
                                   {formatPrice(paiement?.totalPaye)}

@@ -2,12 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { Card, CardBody, Col, Row } from 'reactstrap';
 import { useAllPaiements } from '../../Api/queriesPaiement';
 import { useAllDepenses } from '../../Api/queriesDepense';
-import { formatPrice } from '../components/capitalizeFunction'; // Pour afficher les montants formatés
+import {
+  asMoneyNumber,
+  formatPrice,
+  sumAchatFromPaiements,
+  sumReductionFromRows,
+  sumReliquatFromFactures,
+} from '../components/capitalizeFunction';
 import { useAllCommandes } from '../../Api/queriesCommande';
 
 const SelectedMounthTotalResult = () => {
   const { data: commandes = [] } = useAllCommandes();
-  const { data: paiementsData = [] } = useAllPaiements();
+  const { data: paiementsData = [] } = useAllPaiements({ deep: 1 });
   const { data: depenseData = [] } = useAllDepenses();
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
@@ -35,15 +41,19 @@ const SelectedMounthTotalResult = () => {
   }, [commandes, selectedMonth]);
 
   // Calcul de somme total de Paiements pour le mois sélectionné
-  const totalPaiementsToPaye = useMemo(() => {
-    return paiementsData?.paiements?.reduce((acc, item) => {
+  const paiementsDuMois = useMemo(() => {
+    return (paiementsData?.paiements || []).filter((item) => {
       const date = new Date(item.paiementDate);
-      if (!isNaN(date) && date.getMonth() === selectedMonth) {
-        acc += Number(item.totalAmount || 0);
-      }
-      return acc;
-    }, 0);
+      return !isNaN(date) && date.getMonth() === selectedMonth;
+    });
   }, [paiementsData, selectedMonth]);
+
+  const totalPaiementsToPaye = useMemo(() => {
+    return paiementsDuMois.reduce(
+      (acc, item) => acc + asMoneyNumber(item?.totalAmount),
+      0
+    );
+  }, [paiementsDuMois]);
 
   // Calcul de somme total Payé pour le mois sélectionné
   const totalPaiementsAmountPaye = useMemo(() => {
@@ -57,8 +67,21 @@ const SelectedMounthTotalResult = () => {
   }, [paiementsData, selectedMonth]);
 
   // Calcul de somme total de Paiement Impayé pour le mois sélectionné
-  const totalPaiementsNotPaye =
-    totalPaiementsToPaye - totalPaiementsAmountPaye || 0;
+  const totalPaiementsNotPaye = useMemo(
+    () =>
+      sumReliquatFromFactures(
+        paiementsDuMois.map((p) => ({
+          totalAmount: p?.totalAmount,
+          totalPaye: p?.totalPaye,
+        }))
+      ),
+    [paiementsDuMois]
+  );
+
+  const totalReduction = useMemo(
+    () => sumReductionFromRows(paiementsDuMois),
+    [paiementsDuMois]
+  );
 
   // Calcul de total pour Dépenses pour le mois sélectionné
   const totalDepenses = useMemo(() => {
@@ -81,29 +104,12 @@ const SelectedMounthTotalResult = () => {
     }
 
     // On filtre d'abord les paiements par date sélectionnée
-    const paiementsFiltres = paiementsData.paiements.filter((item) => {
-      const date = new Date(item?.paiementDate);
-
-      return date.getMonth() === selectedMonth;
-    });
-
-    // let totalCA = 0; // chiffre d’affaires
-    let totalAchat = 0; // coût d’achat
-
-    paiementsFiltres.forEach((paiement) => {
-      paiement.commande?.items.forEach((item) => {
-        const produit = item?.produit;
-        if (!produit) return;
-
-        // totalCA += (item?.customerPrice || 0) * (item?.quantity || 0);
-        totalAchat += (produit?.achatPrice || 0) * (item?.quantity || 0);
-      });
-    });
+    const totalAchat = sumAchatFromPaiements(paiementsDuMois);
     const total = totalPaiementsAmountPaye - totalAchat;
     const benefice = total - totalDepenses;
 
     return { totalAchat, benefice };
-  }, [paiementsData, selectedMonth, totalPaiementsAmountPaye, totalDepenses]);
+  }, [paiementsData, paiementsDuMois, selectedMonth, totalPaiementsAmountPaye, totalDepenses]);
 
   return (
     <React.Fragment>
@@ -246,7 +252,7 @@ const SelectedMounthTotalResult = () => {
                 background: ' #03045e',
                 justifyContent: 'center',
                 alignItems: 'start',
-                height: '100px',
+                minHeight: '130px',
                 padding: '0px 10px',
               }}
             >
@@ -262,6 +268,13 @@ const SelectedMounthTotalResult = () => {
                 <span className='text-success ps-3'>
                   {' '}
                   {formatPrice(totalPaiementsAmountPaye)} F
+                </span>
+              </h5>
+              <h5 className='my-1 text-light'>
+                Total de Réduction:{' '}
+                <span className='text-warning ps-3'>
+                  {' '}
+                  {formatPrice(totalReduction)} F
                 </span>
               </h5>
               <h5 className='my-1 text-light'>

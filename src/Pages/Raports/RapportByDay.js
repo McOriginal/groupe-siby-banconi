@@ -5,6 +5,9 @@ import { useAllDepenses } from '../../Api/queriesDepense';
 import {
   asMoneyNumber,
   formatPrice,
+  sumNetDueFromFactures,
+  sumReductionFromRows,
+  sumReliquatFromFactures,
 } from '../components/capitalizeFunction';
 import { useAllCommandes } from '../../Api/queriesCommande';
 
@@ -40,9 +43,9 @@ const RapportByDay = () => {
   });
   /**
    * IMPORTANT (règle métier demandée):
-   * - Total à payé = Σ commandesListe.totalAmount
+   * - Total à payé = Σ factures.totalAmount (net, après réduction)
    * - Total payé   = Σ factures.totalPaye
-   * - Impayé       = Total à payé − Total payé
+   * - Impayé       = Σ (net dû − payé)
    *
    * Donc on récupère aussi `commandesListe` + `factures.totalPaye` via `facturesTotals=1`.
    */
@@ -75,12 +78,12 @@ const RapportByDay = () => {
 
   // Calcul le total de somme Payés pour le mois sélectionné
   const totalPaiements = useMemo(() => {
-    // Total à payer = Σ commandesListe.totalAmount (règle métier).
-    return (commandesData?.commandesListe || []).reduce(
-      (acc, c) => acc + asMoneyNumber(c?.totalAmount),
-      0
-    );
-  }, [commandesData, selectedDate]);
+    const factures = commandesData?.factures || [];
+    if (factures.length > 0) return sumNetDueFromFactures(factures);
+    const st = paiementsData?.sumTotalAmount;
+    if (st != null && Number.isFinite(Number(st))) return asMoneyNumber(st);
+    return 0;
+  }, [commandesData, paiementsData, selectedDate]);
   // Total payé = Σ factures.totalPaye (règle métier).
   const totalPaiementsAmountPayed = useMemo(() => {
     return (commandesData?.factures || []).reduce(
@@ -89,15 +92,20 @@ const RapportByDay = () => {
     );
   }, [commandesData, selectedDate]);
 
-  // Calcul le total de somme Impayés pour le mois sélectionné
-  const totalAmountNotPayed =
-    asMoneyNumber(totalPaiements) - asMoneyNumber(totalPaiementsAmountPayed);
+  // Impayé = reste dû net (après réduction), pas (montant commande − payé).
+  const totalAmountNotPayed = useMemo(() => {
+    const factures = commandesData?.factures || [];
+    if (factures.length > 0) return sumReliquatFromFactures(factures);
+    const sr = paiementsData?.sumReliquat;
+    if (sr != null && Number.isFinite(Number(sr))) return asMoneyNumber(sr);
+    return 0;
+  }, [commandesData, paiementsData]);
 
   /**
-   * --- Rapport journalier : totaux « commande / paiement » (stats=bilans sur la date) ---
-   * Total à payer : somme des `totalAmount` = **montant des commandes** à payer (inclut l’impayé dans chaque commande).
-   * Total payé    : somme des `totalPaye` = **montants encaissés** (paiements effectués).
-   * Impayé        : **reste dû** sur les commandes ; on privilégie `sumReliquat` renvoyé par l’API (agrégat cohérent).
+   * --- Rapport journalier : totaux « commande / paiement » ---
+   * Total à payer : Σ montants dus nets (`factures.totalAmount`).
+   * Total payé    : Σ encaissements (`factures.totalPaye`).
+   * Impayé        : Σ (montant dû net sur facture − payé) ; la réduction n’entre pas dans l’impayé.
    */
   // Total à payer = somme des montants commande dus pour le jour sélectionné.
   const rapportJourTotalCommandesAPayer = totalPaiements;
@@ -105,6 +113,14 @@ const RapportByDay = () => {
   const rapportJourTotalPayeEncaisse = totalPaiementsAmountPayed;
   // Impayé : `sumReliquat` serveur si présent et numérique, sinon différence à payer − payé (même résultat attendu).
   const rapportJourMontantCommandesNonPayes = asMoneyNumber(totalAmountNotPayed);
+
+  const totalReduction = useMemo(() => {
+    const factures = commandesData?.factures || [];
+    if (factures.length > 0) return sumReductionFromRows(factures);
+    const sr = paiementsData?.sumReduction;
+    if (sr != null && Number.isFinite(Number(sr))) return asMoneyNumber(sr);
+    return 0;
+  }, [commandesData, paiementsData]);
 
   // Calcul le total pour Dépenses pour le mois sélectionné
   const totalDepenses = useMemo(() => {
@@ -265,7 +281,7 @@ const RapportByDay = () => {
                 background: 'linear-gradient(to top right , #3E0703, #cbcaa5)',
                 justifyContent: 'center',
                 alignItems: 'start',
-                height: '100px',
+                minHeight: '120px',
                 padding: '0 10px',
               }}
             >
@@ -281,6 +297,13 @@ const RapportByDay = () => {
                 <span className='text-success'>
                   {' '}
                   {formatPrice(rapportJourTotalPayeEncaisse)} F
+                </span>
+              </h6>
+              <h6 className='my-1 text-light'>
+                Total de Réduction:{' '}
+                <span className='text-warning'>
+                  {' '}
+                  {formatPrice(totalReduction)} F
                 </span>
               </h6>
               <h6 className='my-1 text-light'>
