@@ -63,7 +63,7 @@ const corsOptions = {
 };
 
 // CORS UNIQUEMENT pour l’API
-app.use('/boutique_banconi/api', cors(corsOptions));
+app.use('/boutique_banconi/api/', cors(corsOptions));
 // Preflight pour toutes les routes /api/... (regex => pas de parsing path-to-regexp)
 app.options(/^\/api\/.*$/, cors(corsOptions));
 app.use(express.json()); // Parser les requêtes avec JSON

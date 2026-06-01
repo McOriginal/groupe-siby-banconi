@@ -409,8 +409,10 @@ exports.getAllCommandes = async (req, res) => {
        * Optimisation Bilans/Rapports:
        * - Quand `facturesTotals=1`, on renvoie aussi `factures.totalPaye`
        *   (et `factures.totalAmount` si présent) pour calculer:
+       *   - chiffre d'affaire / total à payer = Σ factures.totalAmount (net après réduction)
        *   - revenu = Σ factures.totalPaye
-       *   - impayé = Σ commandesListe.totalAmount − Σ factures.totalPaye
+       *   - impayé = Σ max(0, factures.totalAmount − factures.totalPaye)
+       *   - total réduction = Σ factures.reduction
        *
        * Contrainte:
        * - On ne change pas l'URL, seulement un query param optionnel.
@@ -420,7 +422,11 @@ exports.getAllCommandes = async (req, res) => {
         req.query?.facturesTotals === 'true';
 
       const paiements = await Paiement.find({ commande: { $in: commandeIds } })
-        .select(facturesTotals ? 'commande totalPaye totalAmount' : 'commande')
+        .select(
+          facturesTotals
+            ? 'commande totalPaye totalAmount reduction'
+            : 'commande'
+        )
         .lean();
 
       // On conserve la forme attendue par le front: fact.commande._id
@@ -430,8 +436,9 @@ exports.getAllCommandes = async (req, res) => {
               commande: { _id: p.commande },
               // total payé (revenu) - utilisé par Bilans/Rapports
               totalPaye: Number(p.totalPaye || 0),
-              // montant de commande côté paiement (optionnel) - ne remplace pas commandesListe.totalAmount
+              // montant dû net (après réduction)
               totalAmount: Number(p.totalAmount || 0),
+              reduction: Number(p.reduction || 0),
             }
           : { commande: { _id: p.commande } }
       );

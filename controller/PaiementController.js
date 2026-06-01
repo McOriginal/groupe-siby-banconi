@@ -240,6 +240,7 @@ exports.getAllPaiements = async (req, res) => {
                   _id: null,
                   sumTotalAmount: { $sum: '$totalAmount' },
                   sumTotalPaye: { $sum: '$totalPaye' },
+                  sumReduction: { $sum: { $ifNull: ['$reduction', 0] } },
                   countPaiements: { $sum: 1 },
                 },
               },
@@ -292,6 +293,7 @@ exports.getAllPaiements = async (req, res) => {
             sumTotalAmount: { $ifNull: ['$_pt.sumTotalAmount', 0] },
             // Somme des montants réellement payés (encaissements).
             sumTotalPaye: { $ifNull: ['$_pt.sumTotalPaye', 0] },
+            sumReduction: { $ifNull: ['$_pt.sumReduction', 0] },
             // Coût d’achat estimé (quantités × prix d’achat produit).
             totalAchat: { $ifNull: ['$_ar.totalAchat', 0] },
             // Reste dû global (impayés / réliquat agrégé).
@@ -310,6 +312,7 @@ exports.getAllPaiements = async (req, res) => {
         countPaiements: 0,
         sumTotalAmount: 0,
         sumTotalPaye: 0,
+        sumReduction: 0,
         sumReliquat: 0,
         totalAchat: 0,
       };
@@ -323,6 +326,7 @@ exports.getAllPaiements = async (req, res) => {
         countPaiements: Number(row.countPaiements ?? 0),
         sumTotalAmount: Number(row.sumTotalAmount ?? 0),
         sumTotalPaye: Number(row.sumTotalPaye ?? 0),
+        sumReduction: Number(row.sumReduction ?? 0),
         sumReliquat: Number(row.sumReliquat ?? 0),
         totalAchat: Number(row.totalAchat ?? 0),
       });
