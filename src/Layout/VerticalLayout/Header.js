@@ -79,16 +79,16 @@ const Header = (props) => {
               </span>
             </div>
 
-            <button
-              type='button'
-              className='btn btn-sm px-3 font-size-24 header-item waves-effect  d-flex justify-content-center text-white align-self-center mx-3 pt-3'
+            <div
+              // type='button'
+              className='btn btn-sm px-3 font-size-24 header-item waves-effect d-flex justify-content-center text-white align-items-center mx-3 '
               id='vertical-menu-btn'
               onClick={() => {
                 tToggle();
               }}
             >
-              <i className='dripicons-align-left align-middle text-info'></i>
-            </button>
+              <i className='dripicons-align-left align-middle mt-2 text-info'></i>
+            </div>
           </div>
           <div className='d-none d-md-flex flex-column  align-items-center justify-content-center'>
             <p className='fw-bold font-size-16 text-info my-1'>
