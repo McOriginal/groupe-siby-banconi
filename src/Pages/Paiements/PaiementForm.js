@@ -25,22 +25,27 @@ import {
   formatPhoneNumber,
   formatPrice,
 } from '../components/capitalizeFunction';
-import { useAllCommandes } from '../../Api/queriesCommande';
+import { useAllCommandes, useOneCommande } from '../../Api/queriesCommande';
 import { useParams } from 'react-router-dom';
 
 const PaiementForm = ({ paiementToEdit, tog_form_modal }) => {
   const commandeId = useParams();
   // Paiement Query pour créer la Paiement
   const { mutate: createPaiement } = useCreatePaiement();
+  const {
+    data: selectedComm,
+    isFetchingCommandes,
+    error,
+  } = useOneCommande(commandeId?.id);
   // Paiement Query pour Mettre à jour la Paiement
   const { mutate: updatePaiement } = useUpdatePaiement();
 
   // Query pour affiche toutes les commandeData
-  const {
-    data: commandeData,
-    isLoading: isFetchingCommandes,
-    error,
-  } = useAllCommandes();
+  // const {
+  //   data: commandeData,
+  //   isLoading: isFetchingCommandes,
+  //   error,
+  // } = useAllCommandes();
 
   // State pour gérer le chargement
   const [isLoading, setIsLoading] = useState(false);
@@ -137,9 +142,10 @@ const PaiementForm = ({ paiementToEdit, tog_form_modal }) => {
   // Calcule de Somme Total en fonction de commande Sélectionné
   useEffect(() => {
     // La COMMANDE sélectionnée via _ID dans la liste deroulante
-    const selectedCommande = commandeData?.commandesListe?.find(
-      (t) => t._id === validation.values.commande
-    );
+    // const selectedCommande = commandeData?.commandesListe?.find(
+    //   (t) => t._id === validation.values.commande
+    // );
+    const selectedCommande = selectedComm?.commandeData;
 
     // Si il y'a une sélection alors
     if (selectedCommande) {
@@ -153,7 +159,7 @@ const PaiementForm = ({ paiementToEdit, tog_form_modal }) => {
         validation.setFieldValue('totalAmount', finalAmount);
       }
     }
-  }, [validation.values.commande, validation.values.reduction, commandeData]);
+  }, [validation.values.commande, validation.values.reduction, selectedComm]);
 
   return (
     <Form
@@ -184,7 +190,7 @@ const PaiementForm = ({ paiementToEdit, tog_form_modal }) => {
               Erreur de chargement veillez acctualiser la page{' '}
             </p>
           )}
-          {!error && !isFetchingCommandes && !commandeId.id && (
+          {/* {!error && !isFetchingCommandes && !commandeId.id && (
             <FormGroup className='mb-3'>
               <Label htmlFor='commande'>Commande</Label>
 
@@ -217,7 +223,7 @@ const PaiementForm = ({ paiementToEdit, tog_form_modal }) => {
                 </FormFeedback>
               ) : null}
             </FormGroup>
-          )}
+          )} */}
         </Col>
       </Row>
 
@@ -265,7 +271,7 @@ const PaiementForm = ({ paiementToEdit, tog_form_modal }) => {
               id='reduction'
               onChange={validation.handleChange}
               onBlur={validation.handleBlur}
-              value={validation.values.reduction || undefined}
+              value={validation.values.reduction || 0}
               invalid={
                 validation.touched.reduction && validation.errors.reduction
                   ? true
